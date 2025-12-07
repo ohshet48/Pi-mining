@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#5b21b6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Pi Mining</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            overflow-x: hidden;
+            background: linear-gradient(135deg, #1e1b4b 0%, #1e3a8a 50%, #312e81 100%);
+            min-height: 100vh;
+        }
+        .container { max-width: 500px; margin: 0 auto; padding: 16px; color: white; }
+        .header { text-align: center; padding: 24px 0; }
+        .logo { 
+            width: 80px; height: 80px; 
+            background: linear-gradient(135deg, #fbbf24 0%, #f97316 100%);
+            border-radius: 50%;
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 2s infinite;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
+        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(0.98); } }
+        .logo svg { width: 48px; height: 48px; }
+        .title { 
+            font-size: 32px; 
+            font-weight: bold;
+            background: linear-gradient(135deg, #fbbf24 0%, #f97316 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+        .subtitle { color: #c4b5fd; font-size: 14px; }
+        .card { 
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .balance-text { color: #c4b5fd; font-size: 14px; margin-bottom: 8px; text-align: center; }
+        .balance-amount { font-size: 48px; font-weight: bold; text-align: center; margin-bottom: 4px; }
+        .balance-unit { font-size: 24px; color: #fbbf24; text-align: center; }
+        .btn {
+            width: 100%;
+            padding: 24px;
+            border: none;
+            border-radius: 16px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: transform 0.1s;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { 
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+        .btn-secondary {
+            background: linear-gradient(135deg, #3b82f6 0%, #7c3aed 100%);
+            color: white;
+            padding: 12px;
+            font-size: 16px;
+        }
+        .btn-bonus {
+            background: linear-gradient(135deg, #fbbf24 0%, #f97316 100%);
+            color: white;
+            padding: 12px;
+            font-size: 16px;
+        }
+        .btn-disabled {
+            background: rgba(100,100,100,0.5);
+            color: rgba(255,255,255,0.5);
+            cursor: not-allowed;
+        }
+        .timer-circle {
+            width: 128px;
+            height: 128px;
+            margin: 0 auto 16px;
+            position: relative;
+        }
+        .timer-circle svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+        .timer-circle-bg { stroke: rgba(255,255,255,0.1); }
+        .timer-circle-progress { 
+            stroke: #10b981;
+            transition: stroke-dashoffset 1s linear;
+        }
+        .timer-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: pulse 2s infinite;
+        }
+        .mining-status { color: #10b981; font-weight: 600; font-size: 18px; text-align: center; margin-bottom: 8px; }
+        .timer-text { font-size: 36px; font-weight: bold; text-align: center; margin-bottom: 8px; }
+        .timer-label { color: #c4b5fd; font-size: 14px; text-align: center; }
+        .earning-box {
+            background: rgba(16,185,129,0.2);
+            border: 1px solid rgba(16,185,129,0.3);
+            border-radius: 12px;
+            padding: 12px;
+            margin-top: 16px;
+            text-align: center;
+        }
+        .earning-text { color: #6ee7b7; font-size: 14px; }
+        .earning-amount { font-weight: bold; font-size: 18px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+        .stat-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .stat-header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+        .stat-icon {
+            padding: 8px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .stat-icon svg { width: 20px; height: 20px; }
+        .stat-label { color: #c4b5fd; font-size: 14px; }
+        .stat-value { font-size: 24px; font-weight: bold; }
+        .stat-unit { font-size: 14px; color: #c4b5fd; }
+        .referral-code {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(59,130,246,0.3);
+            border-radius: 12px;
+            padding: 12px;
+            margin: 12px 0;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            font-family: monospace;
+            color: #93c5fd;
+        }
+        .bonus-card {
+            background: linear-gradient(135deg, rgba(251,191,36,0.2) 0%, rgba(249,115,22,0.2) 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(251,191,36,0.3);
+        }
+        .bonus-text { color: #e0d4ff; font-size: 14px; margin-bottom: 12px; }
+        .bonus-highlight { color: #fbbf24; font-weight: bold; }
+        .footer { text-align: center; padding: 24px 0; }
+        .footer-text { color: #c4b5fd; font-size: 12px; }
+        .section-title { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            font-size: 18px; 
+            font-weight: 600; 
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="app">
+        <div class="header">
+            <div class="logo">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+            </div>
+            <h1 class="title">Pi Mining</h1>
+            <p class="subtitle">Dijital Madencilik Uygulaması</p>
+        </div>
+
+        <div class="card">
+            <p class="balance-text">Toplam Bakiyeniz</p>
+            <div class="balance-amount" id="balance">0.00</div>
+            <p class="balance-unit">π Pi</p>
+        </div>
+
+        <div class="card" id="mining-card"></div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon" style="background: rgba(59,130,246,0.3);">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#93c5fd" stroke-width="2">
+                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                            <polyline points="17 6 23 6 23 12"></polyline>
+                        </svg>
+                    </div>
+                    <span class="stat-label">Mining Hızı</span>
+                </div>
+                <div class="stat-value" id="rate">1.00</div>
+                <div class="stat-unit">π/saat</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon" style="background: rgba(168,85,247,0.3);">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#d8b4fe" stroke-width="2">
+                            <circle cx="12" cy="8" r="7"></circle>
+                            <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+                        </svg>
+                    </div>
+                    <span class="stat-label">Seviye</span>
+                </div>
+                <div class="stat-value" id="level">1</div>
+                <div class="stat-unit">Level</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon" style="background: rgba(16,185,129,0.3);">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#6ee7b7" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                    </div>
+                    <span class="stat-label">Referanslar</span>
+                </div>
+                <div class="stat-value" id="referrals">0</div>
+                <div class="stat-unit">Kişi</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-icon" style="background: rgba(249,115,22,0.3);">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#fdba74" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                    </div>
+                    <span class="stat-label">Streak</span>
+                </div>
+                <div class="stat-value" id="streak">0</div>
+                <div class="stat-unit">Gün</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="section-title">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#93c5fd" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                Referans Kodunuz
+            </div>
+            <div class="referral-code" id="refCode">PI000000</div>
+            <button class="btn btn-secondary" onclick="addRef()">+ Referans Ekle (Test)</button>
+            <p class="footer-text" style="margin-top: 8px;">Her referans +0.25 π/saat bonus</p>
+        </div>
+
+        <div class="card bonus-card">
+            <div class="section-title">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#fbbf24" stroke-width="2">
+                    <polyline points="20 12 20 22 4 22 4 12"></polyline>
+                    <rect x="2" y="7" width="20" height="5"></rect>
+                    <line x1="12" y1="22" x2="12" y2="7"></line>
+                    <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path>
+                    <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path>
+                </svg>
+                Günlük Streak Bonusu
+            </div>
+            <p class="bonus-text">7 gün üst üste madencilik yaparak bonus kazanın! Şu anki streak: <span class="bonus-highlight" id="streakText">0 gün</span></p>
+            <button class="btn btn-bonus" id="bonusBtn" onclick="claimBonus()">🔒 7 gün kaldı</button>
+        </div>
+
+        <div class="footer">
+            <p class="footer-text">⚠️ Bu bir demo uygulamadır. Gerçek kripto para değildir.</p>
+        </div>
+    </div>
+
+    <script>
+        let data = {
+            balance: parseFloat(localStorage.getItem('piBalance')) || 0,
+            rate: parseFloat(localStorage.getItem('miningRate')) || 1.0,
+            level: parseInt(localStorage.getItem('level')) || 1,
+            refs: parseInt(localStorage.getItem('referrals')) || 0,
+            streak: parseInt(localStorage.getItem('streak')) || 0,
+            lastDate: localStorage.getItem('lastMineDate') || null,
+            refCode: localStorage.getItem('referralCode') || 'PI' + Math.random().toString(36).substr(2, 6).toUpperCase(),
+            mining: false,
+            timeLeft: 0
+        };
+
+        if (!localStorage.getItem('referralCode')) {
+            localStorage.setItem('referralCode', data.refCode);
+        }
+
+        function save() {
+            localStorage.setItem('piBalance', data.balance);
+            localStorage.setItem('miningRate', data.rate);
+            localStorage.setItem('level', data.level);
+            localStorage.setItem('referrals', data.refs);
+            localStorage.setItem('streak', data.streak);
+        }
+
+        function formatTime(sec) {
+            const h = Math.floor(sec / 3600).toString().padStart(2, '0');
+            const m = Math.floor((sec % 3600) / 60).toString().padStart(2, '0');
+            const s = (sec % 60).toString().padStart(2, '0');
+            return h + ':' + m + ':' + s;
+        }
+
+        function render() {
+            document.getElementById('balance').textContent = data.balance.toFixed(2);
+            document.getElementById('rate').textContent = data.rate.toFixed(2);
+            document.getElementById('level').textContent = data.level;
+            document.getElementById('referrals').textContent = data.refs;
+            document.getElementById('streak').textContent = data.streak;
+            document.getElementById('refCode').textContent = data.refCode;
+            document.getElementById('streakText').textContent = data.streak + ' gün';
+
+            const bonusBtn = document.getElementById('bonusBtn');
+            if (data.streak >= 7) {
+                bonusBtn.textContent = '🎁 Bonus Al (' + (data.streak * 10) + ' π)';
+                bonusBtn.className = 'btn btn-bonus';
+            } else {
+                bonusBtn.textContent = '🔒 ' + (7 - data.streak) + ' gün kaldı';
+                bonusBtn.className = 'btn btn-disabled';
+            }
+
+            const miningCard = document.getElementById('mining-card');
+            if (!data.mining) {
+                miningCard.innerHTML = '<button class="btn btn-primary" onclick="startMine()"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>Madenciliği Başlat</button>';
+            } else {
+                const progress = ((86400 - data.timeLeft) / 86400) * 377;
+                miningCard.innerHTML = '<div class="timer-circle"><svg viewBox="0 0 128 128"><circle class="timer-circle-bg" cx="64" cy="64" r="60" stroke-width="8" fill="none"/><circle class="timer-circle-progress" cx="64" cy="64" r="60" stroke-width="8" fill="none" stroke-dasharray="377" stroke-dashoffset="' + (377 - progress) + '"/></svg><div class="timer-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="#10b981" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></div></div><p class="mining-status">⚡ Madencilik Aktif</p><p class="timer-text">' + formatTime(data.timeLeft) + '</p><p class="timer-label">Kalan Süre</p><div class="earning-box"><p class="earning-text">Kazanılıyor: <span class="earning-amount">' + (data.rate * 24).toFixed(2) + ' π Pi</span></p></div>';
+            }
+        }
+
+        function startMine() {
+            const now = Date.now();
+            const end = now + (24 * 60 * 60 * 1000);
+            localStorage.setItem('miningEndTime', end);
+            data.mining = true;
+            data.timeLeft = 24 * 60 * 60;
+
+            const today = new Date().toDateString();
+            if (data.lastDate) {
+                const last = new Date(data.lastDate);
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                if (last.toDateString() === yesterday.toDateString()) {
+                    data.streak++;
+                } else if (last.toDateString() !== today) {
+                    data.streak = 1;
+                }
+            } else {
+                data.streak = 1;
+            }
+            data.lastDate = today;
+            localStorage.setItem('lastMineDate', today);
+            save();
+            render();
+        }
+
+        function completeMine() {
+            data.mining = false;
+            data.timeLeft = 0;
+            localStorage.removeItem('miningEndTime');
+            data.balance += data.rate * 24;
+            const newLevel = Math.floor(data.balance / 100) + 1;
+            if (newLevel > data.level) {
+                data.level = newLevel;
+                data.rate += 0.1;
+            }
+            save();
+            render();
+        }
+
+        function addRef() {
+            data.refs++;
+            data.rate += 0.25;
+            save();
+            alert('🎉 Yeni referans eklendi! Mining hızınız +0.25 Pi/saat arttı!');
+            render();
+        }
+
+        function claimBonus() {
+            if (data.streak >= 7) {
+                const bonus = data.streak * 10;
+                data.balance += bonus;
+                save();
+                alert('🎁 ' + data.streak + ' günlük streak bonusu: +' + bonus + ' Pi!');
+                render();
+            } else {
+                alert('❌ Bonus için en az 7 günlük streak gerekli. Şu an: ' + data.streak + ' gün');
+            }
+        }
+
+        function checkMining() {
+            const end = localStorage.getItem('miningEndTime');
+            if (end) {
+                const now = Date.now();
+                const endTime = parseInt(end);
+                if (now < endTime) {
+                    data.mining = true;
+                    data.timeLeft = Math.floor((endTime - now) / 1000);
+                } else {
+                    completeMine();
+                }
+            }
+        }
+
+        checkMining();
+        render();
+
+        setInterval(function() {
+            if (data.mining && data.timeLeft > 0) {
+                data.timeLeft--;
+                if (data.timeLeft <= 0) {
+                    completeMine();
+                }
+                render();
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
