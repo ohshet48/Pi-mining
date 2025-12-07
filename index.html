@@ -17,6 +17,14 @@
             -webkit-tap-highlight-color: transparent;
             -webkit-touch-callout: none;
         }
+        
+        input, button {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+        
         body { 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: #000814;
@@ -70,18 +78,260 @@
             z-index: 2;
         }
         
-        /* Glowing Borders */
-        .glow-border {
+        .container { 
+            max-width: 500px; 
+            margin: 0 auto; 
+            padding: 20px 20px 60px 20px; 
+            position: relative; 
+            z-index: 10;
+            min-height: 100vh;
+        }
+        
+        /* Auth Screen */
+        .auth-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .auth-logo {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #fbbf24, #f97316);
+            border-radius: 50%;
+            margin: 0 auto 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 20px 60px rgba(251, 191, 36, 0.4);
+            animation: logoPulse 2s infinite;
+        }
+        
+        @keyframes logoPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(0.95); opacity: 0.85; }
+        }
+        
+        .auth-logo svg { width: 55px; height: 55px; fill: none; stroke: white; stroke-width: 2.5; }
+        
+        .auth-title {
+            font-size: 36px;
+            font-weight: 900;
+            text-align: center;
+            background: linear-gradient(135deg, #fbbf24, #f97316);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        
+        .auth-subtitle {
+            text-align: center;
+            color: #c4b5fd;
+            font-size: 15px;
+            margin-bottom: 40px;
+        }
+        
+        .auth-card {
+            background: rgba(10, 20, 40, 0.95);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 30px;
+            border: 2px solid transparent;
+            background: 
+                linear-gradient(rgba(10, 20, 40, 0.95), rgba(10, 20, 40, 0.95)) padding-box,
+                linear-gradient(145deg, rgba(0, 255, 255, 0.4), rgba(123, 67, 255, 0.4)) border-box;
+            box-shadow: 
+                0 0 30px rgba(0, 255, 255, 0.2),
+                0 10px 40px rgba(0, 0, 0, 0.4);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            color: #c4b5fd;
+            font-size: 14px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(0, 255, 255, 0.2);
+            border-radius: 12px;
+            color: white;
+            font-size: 15px;
+            transition: all 0.3s;
+            outline: none;
+        }
+        
+        .form-input:focus {
+            border-color: rgba(0, 255, 255, 0.6);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+        }
+        
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.15s;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn:active { transform: scale(0.98); }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #00ffff, #0096ff);
+            color: #000;
+            margin-bottom: 12px;
+        }
+        
+        .btn-google {
+            background: white;
+            color: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .divider {
+            text-align: center;
+            color: #c4b5fd;
+            font-size: 14px;
+            margin: 20px 0;
+            position: relative;
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 40%;
+            height: 1px;
+            background: rgba(0, 255, 255, 0.2);
+        }
+        
+        .divider::before { left: 0; }
+        .divider::after { right: 0; }
+        
+        .switch-auth {
+            text-align: center;
+            color: #c4b5fd;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+        
+        .switch-auth span {
+            color: #00ffff;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        
+        .error-msg {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 20px;
+            color: #fca5a5;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        .success-msg {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(34, 197, 94, 0.5);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 20px;
+            color: #86efac;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        /* Header */
+        .header { text-align: center; padding: 30px 0; }
+        .logo { 
+            width: 90px; height: 90px;
+            background: linear-gradient(135deg, #fbbf24, #f97316);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            animation: logoPulse 2s infinite;
+        }
+        .logo svg { width: 50px; height: 50px; fill: none; stroke: white; stroke-width: 2.5; }
+        .title { 
+            font-size: 38px; 
+            font-weight: 900;
+            background: linear-gradient(135deg, #fbbf24, #f97316);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .subtitle { color: #c4b5fd; font-size: 15px; }
+        
+        /* Card */
+        .card { 
+            background: rgba(10, 20, 40, 0.8);
+            backdrop-filter: blur(12px);
+            border-radius: 28px;
+            padding: 28px;
+            margin-bottom: 18px;
             position: relative;
             border: 2px solid transparent;
             background: 
                 linear-gradient(rgba(10, 20, 40, 0.95), rgba(10, 20, 40, 0.95)) padding-box,
-                linear-gradient(145deg, #00ffff, #7b43ff, #00ffff) border-box;
+                linear-gradient(145deg, rgba(0, 255, 255, 0.4), rgba(123, 67, 255, 0.4)) border-box;
             box-shadow: 
-                0 0 20px rgba(0, 255, 255, 0.3),
-                0 0 40px rgba(123, 67, 255, 0.2),
-                inset 0 0 20px rgba(0, 255, 255, 0.05);
+                0 0 30px rgba(0, 255, 255, 0.2),
+                0 10px 40px rgba(0, 0, 0, 0.4);
         }
+        
+        /* Balance */
+        .balance-label { color: #c4b5fd; font-size: 15px; text-align: center; margin-bottom: 10px; }
+        .balance-value { font-size: 56px; font-weight: 900; text-align: center; margin-bottom: 8px; line-height: 1; }
+        .balance-unit { font-size: 26px; color: #fbbf24; text-align: center; font-weight: 600; }
+        
+        /* Button */
+        .btn-mine { 
+            width: 100%;
+            padding: 26px;
+            border: none;
+            border-radius: 20px;
+            font-size: 22px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+            transition: transform 0.15s;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+        .btn-mine:active { transform: scale(0.97); }
+        .btn-mine svg { width: 36px; height: 36px; }
         
         /* Rotating Light Border for Mining Card */
         .mining-glow {
@@ -123,87 +373,6 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        .container { 
-            max-width: 500px; 
-            margin: 0 auto; 
-            padding: 20px 20px 60px 20px; 
-            position: relative; 
-            z-index: 10;
-            min-height: 100vh;
-        }
-        
-        /* Header */
-        .header { text-align: center; padding: 30px 0; }
-        .logo { 
-            width: 90px; height: 90px;
-            background: linear-gradient(135deg, #fbbf24, #f97316);
-            border-radius: 50%;
-            margin: 0 auto 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-            animation: logoPulse 2s infinite;
-        }
-        @keyframes logoPulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(0.95); opacity: 0.85; }
-        }
-        .logo svg { width: 50px; height: 50px; fill: none; stroke: white; stroke-width: 2.5; }
-        .title { 
-            font-size: 38px; 
-            font-weight: 900;
-            background: linear-gradient(135deg, #fbbf24, #f97316);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
-        }
-        .subtitle { color: #c4b5fd; font-size: 15px; }
-        
-        /* Card */
-        .card { 
-            background: rgba(10, 20, 40, 0.8);
-            backdrop-filter: blur(12px);
-            border-radius: 28px;
-            padding: 28px;
-            margin-bottom: 18px;
-            position: relative;
-            border: 2px solid transparent;
-            background: 
-                linear-gradient(rgba(10, 20, 40, 0.95), rgba(10, 20, 40, 0.95)) padding-box,
-                linear-gradient(145deg, rgba(0, 255, 255, 0.4), rgba(123, 67, 255, 0.4)) border-box;
-            box-shadow: 
-                0 0 30px rgba(0, 255, 255, 0.2),
-                0 10px 40px rgba(0, 0, 0, 0.4);
-        }
-        
-        /* Balance */
-        .balance-label { color: #c4b5fd; font-size: 15px; text-align: center; margin-bottom: 10px; }
-        .balance-value { font-size: 56px; font-weight: 900; text-align: center; margin-bottom: 8px; line-height: 1; }
-        .balance-unit { font-size: 26px; color: #fbbf24; text-align: center; font-weight: 600; }
-        
-        /* Button */
-        .btn {
-            width: 100%;
-            padding: 26px;
-            border: none;
-            border-radius: 20px;
-            font-size: 22px;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 14px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-            transition: transform 0.15s;
-        }
-        .btn:active { transform: scale(0.97); }
-        .btn-mine { 
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-        }
-        .btn svg { width: 36px; height: 36px; }
         
         /* Timer */
         .timer-wrap { text-align: center; }
@@ -294,33 +463,58 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            font-size: 19px;
+            font-size: 17px;
             font-weight: 700;
-            margin-bottom: 14px;
+            margin-bottom: 12px;
         }
-        .section-title svg { width: 22px; height: 22px; stroke: #93c5fd; }
+        .section-title svg { width: 20px; height: 20px; stroke: #93c5fd; }
         
-        /* Referral */
-        .ref-code {
+        /* Referral - Compact */
+        .ref-compact {
             background: rgba(0,0,0,0.35);
             border: 1.5px solid rgba(59,130,246,0.35);
-            border-radius: 14px;
-            padding: 14px;
-            margin: 14px 0;
-            text-align: center;
-            font-size: 26px;
-            font-weight: 900;
+            border-radius: 12px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        
+        .ref-code-text {
+            font-size: 18px;
+            font-weight: 800;
             font-family: 'Courier New', monospace;
             color: #93c5fd;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
+            flex: 1;
         }
-        .btn-ref {
-            background: linear-gradient(135deg, #3b82f6, #7c3aed);
-            color: white;
-            padding: 14px;
-            font-size: 17px;
+        
+        .copy-btn {
+            background: rgba(0, 255, 255, 0.2);
+            border: 1px solid rgba(0, 255, 255, 0.4);
+            color: #00ffff;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
-        .ref-note { color: #c4b5fd; font-size: 13px; text-align: center; margin-top: 10px; }
+        
+        .copy-btn:active {
+            transform: scale(0.95);
+            background: rgba(0, 255, 255, 0.3);
+        }
+        
+        .copy-btn svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+        }
         
         /* Bonus */
         .bonus-card {
@@ -334,11 +528,30 @@
             color: white;
             padding: 14px;
             font-size: 17px;
+            width: 100%;
+            border: none;
+            border-radius: 14px;
+            font-weight: 700;
+            cursor: pointer;
         }
         .btn-disabled {
             background: rgba(100,100,100,0.5);
             color: rgba(255,255,255,0.5);
             cursor: not-allowed;
+        }
+        
+        /* Logout Button */
+        .logout-btn {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: block;
+            margin: 20px auto 0;
         }
         
         /* Footer */
@@ -352,118 +565,299 @@
     <div class="grid-lines"></div>
     <div id="particles"></div>
     
-    <div class="container" id="app">
-        <div class="header">
-            <div class="logo">
-                <svg viewBox="0 0 24 24">
-                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-                </svg>
-            </div>
-            <h1 class="title">Pi Mining</h1>
-            <p class="subtitle">Digital Mining Application</p>
+    <div id="authScreen" class="auth-screen" style="display:none;">
+        <div class="auth-logo">
+            <svg viewBox="0 0 24 24">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
         </div>
-
-        <div class="card">
-            <p class="balance-label">Total Balance</p>
-            <div class="balance-value" id="balance">0.00</div>
-            <p class="balance-unit">π Pi</p>
-        </div>
-
-        <div class="card" id="miningCard"></div>
-
-        <div class="stats">
-            <div class="stat">
-                <div class="stat-top">
-                    <div class="stat-icon icon-blue">
-                        <svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-                    </div>
-                    <span class="stat-label">Mining Rate</span>
+        <h1 class="auth-title">Pi Mining</h1>
+        <p class="auth-subtitle">Digital Mining Application</p>
+        
+        <div class="auth-card">
+            <div id="errorMsg" style="display:none;"></div>
+            <div id="successMsg" style="display:none;"></div>
+            
+            <!-- Login Form -->
+            <div id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="loginEmail" placeholder="Enter your email">
                 </div>
-                <div class="stat-value" id="rate">1.00</div>
-                <div class="stat-unit">π/hour</div>
-            </div>
-
-            <div class="stat">
-                <div class="stat-top">
-                    <div class="stat-icon icon-purple">
-                        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
-                    </div>
-                    <span class="stat-label">Level</span>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" id="loginPassword" placeholder="Enter your password">
                 </div>
-                <div class="stat-value" id="level">1</div>
-                <div class="stat-unit">Level</div>
+                <button class="btn btn-primary" onclick="login()">Login</button>
+                <div class="divider">OR</div>
+                <button class="btn btn-google" onclick="googleLogin()">
+                    <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                    Continue with Google
+                </button>
+                <div class="switch-auth">Don't have an account? <span onclick="showSignup()">Sign Up</span></div>
             </div>
-
-            <div class="stat">
-                <div class="stat-top">
-                    <div class="stat-icon icon-green">
-                        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                    </div>
-                    <span class="stat-label">Referrals</span>
+            
+            <!-- Signup Form -->
+            <div id="signupForm" style="display:none;">
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-input" id="signupUsername" placeholder="Choose a username">
                 </div>
-                <div class="stat-value" id="refs">0</div>
-                <div class="stat-unit">People</div>
-            </div>
-
-            <div class="stat">
-                <div class="stat-top">
-                    <div class="stat-icon icon-orange">
-                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    </div>
-                    <span class="stat-label">Streak</span>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="signupEmail" placeholder="Enter your email">
                 </div>
-                <div class="stat-value" id="streak">0</div>
-                <div class="stat-unit">Days</div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" id="signupPassword" placeholder="Create a password">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Confirm Password</label>
+                    <input type="password" class="form-input" id="signupPasswordConfirm" placeholder="Confirm your password">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Referral Code (Optional)</label>
+                    <input type="text" class="form-input" id="signupReferral" placeholder="Enter referral code">
+                </div>
+                <button class="btn btn-primary" onclick="signup()">Create Account</button>
+                <div class="divider">OR</div>
+                <button class="btn btn-google" onclick="googleLogin()">
+                    <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                    Continue with Google
+                </button>
+                <div class="switch-auth">Already have an account? <span onclick="showLogin()">Login</span></div>
             </div>
-        </div>
-
-        <div class="card">
-            <div class="section-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                Your Referral Code
-            </div>
-            <div class="ref-code" id="refCode">PI000000</div>
-            <button class="btn btn-ref" onclick="addRef()">+ Add Referral (Test)</button>
-            <p class="ref-note">Each referral +0.25 π/hour bonus</p>
-        </div>
-
-        <div class="card bonus-card">
-            <div class="section-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
-                Daily Streak Bonus
-            </div>
-            <p class="bonus-text">Mine for 7 consecutive days to earn a bonus! Current streak: <span class="bonus-highlight" id="streakTxt">0 days</span></p>
-            <button class="btn btn-bonus" id="bonusBtn" onclick="claimBonus()">🔒 7 days remaining</button>
-        </div>
-
-        <div class="footer">
-            <p class="footer-text">⚠️ This is a demo application. Not real cryptocurrency.</p>
         </div>
     </div>
+    
+    <div class="container" id="app" style="display:none;"></div>
 
     <script>
-        let d = {
-            balance: parseFloat(localStorage.getItem('piBalance')) || 0,
-            rate: parseFloat(localStorage.getItem('miningRate')) || 1.0,
-            level: parseInt(localStorage.getItem('level')) || 1,
-            refs: parseInt(localStorage.getItem('referrals')) || 0,
-            streak: parseInt(localStorage.getItem('streak')) || 0,
-            lastDate: localStorage.getItem('lastMineDate') || null,
-            refCode: localStorage.getItem('referralCode') || 'PI' + Math.random().toString(36).substr(2, 6).toUpperCase(),
-            mining: false,
-            timeLeft: 0
-        };
-
-        if (!localStorage.getItem('referralCode')) {
-            localStorage.setItem('referralCode', d.refCode);
+        // Auth Management
+        let currentUser = null;
+        
+        function showLogin() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('signupForm').style.display = 'none';
+            hideMessages();
+        }
+        
+        function showSignup() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('signupForm').style.display = 'block';
+            hideMessages();
+        }
+        
+        function hideMessages() {
+            document.getElementById('errorMsg').style.display = 'none';
+            document.getElementById('successMsg').style.display = 'none';
+        }
+        
+        function showError(msg) {
+            const el = document.getElementById('errorMsg');
+            el.className = 'error-msg';
+            el.textContent = msg;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 5000);
+        }
+        
+        function showSuccess(msg) {
+            const el = document.getElementById('successMsg');
+            el.className = 'success-msg';
+            el.textContent = msg;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 3000);
+        }
+        
+        function login() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!email || !password) {
+                showError('Please fill in all fields');
+                return;
+            }
+            
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            const user = users[email];
+            
+            if (!user || user.password !== password) {
+                showError('Invalid email or password');
+                return;
+            }
+            
+            currentUser = user;
+            localStorage.setItem('currentUser', email);
+            showSuccess('Login successful!');
+            setTimeout(() => {
+                document.getElementById('authScreen').style.display = 'none';
+                document.getElementById('app').style.display = 'block';
+                initApp();
+            }, 1000);
+        }
+        
+        function signup() {
+            const username = document.getElementById('signupUsername').value.trim();
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value;
+            const passwordConfirm = document.getElementById('signupPasswordConfirm').value;
+            const referralCode = document.getElementById('signupReferral').value.trim();
+            
+            if (!username || !email || !password || !passwordConfirm) {
+                showError('Please fill in all required fields');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showError('Password must be at least 6 characters');
+                return;
+            }
+            
+            if (password !== passwordConfirm) {
+                showError('Passwords do not match');
+                return;
+            }
+            
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            
+            if (users[email]) {
+                showError('Email already registered');
+                return;
+            }
+            
+            // Check if referral code is valid
+            let referralBonus = 0;
+            if (referralCode) {
+                let referrerFound = false;
+                for (let userEmail in users) {
+                    if (users[userEmail].refCode === referralCode) {
+                        referrerFound = true;
+                        // Give bonus to referrer
+                        users[userEmail].refs = (users[userEmail].refs || 0) + 1;
+                        users[userEmail].rate = (users[userEmail].rate || 1.0) + 0.25;
+                        referralBonus = 0.25; // Bonus for new user too
+                        break;
+                    }
+                }
+                
+                if (!referrerFound) {
+                    showError('Invalid referral code');
+                    return;
+                }
+            }
+            
+            const newRefCode = 'PI' + Math.random().toString(36).substr(2, 6).toUpperCase();
+            
+            users[email] = {
+                username: username,
+                email: email,
+                password: password,
+                refCode: newRefCode,
+                balance: 0,
+                rate: 1.0 + referralBonus,
+                level: 1,
+                refs: 0,
+                streak: 0,
+                lastDate: null,
+                mining: false,
+                timeLeft: 0
+            };
+            
+            localStorage.setItem('users', JSON.stringify(users));
+            
+            showSuccess('Account created successfully! Please login.');
+            setTimeout(() => {
+                showLogin();
+                document.getElementById('loginEmail').value = email;
+            }, 2000);
+        }
+        
+        function googleLogin() {
+            showError('Google login is not available in this demo version. Please use email signup.');
+        }
+        
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('currentUser');
+                location.reload();
+            }
+        }
+        
+        function copyReferralCode() {
+            const code = currentUser.refCode;
+            
+            // Create temporary textarea
+            const textarea = document.createElement('textarea');
+            textarea.value = code;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            
+            try {
+                document.execCommand('copy');
+                showSuccess('Referral code copied: ' + code);
+            } catch (err) {
+                showError('Failed to copy code');
+            }
+            
+            document.body.removeChild(textarea);
+        }
+        
+        // Check if user is logged in
+        function checkAuth() {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                const users = JSON.parse(localStorage.getItem('users') || '{}');
+                currentUser = users[savedUser];
+                if (currentUser) {
+                    document.getElementById('authScreen').style.display = 'none';
+                    document.getElementById('app').style.display = 'block';
+                    initApp();
+                    return;
+                }
+            }
+            
+            document.getElementById('authScreen').style.display = 'flex';
+            document.getElementById('app').style.display = 'none';
+        }
+        
+        // Mining App Logic
+        let d = {};
+        
+        function initApp() {
+            d = {
+                balance: currentUser.balance || 0,
+                rate: currentUser.rate || 1.0,
+                level: currentUser.level || 1,
+                refs: currentUser.refs || 0,
+                streak: currentUser.streak || 0,
+                lastDate: currentUser.lastDate || null,
+                refCode: currentUser.refCode,
+                mining: false,
+                timeLeft: 0
+            };
+            
+            checkMining();
+            render();
+            startTimer();
         }
 
         function save() {
-            localStorage.setItem('piBalance', d.balance);
-            localStorage.setItem('miningRate', d.rate);
-            localStorage.setItem('level', d.level);
-            localStorage.setItem('referrals', d.refs);
-            localStorage.setItem('streak', d.streak);
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            const userEmail = localStorage.getItem('currentUser');
+            
+            if (users[userEmail]) {
+                users[userEmail].balance = d.balance;
+                users[userEmail].rate = d.rate;
+                users[userEmail].level = d.level;
+                users[userEmail].refs = d.refs;
+                users[userEmail].streak = d.streak;
+                users[userEmail].lastDate = d.lastDate;
+                
+                localStorage.setItem('users', JSON.stringify(users));
+                currentUser = users[userEmail];
+            }
         }
 
         function fmt(s) {
@@ -474,38 +868,141 @@
         }
 
         function render() {
-            document.getElementById('balance').textContent = d.balance.toFixed(2);
-            document.getElementById('rate').textContent = d.rate.toFixed(2);
-            document.getElementById('level').textContent = d.level;
-            document.getElementById('refs').textContent = d.refs;
-            document.getElementById('streak').textContent = d.streak;
-            document.getElementById('refCode').textContent = d.refCode;
-            document.getElementById('streakTxt').textContent = d.streak + ' days';
+            document.getElementById('app').innerHTML = `
+                <div class="header">
+                    <div class="logo">
+                        <svg viewBox="0 0 24 24">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                        </svg>
+                    </div>
+                    <h1 class="title">Pi Mining</h1>
+                    <p class="subtitle">Welcome, ${currentUser.username}!</p>
+                </div>
 
-            const bonusBtn = document.getElementById('bonusBtn');
-            if (d.streak >= 7) {
-                bonusBtn.textContent = '🎁 Claim Bonus (' + (d.streak * 10) + ' π)';
-                bonusBtn.className = 'btn btn-bonus';
-            } else {
-                bonusBtn.textContent = '🔒 ' + (7 - d.streak) + ' days remaining';
-                bonusBtn.className = 'btn btn-disabled';
-            }
+                <div class="card">
+                    <p class="balance-label">Total Balance</p>
+                    <div class="balance-value">${d.balance.toFixed(2)}</div>
+                    <p class="balance-unit">π Pi</p>
+                </div>
 
-            const mc = document.getElementById('miningCard');
-            if (!d.mining) {
-                mc.innerHTML = '<button class="btn btn-mine" onclick="startMine()"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Start Mining</button>';
-                mc.className = 'card';
-            } else {
-                const prog = ((86400 - d.timeLeft) / 86400) * 440;
-                mc.innerHTML = '<div class="timer-wrap"><div class="timer-circle"><svg viewBox="0 0 150 150"><circle class="timer-bg" cx="75" cy="75" r="70"/><circle class="timer-progress" cx="75" cy="75" r="70" stroke-dasharray="440" stroke-dashoffset="' + (440 - prog) + '"/></svg><div class="timer-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div></div><p class="mining-active">⚡ Mining Active</p><p class="timer-time">' + fmt(d.timeLeft) + '</p><p class="timer-label">Time Remaining</p><div class="earning-box"><p class="earning-text">Earning: <span class="earning-amount">' + (d.rate * 24).toFixed(2) + ' π Pi</span></p></div></div>';
-                mc.className = 'card mining-glow';
-            }
+                <div class="card ${d.mining ? 'mining-glow' : ''}" id="miningCard">
+                    ${!d.mining ? `
+                        <button class="btn-mine" onclick="startMine()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                            </svg>
+                            Start Mining
+                        </button>
+                    ` : `
+                        <div class="timer-wrap">
+                            <div class="timer-circle">
+                                <svg viewBox="0 0 150 150">
+                                    <circle class="timer-bg" cx="75" cy="75" r="70"/>
+                                    <circle class="timer-progress" cx="75" cy="75" r="70" stroke-dasharray="440" 
+                                        stroke-dashoffset="${440 - ((86400 - d.timeLeft) / 86400) * 440}"/>
+                                </svg>
+                                <div class="timer-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5">
+                                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <p class="mining-active">⚡ Mining Active</p>
+                            <p class="timer-time">${fmt(d.timeLeft)}</p>
+                            <p class="timer-label">Time Remaining</p>
+                            <div class="earning-box">
+                                <p class="earning-text">Earning: <span class="earning-amount">${(d.rate * 24).toFixed(2)} π Pi</span></p>
+                            </div>
+                        </div>
+                    `}
+                </div>
+
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-top">
+                            <div class="stat-icon icon-blue">
+                                <svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                            </div>
+                            <span class="stat-label">Mining Rate</span>
+                        </div>
+                        <div class="stat-value">${d.rate.toFixed(2)}</div>
+                        <div class="stat-unit">π/hour</div>
+                    </div>
+
+                    <div class="stat">
+                        <div class="stat-top">
+                            <div class="stat-icon icon-purple">
+                                <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+                            </div>
+                            <span class="stat-label">Level</span>
+                        </div>
+                        <div class="stat-value">${d.level}</div>
+                        <div class="stat-unit">Level</div>
+                    </div>
+
+                    <div class="stat">
+                        <div class="stat-top">
+                            <div class="stat-icon icon-green">
+                                <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            </div>
+                            <span class="stat-label">Referrals</span>
+                        </div>
+                        <div class="stat-value">${d.refs}</div>
+                        <div class="stat-unit">People</div>
+                    </div>
+
+                    <div class="stat">
+                        <div class="stat-top">
+                            <div class="stat-icon icon-orange">
+                                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            </div>
+                            <span class="stat-label">Streak</span>
+                        </div>
+                        <div class="stat-value">${d.streak}</div>
+                        <div class="stat-unit">Days</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="section-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        Your Referral Code
+                    </div>
+                    <div class="ref-compact">
+                        <div class="ref-code-text">${d.refCode}</div>
+                        <button class="copy-btn" onclick="copyReferralCode()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                            </svg>
+                            Copy
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card bonus-card">
+                    <div class="section-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+                        Daily Streak Bonus
+                    </div>
+                    <p class="bonus-text">Mine for 7 consecutive days to earn a bonus! Current streak: <span class="bonus-highlight">${d.streak} days</span></p>
+                    <button class="btn ${d.streak >= 7 ? 'btn-bonus' : 'btn-disabled'}" onclick="claimBonus()" ${d.streak < 7 ? 'disabled' : ''}>
+                        ${d.streak >= 7 ? `🎁 Claim Bonus (${d.streak * 10} π)` : `🔒 ${7 - d.streak} days remaining`}
+                    </button>
+                </div>
+
+                <button class="logout-btn" onclick="logout()">Logout</button>
+
+                <div class="footer">
+                    <p class="footer-text">⚠️ This is a demo application. Not real cryptocurrency.</p>
+                </div>
+            `;
         }
 
         function startMine() {
             const now = Date.now();
             const end = now + (24 * 60 * 60 * 1000);
-            localStorage.setItem('miningEndTime', end);
+            localStorage.setItem('miningEndTime_' + currentUser.email, end);
             d.mining = true;
             d.timeLeft = 24 * 60 * 60;
 
@@ -523,7 +1020,6 @@
                 d.streak = 1;
             }
             d.lastDate = today;
-            localStorage.setItem('lastMineDate', today);
             save();
             render();
         }
@@ -531,7 +1027,7 @@
         function completeMine() {
             d.mining = false;
             d.timeLeft = 0;
-            localStorage.removeItem('miningEndTime');
+            localStorage.removeItem('miningEndTime_' + currentUser.email);
             d.balance += d.rate * 24;
             const newLvl = Math.floor(d.balance / 100) + 1;
             if (newLvl > d.level) {
@@ -542,28 +1038,18 @@
             render();
         }
 
-        function addRef() {
-            d.refs++;
-            d.rate += 0.25;
-            save();
-            alert('🎉 New referral added! Your mining rate increased by +0.25 Pi/hour!');
-            render();
-        }
-
         function claimBonus() {
             if (d.streak >= 7) {
                 const bonus = d.streak * 10;
                 d.balance += bonus;
                 save();
-                alert('🎁 ' + d.streak + ' day streak bonus: +' + bonus + ' Pi!');
+                showSuccess('🎁 ' + d.streak + ' day streak bonus: +' + bonus + ' Pi!');
                 render();
-            } else {
-                alert('❌ You need at least a 7 day streak for bonus. Current: ' + d.streak + ' days');
             }
         }
 
         function checkMining() {
-            const end = localStorage.getItem('miningEndTime');
+            const end = localStorage.getItem('miningEndTime_' + currentUser.email);
             if (end) {
                 const now = Date.now();
                 const endTime = parseInt(end);
@@ -576,8 +1062,17 @@
             }
         }
 
-        checkMining();
-        render();
+        function startTimer() {
+            setInterval(function() {
+                if (d.mining && d.timeLeft > 0) {
+                    d.timeLeft--;
+                    if (d.timeLeft <= 0) {
+                        completeMine();
+                    }
+                    render();
+                }
+            }, 1000);
+        }
         
         // Create Animated Particles
         function createParticles() {
@@ -609,16 +1104,7 @@
         }
         
         createParticles();
-
-        setInterval(function() {
-            if (d.mining && d.timeLeft > 0) {
-                d.timeLeft--;
-                if (d.timeLeft <= 0) {
-                    completeMine();
-                }
-                render();
-            }
-        }, 1000);
+        checkAuth();
     </script>
 </body>
 </html>
