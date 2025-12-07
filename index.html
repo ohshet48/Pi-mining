@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,13 +9,109 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #1e1b4b 0%, #1e3a8a 50%, #312e81 100%);
+            background: #000814;
             min-height: 100vh;
             color: white;
             padding: 0;
-            overflow-x: hidden;
+            overflow: hidden;
+            position: relative;
         }
-        .container { max-width: 500px; margin: 0 auto; padding: 20px; }
+        
+        /* Animated Tech Background */
+        .tech-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            background: 
+                radial-gradient(ellipse at 20% 30%, rgba(0, 255, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 70%, rgba(138, 43, 226, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(0, 150, 255, 0.1) 0%, transparent 50%);
+        }
+        
+        .grid-lines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+            background-image: 
+                linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0.4;
+        }
+        
+        .particle {
+            position: fixed;
+            width: 3px;
+            height: 3px;
+            background: cyan;
+            border-radius: 50%;
+            box-shadow: 0 0 10px cyan;
+            pointer-events: none;
+            z-index: 2;
+        }
+        
+        /* Glowing Borders */
+        .glow-border {
+            position: relative;
+            border: 2px solid transparent;
+            background: 
+                linear-gradient(rgba(10, 20, 40, 0.95), rgba(10, 20, 40, 0.95)) padding-box,
+                linear-gradient(145deg, #00ffff, #7b43ff, #00ffff) border-box;
+            box-shadow: 
+                0 0 20px rgba(0, 255, 255, 0.3),
+                0 0 40px rgba(123, 67, 255, 0.2),
+                inset 0 0 20px rgba(0, 255, 255, 0.05);
+        }
+        
+        /* Rotating Light Border for Mining Card */
+        .mining-glow {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .mining-glow::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(
+                transparent,
+                transparent,
+                transparent,
+                #00ffff,
+                #7b43ff,
+                transparent,
+                transparent,
+                transparent
+            );
+            animation: rotateBorder 4s linear infinite;
+            z-index: -1;
+        }
+        
+        .mining-glow::after {
+            content: '';
+            position: absolute;
+            inset: 2px;
+            background: rgba(10, 20, 40, 0.98);
+            border-radius: 26px;
+            z-index: -1;
+        }
+        
+        @keyframes rotateBorder {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .container { max-width: 500px; margin: 0 auto; padding: 20px; position: relative; z-index: 10; }
         
         /* Header */
         .header { text-align: center; padding: 30px 0; }
@@ -47,13 +143,19 @@
         
         /* Card */
         .card { 
-            background: rgba(255,255,255,0.12);
+            background: rgba(10, 20, 40, 0.8);
             backdrop-filter: blur(12px);
             border-radius: 28px;
             padding: 28px;
             margin-bottom: 18px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.25);
-            border: 1px solid rgba(255,255,255,0.18);
+            position: relative;
+            border: 2px solid transparent;
+            background: 
+                linear-gradient(rgba(10, 20, 40, 0.95), rgba(10, 20, 40, 0.95)) padding-box,
+                linear-gradient(145deg, rgba(0, 255, 255, 0.4), rgba(123, 67, 255, 0.4)) border-box;
+            box-shadow: 
+                0 0 30px rgba(0, 255, 255, 0.2),
+                0 10px 40px rgba(0, 0, 0, 0.4);
         }
         
         /* Balance */
@@ -134,11 +236,15 @@
             margin-bottom: 18px; 
         }
         .stat {
-            background: rgba(255,255,255,0.12);
+            background: rgba(10, 20, 40, 0.8);
             backdrop-filter: blur(12px);
             border-radius: 20px;
             padding: 18px;
-            border: 1px solid rgba(255,255,255,0.18);
+            border: 2px solid transparent;
+            background: 
+                linear-gradient(rgba(10, 20, 40, 0.9), rgba(10, 20, 40, 0.9)) padding-box,
+                linear-gradient(145deg, rgba(0, 255, 255, 0.3), rgba(123, 67, 255, 0.3)) border-box;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.15);
         }
         .stat-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
         .stat-icon {
@@ -222,6 +328,11 @@
     </style>
 </head>
 <body>
+    <!-- Tech Background -->
+    <div class="tech-bg"></div>
+    <div class="grid-lines"></div>
+    <div id="particles"></div>
+    
     <div class="container" id="app">
         <div class="header">
             <div class="logo">
@@ -230,11 +341,11 @@
                 </svg>
             </div>
             <h1 class="title">Pi Mining</h1>
-            <p class="subtitle">Dijital Madencilik Uygulaması</p>
+            <p class="subtitle">Digital Mining Application</p>
         </div>
 
         <div class="card">
-            <p class="balance-label">Toplam Bakiyeniz</p>
+            <p class="balance-label">Total Balance</p>
             <div class="balance-value" id="balance">0.00</div>
             <p class="balance-unit">π Pi</p>
         </div>
@@ -247,10 +358,10 @@
                     <div class="stat-icon icon-blue">
                         <svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
                     </div>
-                    <span class="stat-label">Mining Hızı</span>
+                    <span class="stat-label">Mining Rate</span>
                 </div>
                 <div class="stat-value" id="rate">1.00</div>
-                <div class="stat-unit">π/saat</div>
+                <div class="stat-unit">π/hour</div>
             </div>
 
             <div class="stat">
@@ -258,7 +369,7 @@
                     <div class="stat-icon icon-purple">
                         <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
                     </div>
-                    <span class="stat-label">Seviye</span>
+                    <span class="stat-label">Level</span>
                 </div>
                 <div class="stat-value" id="level">1</div>
                 <div class="stat-unit">Level</div>
@@ -269,10 +380,10 @@
                     <div class="stat-icon icon-green">
                         <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                     </div>
-                    <span class="stat-label">Referanslar</span>
+                    <span class="stat-label">Referrals</span>
                 </div>
                 <div class="stat-value" id="refs">0</div>
-                <div class="stat-unit">Kişi</div>
+                <div class="stat-unit">People</div>
             </div>
 
             <div class="stat">
@@ -283,31 +394,31 @@
                     <span class="stat-label">Streak</span>
                 </div>
                 <div class="stat-value" id="streak">0</div>
-                <div class="stat-unit">Gün</div>
+                <div class="stat-unit">Days</div>
             </div>
         </div>
 
         <div class="card">
             <div class="section-title">
                 <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                Referans Kodunuz
+                Your Referral Code
             </div>
             <div class="ref-code" id="refCode">PI000000</div>
-            <button class="btn btn-ref" onclick="addRef()">+ Referans Ekle (Test)</button>
-            <p class="ref-note">Her referans +0.25 π/saat bonus</p>
+            <button class="btn btn-ref" onclick="addRef()">+ Add Referral (Test)</button>
+            <p class="ref-note">Each referral +0.25 π/hour bonus</p>
         </div>
 
         <div class="card bonus-card">
             <div class="section-title">
                 <svg viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
-                Günlük Streak Bonusu
+                Daily Streak Bonus
             </div>
-            <p class="bonus-text">7 gün üst üste madencilik yaparak bonus kazanın! Şu anki streak: <span class="bonus-highlight" id="streakTxt">0 gün</span></p>
-            <button class="btn btn-bonus" id="bonusBtn" onclick="claimBonus()">🔒 7 gün kaldı</button>
+            <p class="bonus-text">Mine for 7 consecutive days to earn a bonus! Current streak: <span class="bonus-highlight" id="streakTxt">0 days</span></p>
+            <button class="btn btn-bonus" id="bonusBtn" onclick="claimBonus()">🔒 7 days remaining</button>
         </div>
 
         <div class="footer">
-            <p class="footer-text">⚠️ Bu bir demo uygulamadır. Gerçek kripto para değildir.</p>
+            <p class="footer-text">⚠️ This is a demo application. Not real cryptocurrency.</p>
         </div>
     </div>
 
@@ -350,23 +461,25 @@
             document.getElementById('refs').textContent = d.refs;
             document.getElementById('streak').textContent = d.streak;
             document.getElementById('refCode').textContent = d.refCode;
-            document.getElementById('streakTxt').textContent = d.streak + ' gün';
+            document.getElementById('streakTxt').textContent = d.streak + ' days';
 
             const bonusBtn = document.getElementById('bonusBtn');
             if (d.streak >= 7) {
-                bonusBtn.textContent = '🎁 Bonus Al (' + (d.streak * 10) + ' π)';
+                bonusBtn.textContent = '🎁 Claim Bonus (' + (d.streak * 10) + ' π)';
                 bonusBtn.className = 'btn btn-bonus';
             } else {
-                bonusBtn.textContent = '🔒 ' + (7 - d.streak) + ' gün kaldı';
+                bonusBtn.textContent = '🔒 ' + (7 - d.streak) + ' days remaining';
                 bonusBtn.className = 'btn btn-disabled';
             }
 
             const mc = document.getElementById('miningCard');
             if (!d.mining) {
-                mc.innerHTML = '<button class="btn btn-mine" onclick="startMine()"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Madenciliği Başlat</button>';
+                mc.innerHTML = '<button class="btn btn-mine" onclick="startMine()"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Start Mining</button>';
+                mc.className = 'card';
             } else {
                 const prog = ((86400 - d.timeLeft) / 86400) * 440;
-                mc.innerHTML = '<div class="timer-wrap"><div class="timer-circle"><svg viewBox="0 0 150 150"><circle class="timer-bg" cx="75" cy="75" r="70"/><circle class="timer-progress" cx="75" cy="75" r="70" stroke-dasharray="440" stroke-dashoffset="' + (440 - prog) + '"/></svg><div class="timer-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div></div><p class="mining-active">⚡ Madencilik Aktif</p><p class="timer-time">' + fmt(d.timeLeft) + '</p><p class="timer-label">Kalan Süre</p><div class="earning-box"><p class="earning-text">Kazanılıyor: <span class="earning-amount">' + (d.rate * 24).toFixed(2) + ' π Pi</span></p></div></div>';
+                mc.innerHTML = '<div class="timer-wrap"><div class="timer-circle"><svg viewBox="0 0 150 150"><circle class="timer-bg" cx="75" cy="75" r="70"/><circle class="timer-progress" cx="75" cy="75" r="70" stroke-dasharray="440" stroke-dashoffset="' + (440 - prog) + '"/></svg><div class="timer-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div></div><p class="mining-active">⚡ Mining Active</p><p class="timer-time">' + fmt(d.timeLeft) + '</p><p class="timer-label">Time Remaining</p><div class="earning-box"><p class="earning-text">Earning: <span class="earning-amount">' + (d.rate * 24).toFixed(2) + ' π Pi</span></p></div></div>';
+                mc.className = 'card mining-glow';
             }
         }
 
@@ -414,7 +527,7 @@
             d.refs++;
             d.rate += 0.25;
             save();
-            alert('🎉 Yeni referans eklendi! Mining hızınız +0.25 Pi/saat arttı!');
+            alert('🎉 New referral added! Your mining rate increased by +0.25 Pi/hour!');
             render();
         }
 
@@ -423,10 +536,10 @@
                 const bonus = d.streak * 10;
                 d.balance += bonus;
                 save();
-                alert('🎁 ' + d.streak + ' günlük streak bonusu: +' + bonus + ' Pi!');
+                alert('🎁 ' + d.streak + ' day streak bonus: +' + bonus + ' Pi!');
                 render();
             } else {
-                alert('❌ Bonus için en az 7 günlük streak gerekli. Şu an: ' + d.streak + ' gün');
+                alert('❌ You need at least a 7 day streak for bonus. Current: ' + d.streak + ' days');
             }
         }
 
@@ -446,6 +559,37 @@
 
         checkMining();
         render();
+        
+        // Create Animated Particles
+        function createParticles() {
+            const container = document.getElementById('particles');
+            const particleCount = 30;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animation = `float ${5 + Math.random() * 10}s linear infinite`;
+                particle.style.animationDelay = Math.random() * 5 + 's';
+                particle.style.opacity = Math.random() * 0.5 + 0.2;
+                container.appendChild(particle);
+            }
+            
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes float {
+                    0% { transform: translate(0, 0); }
+                    25% { transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px); }
+                    50% { transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px); }
+                    75% { transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px); }
+                    100% { transform: translate(0, 0); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        createParticles();
 
         setInterval(function() {
             if (d.mining && d.timeLeft > 0) {
