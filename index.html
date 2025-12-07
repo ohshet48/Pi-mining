@@ -37,7 +37,7 @@
             touch-action: pan-y;
         }
         
-        /* Animated Tech Background */
+        /* Simplified Tech Background - Single Layer */
         .tech-bg {
             position: fixed;
             top: 0;
@@ -46,10 +46,7 @@
             height: 100%;
             z-index: 0;
             pointer-events: none;
-            background: 
-                radial-gradient(ellipse at 20% 30%, rgba(0, 255, 255, 0.15) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 70%, rgba(138, 43, 226, 0.15) 0%, transparent 50%),
-                radial-gradient(ellipse at 50% 50%, rgba(0, 150, 255, 0.1) 0%, transparent 50%);
+            background: radial-gradient(ellipse at 50% 50%, rgba(0, 180, 200, 0.08) 0%, transparent 60%);
         }
         
         .grid-lines {
@@ -68,14 +65,7 @@
         }
         
         .particle {
-            position: fixed;
-            width: 3px;
-            height: 3px;
-            background: cyan;
-            border-radius: 50%;
-            box-shadow: 0 0 10px cyan;
-            pointer-events: none;
-            z-index: 2;
+            display: none; /* All particles disabled */
         }
         
         .container { 
@@ -106,12 +96,6 @@
             align-items: center;
             justify-content: center;
             box-shadow: 0 20px 60px rgba(251, 191, 36, 0.4);
-            animation: logoPulse 2s infinite;
-        }
-        
-        @keyframes logoPulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(0.95); opacity: 0.85; }
         }
         
         .auth-logo svg { width: 55px; height: 55px; fill: none; stroke: white; stroke-width: 2.5; }
@@ -135,7 +119,6 @@
         
         .auth-card {
             background: rgba(10, 20, 40, 0.95);
-            backdrop-filter: blur(12px);
             border-radius: 24px;
             padding: 30px;
             border: 2px solid transparent;
@@ -277,7 +260,6 @@
             align-items: center;
             justify-content: center;
             box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-            animation: logoPulse 2s infinite;
         }
         .logo svg { width: 50px; height: 50px; fill: none; stroke: white; stroke-width: 2.5; }
         .title { 
@@ -290,10 +272,9 @@
         }
         .subtitle { color: #c4b5fd; font-size: 15px; }
         
-        /* Card */
+        /* Card - No Blur */
         .card { 
-            background: rgba(10, 20, 40, 0.8);
-            backdrop-filter: blur(12px);
+            background: rgba(10, 20, 40, 0.95);
             border-radius: 28px;
             padding: 28px;
             margin-bottom: 18px;
@@ -333,45 +314,15 @@
         .btn-mine:active { transform: scale(0.97); }
         .btn-mine svg { width: 36px; height: 36px; }
         
-        /* Rotating Light Border for Mining Card */
+        /* Static Green Border for Mining (No Animation) */
         .mining-glow {
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .mining-glow::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: conic-gradient(
-                transparent,
-                transparent,
-                transparent,
-                #00ffff,
-                #7b43ff,
-                transparent,
-                transparent,
-                transparent
-            );
-            animation: rotateBorder 4s linear infinite;
-            z-index: -1;
-        }
-        
-        .mining-glow::after {
-            content: '';
-            position: absolute;
-            inset: 2px;
-            background: rgba(10, 20, 40, 0.98);
-            border-radius: 26px;
-            z-index: -1;
-        }
-        
-        @keyframes rotateBorder {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            border: 2px solid #10b981 !important;
+            background: 
+                linear-gradient(rgba(10, 20, 40, 0.95), rgba(10, 20, 40, 0.95)) padding-box,
+                linear-gradient(145deg, #10b981, #10b981) border-box !important;
+            box-shadow: 
+                0 0 30px rgba(16, 185, 129, 0.4),
+                0 10px 40px rgba(0, 0, 0, 0.4) !important;
         }
         
         /* Timer */
@@ -396,11 +347,6 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            animation: iconPulse 2s infinite;
-        }
-        @keyframes iconPulse {
-            0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-            50% { opacity: 0.7; transform: translate(-50%, -50%) scale(0.9); }
         }
         .timer-icon svg { width: 52px; height: 52px; stroke: #10b981; }
         .mining-active { color: #10b981; font-weight: 700; font-size: 20px; margin-bottom: 10px; }
@@ -424,8 +370,7 @@
             margin-bottom: 18px; 
         }
         .stat {
-            background: rgba(10, 20, 40, 0.8);
-            backdrop-filter: blur(12px);
+            background: rgba(10, 20, 40, 0.95);
             border-radius: 20px;
             padding: 18px;
             border: 2px solid transparent;
@@ -725,17 +670,15 @@
                 return;
             }
             
-            // Check if referral code is valid
             let referralBonus = 0;
             if (referralCode) {
                 let referrerFound = false;
                 for (let userEmail in users) {
                     if (users[userEmail].refCode === referralCode) {
                         referrerFound = true;
-                        // Give bonus to referrer
                         users[userEmail].refs = (users[userEmail].refs || 0) + 1;
                         users[userEmail].rate = (users[userEmail].rate || 1.0) + 0.25;
-                        referralBonus = 0.25; // Bonus for new user too
+                        referralBonus = 0.25;
                         break;
                     }
                 }
@@ -786,7 +729,6 @@
         function copyReferralCode() {
             const code = currentUser.refCode;
             
-            // Create temporary textarea
             const textarea = document.createElement('textarea');
             textarea.value = code;
             textarea.style.position = 'fixed';
@@ -804,7 +746,6 @@
             document.body.removeChild(textarea);
         }
         
-        // Check if user is logged in
         function checkAuth() {
             const savedUser = localStorage.getItem('currentUser');
             if (savedUser) {
@@ -822,7 +763,6 @@
             document.getElementById('app').style.display = 'none';
         }
         
-        // Mining App Logic
         let d = {};
         
         function initApp() {
@@ -1074,33 +1014,8 @@
             }, 1000);
         }
         
-        // Create Animated Particles
         function createParticles() {
-            const container = document.getElementById('particles');
-            const particleCount = 30;
-            
-            for (let i = 0; i < particleCount; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                particle.style.left = Math.random() * 100 + '%';
-                particle.style.top = Math.random() * 100 + '%';
-                particle.style.animation = `float ${5 + Math.random() * 10}s linear infinite`;
-                particle.style.animationDelay = Math.random() * 5 + 's';
-                particle.style.opacity = Math.random() * 0.5 + 0.2;
-                container.appendChild(particle);
-            }
-            
-            const style = document.createElement('style');
-            style.textContent = `
-                @keyframes float {
-                    0% { transform: translate(0, 0); }
-                    25% { transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px); }
-                    50% { transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px); }
-                    75% { transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px); }
-                    100% { transform: translate(0, 0); }
-                }
-            `;
-            document.head.appendChild(style);
+            // Disabled for performance
         }
         
         createParticles();
