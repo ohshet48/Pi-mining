@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+/* Icons */<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -288,10 +288,57 @@
                 0 10px 40px rgba(0, 0, 0, 0.4);
         }
         
-        /* Balance */
-        .balance-label { color: #c4b5fd; font-size: 15px; text-align: center; margin-bottom: 10px; }
-        .balance-value { font-size: 56px; font-weight: 900; text-align: center; margin-bottom: 8px; line-height: 1; }
-        .balance-unit { font-size: 26px; color: #fbbf24; text-align: center; font-weight: 600; }
+        /* Balance - Compact 50% smaller */
+        .balance-card {
+            padding: 14px 20px !important;
+            position: relative;
+        }
+        .balance-label { 
+            color: #c4b5fd; 
+            font-size: 12px; 
+            text-align: center; 
+            margin-bottom: 6px; 
+        }
+        .balance-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            position: relative;
+        }
+        .balance-value { 
+            font-size: 28px; 
+            font-weight: 900; 
+            line-height: 1; 
+        }
+        .balance-unit { 
+            font-size: 16px; 
+            color: #fbbf24; 
+            font-weight: 600; 
+        }
+        .balance-toggle {
+            background: rgba(0, 255, 255, 0.2);
+            border: 1px solid rgba(0, 255, 255, 0.4);
+            color: #00ffff;
+            padding: 6px 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            position: absolute;
+            right: 0;
+        }
+        .balance-toggle:active {
+            transform: scale(0.95);
+            background: rgba(0, 255, 255, 0.3);
+        }
+        .balance-toggle svg {
+            width: 20px;
+            height: 20px;
+            stroke: currentColor;
+        }
         
         /* Button */
         .btn-mine { 
@@ -393,7 +440,83 @@
         .stat-value { font-size: 28px; font-weight: 900; line-height: 1; }
         .stat-unit { font-size: 14px; color: #c4b5fd; margin-top: 4px; }
         
-        /* Icons */
+        /* Level Card - Enhanced */
+        .level-progress-bar {
+            width: 100%;
+            height: 24px;
+            background: rgba(10, 20, 40, 0.85);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            margin-top: 8px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        
+        .level-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #059669);
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .level-progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 11px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+        }
+        
+        .level-claim-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(5, 150, 105, 0.3)) !important;
+            border: 2px solid #10b981 !important;
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.5) !important;
+        }
+        
+        .congrats-text {
+            font-size: 24px;
+            font-weight: 900;
+            color: #10b981;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        
+        .level-reached-text {
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        
+        .reward-text {
+            font-size: 15px;
+            color: #6ee7b7;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        
+        .claim-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+        
+        .claim-btn:active {
+            transform: scale(0.98);
+        }
         .icon-blue { background: rgba(59,130,246,0.35); }
         .icon-blue svg { stroke: #93c5fd; fill: none; stroke-width: 2; }
         .icon-purple { background: rgba(168,85,247,0.35); }
@@ -764,6 +887,23 @@
         }
         
         let d = {};
+        let balanceVisible = true;
+        
+        // Level system data
+        const levelRequirements = {
+            1: 0, 2: 5, 3: 10, 4: 15, 5: 20, 6: 30, 7: 40, 8: 50, 9: 60, 10: 75,
+            11: 90, 12: 120, 13: 150, 14: 180, 15: 210, 16: 240, 17: 270, 18: 300, 19: 330, 20: 365
+        };
+        
+        const levelRewards = {
+            2: {coins: 20, rate: 0.25}, 3: {coins: 30, rate: 0.25}, 4: {coins: 50, rate: 0.25},
+            5: {coins: 75, rate: 0.25}, 6: {coins: 100, rate: 0.25}, 7: {coins: 150, rate: 0.25},
+            8: {coins: 200, rate: 0.25}, 9: {coins: 300, rate: 0.25}, 10: {coins: 500, rate: 0.25},
+            11: {coins: 750, rate: 0.25}, 12: {coins: 1100, rate: 0.25}, 13: {coins: 1500, rate: 0.25},
+            14: {coins: 2000, rate: 0.25}, 15: {coins: 2750, rate: 0.25}, 16: {coins: 3500, rate: 0.25},
+            17: {coins: 4500, rate: 0.25}, 18: {coins: 6000, rate: 0.25}, 19: {coins: 7500, rate: 0.25},
+            20: {coins: 10000, rate: 0.25}
+        };
         
         function initApp() {
             d = {
@@ -775,7 +915,9 @@
                 lastDate: currentUser.lastDate || null,
                 refCode: currentUser.refCode,
                 mining: false,
-                timeLeft: 0
+                timeLeft: 0,
+                miningDays: currentUser.miningDays || 0,
+                pendingLevelUp: currentUser.pendingLevelUp || null
             };
             
             checkMining();
@@ -794,10 +936,54 @@
                 users[userEmail].refs = d.refs;
                 users[userEmail].streak = d.streak;
                 users[userEmail].lastDate = d.lastDate;
+                users[userEmail].miningDays = d.miningDays;
+                users[userEmail].pendingLevelUp = d.pendingLevelUp;
                 
                 localStorage.setItem('users', JSON.stringify(users));
                 currentUser = users[userEmail];
             }
+        }
+        
+        function getLevelProgress() {
+            const currentReq = levelRequirements[d.level];
+            const nextReq = levelRequirements[d.level + 1];
+            
+            if (!nextReq) return { progress: 100, current: d.miningDays, required: d.miningDays };
+            
+            const progress = ((d.miningDays - currentReq) / (nextReq - currentReq)) * 100;
+            return {
+                progress: Math.min(progress, 100),
+                current: d.miningDays,
+                required: nextReq
+            };
+        }
+        
+        function checkLevelUp() {
+            if (d.level >= 20) return;
+            
+            const nextReq = levelRequirements[d.level + 1];
+            if (d.miningDays >= nextReq && !d.pendingLevelUp) {
+                d.pendingLevelUp = d.level + 1;
+                save();
+                render();
+            }
+        }
+        
+        function claimLevelReward() {
+            if (!d.pendingLevelUp) return;
+            
+            const reward = levelRewards[d.pendingLevelUp];
+            d.balance += reward.coins;
+            d.rate += reward.rate;
+            d.level = d.pendingLevelUp;
+            d.pendingLevelUp = null;
+            
+            save();
+            
+            // Check if ready for next level
+            checkLevelUp();
+            
+            render();
         }
 
         function fmt(s) {
@@ -815,10 +1001,25 @@
                     </div>
                 </div>
 
-                <div class="card">
+                <div class="card balance-card">
                     <p class="balance-label">Total Balance</p>
-                    <div class="balance-value">${d.balance.toFixed(2)}</div>
-                    <p class="balance-unit">π Pi</p>
+                    <div class="balance-container">
+                        <div class="balance-value">${balanceVisible ? d.balance.toFixed(2) : '••••••'}</div>
+                        <div class="balance-unit">π Pi</div>
+                        <button class="balance-toggle" onclick="toggleBalance()">
+                            ${balanceVisible ? `
+                                <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                            ` : `
+                                <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                                    <line x1="1" y1="1" x2="23" y2="23"/>
+                                </svg>
+                            `}
+                        </button>
+                    </div>
                 </div>
 
                 <div class="card ${d.mining ? 'mining-glow' : ''}" id="miningCard">
@@ -872,8 +1073,23 @@
                             </div>
                             <span class="stat-label">Level</span>
                         </div>
-                        <div class="stat-value">${d.level}</div>
-                        <div class="stat-unit">Level</div>
+                        ${d.pendingLevelUp ? `
+                            <div style="text-align: center; padding: 8px 0;">
+                                <p class="congrats-text" style="font-size: 18px; margin-bottom: 4px;">Congrats!</p>
+                                <p class="level-reached-text" style="font-size: 14px; margin-bottom: 4px;">Level ${d.pendingLevelUp} reached</p>
+                                <p class="reward-text" style="font-size: 12px; margin-bottom: 8px;">+${levelRewards[d.pendingLevelUp].coins} coins, +${levelRewards[d.pendingLevelUp].rate} MR</p>
+                                <button class="claim-btn" style="padding: 8px; font-size: 13px;" onclick="claimLevelReward()">CLAIM</button>
+                            </div>
+                        ` : `
+                            <div class="stat-value">${d.level}</div>
+                            <div class="stat-unit">Level</div>
+                            ${d.level < 20 ? `
+                                <div class="level-progress-bar">
+                                    <div class="level-progress-fill" style="width: ${getLevelProgress().progress}%"></div>
+                                    <div class="level-progress-text">${getLevelProgress().current}/${getLevelProgress().required} Days</div>
+                                </div>
+                            ` : '<div class="stat-unit" style="margin-top: 8px; color: #fbbf24;">MAX LEVEL</div>'}
+                        `}
                     </div>
 
                     <div class="stat">
@@ -916,20 +1132,9 @@
                     </div>
                 </div>
 
-                <div class="card bonus-card">
-                    <div class="section-title">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
-                        Daily Streak Bonus
-                    </div>
-                    <p class="bonus-text">Mine for 7 consecutive days to earn a bonus! Current streak: <span class="bonus-highlight">${d.streak} days</span></p>
-                    <button class="btn ${d.streak >= 7 ? 'btn-bonus' : 'btn-disabled'}" onclick="claimBonus()" ${d.streak < 7 ? 'disabled' : ''}>
-                        ${d.streak >= 7 ? `🎁 Claim Bonus (${d.streak * 10} π)` : `🔒 ${7 - d.streak} days remaining`}
-                    </button>
-                </div>
+                <button class="logout-btn" onclick="logout()" style="display:none;">Logout</button>
 
-                <button class="logout-btn" onclick="logout()">Logout</button>
-
-                <div class="footer">
+                <div class="footer" style="display:none;">
                     <p class="footer-text">⚠️ This is a demo application. Not real cryptocurrency.</p>
                 </div>
             `;
@@ -965,12 +1170,10 @@
             d.timeLeft = 0;
             localStorage.removeItem('miningEndTime_' + currentUser.email);
             d.balance += d.rate * 24;
-            const newLvl = Math.floor(d.balance / 100) + 1;
-            if (newLvl > d.level) {
-                d.level = newLvl;
-                d.rate += 0.1;
-            }
+            d.miningDays++;
+            
             save();
+            checkLevelUp();
             render();
         }
 
@@ -982,6 +1185,11 @@
                 showSuccess('🎁 ' + d.streak + ' day streak bonus: +' + bonus + ' Pi!');
                 render();
             }
+        }
+        
+        function toggleBalance() {
+            balanceVisible = !balanceVisible;
+            render();
         }
 
         function checkMining() {
