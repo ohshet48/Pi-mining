@@ -434,6 +434,21 @@
                 0 10px 40px rgba(0, 0, 0, 0.5);
         }
         
+        .toast-notification.exit {
+            bottom: 20px;
+            top: auto;
+            transform: translateX(-50%) translateY(100px);
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.95), rgba(245, 158, 11, 0.95));
+            border-color: rgba(251, 191, 36, 0.5);
+            box-shadow: 
+                0 0 30px rgba(251, 191, 36, 0.4),
+                0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+        
+        .toast-notification.exit.show {
+            transform: translateX(-50%) translateY(0);
+        }
+        
         /* Header - Minimal */
         .header { text-align: center; padding: 15px 0 10px 0; position: relative; }
         .welcome-card {
@@ -1929,6 +1944,20 @@
             }, 3000);
         }
         
+        function showExitToast() {
+            const toast = document.getElementById('toastNotification');
+            toast.textContent = '⬅️ Press back again to exit';
+            toast.className = 'toast-notification exit';
+            
+            // Trigger show
+            setTimeout(() => toast.classList.add('show'), 10);
+            
+            // Hide after 2 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+        
         function login() {
             const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
@@ -2547,14 +2576,32 @@
         function toggleMenu() {
             const sidebar = document.getElementById('menuSidebar');
             const overlay = document.getElementById('menuOverlay');
+            const isOpening = !sidebar.classList.contains('open');
+            
             sidebar.classList.toggle('open');
             overlay.classList.toggle('show');
             
             // Prevent background scrolling when menu is open
             if (sidebar.classList.contains('open')) {
                 document.body.style.overflow = 'hidden';
+                
+                // Push state for back button handling
+                try {
+                    history.pushState({ menu: 'open' }, '', '#menu');
+                } catch(e) {
+                    // History API not available
+                }
             } else {
                 document.body.style.overflow = 'auto';
+                
+                // Remove hash when closing
+                try {
+                    if (window.location.hash === '#menu') {
+                        history.replaceState(null, '', window.location.pathname);
+                    }
+                } catch(e) {
+                    // History API not available
+                }
             }
         }
         
@@ -3176,22 +3223,64 @@
         createParticles();
         checkAuth();
         
+        // Exit handling - double back press
+        let lastBackPress = 0;
+        const backPressInterval = 2000; // 2 seconds
+        
         // Handle back button (with error handling for restricted environments)
         try {
             window.addEventListener('popstate', function(event) {
                 const fullPage = document.getElementById('fullPage');
-                if (fullPage && fullPage.classList.contains('active')) {
+                const sidebar = document.getElementById('menuSidebar');
+                
+                // Check if menu is open
+                if (sidebar && sidebar.classList.contains('open')) {
+                    // Close menu
+                    sidebar.classList.remove('open');
+                    document.getElementById('menuOverlay').classList.remove('show');
+                    document.body.style.overflow = 'auto';
+                } 
+                // Check if full page is open
+                else if (fullPage && fullPage.classList.contains('active')) {
                     closePage();
+                }
+                // On main page - handle exit
+                else {
+                    const currentTime = Date.now();
+                    
+                    if (currentTime - lastBackPress < backPressInterval) {
+                        // Second press within interval - allow exit
+                        // Browser will handle the exit
+                        return;
+                    } else {
+                        // First press - show warning
+                        lastBackPress = currentTime;
+                        showExitToast();
+                        
+                        // Push a new state so back button can be pressed again
+                        history.pushState({ page: 'main' }, '', '');
+                    }
                 }
             });
             
             // Set initial state
-            history.replaceState(null, '', window.location.pathname);
+            history.replaceState({ page: 'main' }, '', window.location.pathname);
         } catch(e) {
             // History API not available or restricted - use alternative
             // Listen for hashchange as fallback
             window.addEventListener('hashchange', function() {
-                if (!window.location.hash) {
+                const hash = window.location.hash;
+                const sidebar = document.getElementById('menuSidebar');
+                
+                if (!hash || hash === '') {
+                    // Close menu if open
+                    if (sidebar && sidebar.classList.contains('open')) {
+                        sidebar.classList.remove('open');
+                        document.getElementById('menuOverlay').classList.remove('show');
+                        document.body.style.overflow = 'auto';
+                    }
+                    
+                    // Close page if open
                     const fullPage = document.getElementById('fullPage');
                     if (fullPage && fullPage.classList.contains('active')) {
                         closePage();
