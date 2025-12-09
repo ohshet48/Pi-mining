@@ -250,7 +250,7 @@
         }
         
         /* Header - Minimal */
-        .header { text-align: center; padding: 15px 0 10px 0; }
+        .header { text-align: center; padding: 15px 0 10px 0; position: relative; }
         .welcome-card {
             background: rgba(10, 20, 40, 0.85);
             border-radius: 16px;
@@ -261,6 +261,683 @@
                 linear-gradient(rgba(10, 20, 40, 0.85), rgba(10, 20, 40, 0.85)) padding-box,
                 linear-gradient(145deg, rgba(0, 255, 255, 0.4), rgba(123, 67, 255, 0.4)) border-box;
             box-shadow: 0 0 20px rgba(0, 255, 255, 0.15);
+        }
+        .menu-btn {
+            position: absolute;
+            top: 15px;
+            right: 0;
+            width: 44px;
+            height: 44px;
+            background: rgba(10, 20, 40, 0.85);
+            border: 2px solid transparent;
+            background: 
+                linear-gradient(rgba(10, 20, 40, 0.85), rgba(10, 20, 40, 0.85)) padding-box,
+                linear-gradient(145deg, rgba(0, 255, 255, 0.4), rgba(123, 67, 255, 0.4)) border-box;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.15);
+        }
+        .menu-btn:hover {
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        .menu-btn:active {
+            transform: scale(0.95);
+        }
+        .menu-btn span {
+            width: 22px;
+            height: 2.5px;
+            background: linear-gradient(135deg, #00ffff, #0096ff);
+            border-radius: 2px;
+            transition: all 0.3s;
+        }
+        
+        /* Menu Sidebar */
+        .menu-sidebar {
+            position: fixed;
+            top: 0;
+            right: -320px;
+            width: 320px;
+            height: 100vh;
+            background: rgba(10, 20, 40, 0.98);
+            border-left: 2px solid transparent;
+            border-image: linear-gradient(180deg, rgba(0, 255, 255, 0.4), rgba(123, 67, 255, 0.4)) 1;
+            box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            transition: right 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .menu-sidebar.open {
+            right: 0;
+        }
+        
+        .menu-header {
+            padding: 30px 20px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+        }
+        
+        .menu-title {
+            font-size: 24px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #fbbf24, #f97316);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .menu-items {
+            padding: 20px 0;
+        }
+        
+        .menu-item {
+            padding: 18px 20px;
+            color: #c4b5fd;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+        
+        .menu-item:hover {
+            background: rgba(0, 255, 255, 0.1);
+            border-left-color: #00ffff;
+            color: #00ffff;
+        }
+        
+        .menu-item:active {
+            background: rgba(0, 255, 255, 0.15);
+        }
+        
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .menu-overlay.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        /* Profile Modal */
+        .profile-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: 1100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .profile-modal.show {
+            display: flex;
+        }
+        
+        .profile-backdrop {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+        
+        .profile-content {
+            position: relative;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            background: rgba(10, 20, 40, 0.95);
+            border-radius: 24px;
+            border: 2px solid transparent;
+            background: 
+                linear-gradient(rgba(10, 20, 40, 0.95), rgba(10, 20, 40, 0.95)) padding-box,
+                linear-gradient(145deg, rgba(0, 255, 255, 0.4), rgba(123, 67, 255, 0.4)) border-box;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.3);
+        }
+        
+        .profile-header {
+            padding: 30px;
+            text-align: center;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+        }
+        
+        .profile-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 36px;
+            height: 36px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        
+        .profile-close:hover {
+            background: rgba(0, 0, 0, 0.6);
+            border-color: rgba(0, 255, 255, 0.4);
+        }
+        
+        .profile-close svg {
+            width: 20px;
+            height: 20px;
+            stroke: #00ffff;
+            stroke-width: 2.5;
+        }
+        
+        .profile-avatar-large {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #fbbf24, #f97316);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 42px;
+            font-weight: 900;
+            color: white;
+            box-shadow: 0 10px 30px rgba(251, 191, 36, 0.4);
+        }
+        
+        .profile-name {
+            font-size: 28px;
+            font-weight: 900;
+            color: white;
+            margin-bottom: 5px;
+        }
+        
+        .profile-username {
+            font-size: 16px;
+            color: #8b5cf6;
+            font-weight: 600;
+        }
+        
+        .profile-body {
+            padding: 20px 30px 30px;
+        }
+        
+        .profile-section {
+            margin-bottom: 25px;
+        }
+        
+        .profile-section-title {
+            font-size: 14px;
+            color: #8b5cf6;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+        
+        .profile-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        
+        .profile-info-item {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 255, 255, 0.15);
+            border-radius: 14px;
+            padding: 14px;
+        }
+        
+        .profile-info-label {
+            font-size: 12px;
+            color: #c4b5fd;
+            margin-bottom: 6px;
+        }
+        
+        .profile-info-value {
+            font-size: 20px;
+            font-weight: 800;
+            color: white;
+        }
+        
+        .profile-stats-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        
+        .profile-stat-card {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 255, 255, 0.15);
+            border-radius: 14px;
+            padding: 16px;
+            text-align: center;
+        }
+        
+        .profile-stat-value {
+            font-size: 24px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00ffff, #0096ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 4px;
+        }
+        
+        .profile-stat-label {
+            font-size: 11px;
+            color: #c4b5fd;
+            font-weight: 600;
+        }
+        
+        .profile-action-btn {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 255, 255, 0.25);
+            border-radius: 12px;
+            color: #00ffff;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+        
+        .profile-action-btn:hover {
+            background: rgba(0, 0, 0, 0.6);
+            border-color: rgba(0, 255, 255, 0.4);
+        }
+        
+        .profile-action-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .profile-logout-btn {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+        }
+        
+        .profile-delete-btn {
+            background: rgba(239, 68, 68, 0.15);
+            border: 2px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+        
+        /* Avatar Upload */
+        .profile-avatar-large {
+            position: relative;
+            background: linear-gradient(135deg, #0096ff, #00ffff) !important;
+        }
+        
+        .profile-avatar-large img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .avatar-change-btn {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #00ffff, #0096ff);
+            border: 3px solid rgba(10, 20, 40, 0.95);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(0, 255, 255, 0.4);
+        }
+        
+        .avatar-change-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0, 255, 255, 0.6);
+        }
+        
+        .avatar-change-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .avatar-change-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: #000;
+        }
+        
+        /* Avatar change button for full page */
+        .full-page-content .avatar-change-btn {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #00ffff, #0096ff);
+            border: 3px solid rgba(10, 20, 40, 0.95);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(0, 255, 255, 0.4);
+        }
+        
+        .full-page-content .avatar-change-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0, 255, 255, 0.6);
+        }
+        
+        .full-page-content .avatar-change-btn:active {
+            transform: scale(0.95);
+        }
+        
+        /* Referral Earnings Card */
+        .referral-earnings-card {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 255, 255, 0.15);
+            border-radius: 14px;
+            padding: 16px;
+        }
+        
+        .referral-earnings-main {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        
+        .referral-earnings-icon {
+            font-size: 32px;
+        }
+        
+        .referral-earnings-value {
+            font-size: 24px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #fbbf24, #f97316);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .referral-earnings-label {
+            font-size: 12px;
+            color: #c4b5fd;
+            margin-top: 2px;
+        }
+        
+        .referral-earnings-detail {
+            font-size: 13px;
+            color: #8b5cf6;
+            font-weight: 600;
+            text-align: center;
+            padding-top: 10px;
+            border-top: 1px solid rgba(0, 255, 255, 0.1);
+        }
+        
+        /* Ranking Card */
+        .ranking-card {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 255, 255, 0.15);
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .ranking-badge {
+            text-align: center;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(249, 115, 22, 0.2));
+            border: 2px solid rgba(251, 191, 36, 0.4);
+            border-radius: 12px;
+        }
+        
+        .ranking-position {
+            font-size: 28px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #fbbf24, #f97316);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        
+        .ranking-label {
+            font-size: 11px;
+            color: #fbbf24;
+            font-weight: 700;
+        }
+        
+        .ranking-info {
+            flex: 1;
+        }
+        
+        .ranking-info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        
+        .ranking-info-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .ranking-info-label {
+            color: #c4b5fd;
+            font-weight: 600;
+        }
+        
+        .ranking-info-value {
+            color: white;
+            font-weight: 800;
+        }
+        
+        /* Share Buttons */
+        .share-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .share-btn {
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 700;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .share-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .share-twitter {
+            background: #1DA1F2;
+        }
+        
+        .share-whatsapp {
+            background: #25D366;
+        }
+        
+        .share-telegram {
+            background: #0088cc;
+        }
+        
+        .share-copy {
+            background: rgba(0, 255, 255, 0.2);
+            border: 2px solid rgba(0, 255, 255, 0.4);
+        }
+        
+        /* Change Email/Password Modal */
+        .change-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: 1200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .change-modal.show {
+            display: flex;
+        }
+        
+        .change-modal-content {
+            position: relative;
+            max-width: 400px;
+            width: 100%;
+            background: rgba(10, 20, 40, 0.98);
+            border-radius: 20px;
+            padding: 30px;
+            border: 2px solid transparent;
+            background: 
+                linear-gradient(rgba(10, 20, 40, 0.98), rgba(10, 20, 40, 0.98)) padding-box,
+                linear-gradient(145deg, rgba(0, 255, 255, 0.4), rgba(123, 67, 255, 0.4)) border-box;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.3);
+        }
+        
+        .change-modal-title {
+            font-size: 20px;
+            font-weight: 900;
+            color: white;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .change-modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 30px;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        
+        .change-modal-close:hover {
+            background: rgba(0, 0, 0, 0.6);
+        }
+        
+        .change-modal-close svg {
+            width: 16px;
+            height: 16px;
+            stroke: #00ffff;
+            stroke-width: 2.5;
+        }
+        
+        /* Full Page Container */
+        .full-page {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: linear-gradient(135deg, #0a1929 0%, #001e3c 100%);
+            z-index: 2000;
+            display: none;
+            overflow-y: auto;
+        }
+        
+        .full-page.active {
+            display: block;
+        }
+        
+        .full-page-header {
+            position: sticky;
+            top: 0;
+            background: rgba(10, 20, 40, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            z-index: 10;
+        }
+        
+        .back-btn {
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        
+        .back-btn:hover {
+            background: rgba(0, 0, 0, 0.6);
+            border-color: rgba(0, 255, 255, 0.4);
+        }
+        
+        .back-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .back-btn svg {
+            width: 22px;
+            height: 22px;
+            stroke: #00ffff;
+            stroke-width: 2.5;
+        }
+        
+        .full-page-title {
+            font-size: 22px;
+            font-weight: 900;
+            color: white;
+            flex: 1;
+        }
+        
+        .full-page-content {
+            padding: 20px;
+            max-width: 500px;
+            margin: 0 auto;
         }
         .welcome-text { 
             color: #c4b5fd; 
@@ -758,6 +1435,262 @@
     </div>
     
     <div class="container" id="app" style="display:none;"></div>
+    
+    <!-- Menu Sidebar -->
+    <div class="menu-overlay" id="menuOverlay" onclick="toggleMenu()"></div>
+    <div class="menu-sidebar" id="menuSidebar">
+        <div class="menu-header">
+            <div class="menu-title">Menu</div>
+        </div>
+        <div class="menu-items">
+            <div class="menu-item" onclick="openPage('profile')">Profile</div>
+            <div class="menu-item" onclick="openPage('menu2')">Menü 2</div>
+            <div class="menu-item" onclick="openPage('menu3')">Menü 3</div>
+            <div class="menu-item" onclick="openPage('menu4')">Menü 4</div>
+            <div class="menu-item" onclick="openPage('menu5')">Menü 5</div>
+            <div class="menu-item" onclick="openPage('menu6')">Menü 6</div>
+        </div>
+    </div>
+    
+    <!-- Profile Modal -->
+    <div class="profile-modal" id="profileModal">
+        <div class="profile-backdrop" onclick="closeProfile()"></div>
+        <div class="profile-content">
+            <div class="profile-header">
+                <button class="profile-close" onclick="closeProfile()">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+                <div class="profile-avatar-large" id="profileAvatar">
+                    <button class="avatar-change-btn" onclick="uploadAvatar(); event.stopPropagation();">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                            <circle cx="12" cy="13" r="4"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="profile-name" id="profileName"></div>
+                <div class="profile-username" id="profileUsername"></div>
+            </div>
+            <div class="profile-body">
+                <div class="profile-section">
+                    <div class="profile-section-title">Account Stats</div>
+                    <div class="profile-stats-row">
+                        <div class="profile-stat-card">
+                            <div class="profile-stat-value" id="profileBalance"></div>
+                            <div class="profile-stat-label">Total Balance</div>
+                        </div>
+                        <div class="profile-stat-card">
+                            <div class="profile-stat-value" id="profileLevel"></div>
+                            <div class="profile-stat-label">Level</div>
+                        </div>
+                    </div>
+                    <div class="profile-stats-row">
+                        <div class="profile-stat-card">
+                            <div class="profile-stat-value" id="profileRefs"></div>
+                            <div class="profile-stat-label">Referrals</div>
+                        </div>
+                        <div class="profile-stat-card">
+                            <div class="profile-stat-value" id="profileDays"></div>
+                            <div class="profile-stat-label">Mining Days</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="profile-section">
+                    <div class="profile-section-title">Global Ranking</div>
+                    <div class="ranking-card">
+                        <div class="ranking-badge">
+                            <div class="ranking-position" id="profileRank">#0</div>
+                            <div class="ranking-label">Your Rank</div>
+                        </div>
+                        <div class="ranking-info">
+                            <div class="ranking-info-item" style="justify-content: center;">
+                                <span class="ranking-info-label" style="font-size: 15px;">Total Users:</span>
+                                <span class="ranking-info-value" id="totalUsers" style="font-size: 20px; font-weight: 900;">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="profile-section">
+                    <div class="profile-section-title">Referral Earnings</div>
+                    <div class="referral-earnings-card">
+                        <div class="referral-earnings-main">
+                            <div class="referral-earnings-icon">💰</div>
+                            <div class="referral-earnings-info">
+                                <div class="referral-earnings-value" id="profileRefEarnings"></div>
+                                <div class="referral-earnings-label">Total earned from referrals</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="profile-section">
+                    <div class="profile-section-title">Account Settings</div>
+                    <button class="profile-action-btn" onclick="showChangeEmail()">
+                        📧 Change Email
+                    </button>
+                    <button class="profile-action-btn" onclick="showChangePassword()">
+                        🔒 Change Password
+                    </button>
+                </div>
+                
+                <div class="profile-section">
+                    <div class="profile-section-title">Share Profile</div>
+                    <button class="profile-action-btn" onclick="shareProfile()">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
+                            <circle cx="18" cy="5" r="3"/>
+                            <circle cx="6" cy="12" r="3"/>
+                            <circle cx="18" cy="19" r="3"/>
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                        </svg>
+                        Share Profile
+                    </button>
+                </div>
+                
+                <div class="profile-section">
+                    <button class="profile-action-btn profile-logout-btn" onclick="logout()">
+                        🚪 Logout
+                    </button>
+                    <button class="profile-action-btn profile-delete-btn" onclick="showDeleteAccount()">
+                        🗑️ Delete Account
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Change Email Modal -->
+    <div class="change-modal" id="changeEmailModal">
+        <div class="profile-backdrop" onclick="closeChangeEmail()"></div>
+        <div class="change-modal-content">
+            <button class="change-modal-close" onclick="closeChangeEmail()">
+                <svg viewBox="0 0 24 24" fill="none">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+            <div class="change-modal-title">Change Email</div>
+            <div class="form-group">
+                <label class="form-label">New Email</label>
+                <input type="email" class="form-input" id="newEmail" placeholder="Enter new email">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Current Password</label>
+                <input type="password" class="form-input" id="emailPassword" placeholder="Confirm with password">
+            </div>
+            <button class="profile-action-btn" onclick="changeEmail()">
+                ✓ Update Email
+            </button>
+        </div>
+    </div>
+    
+    <!-- Change Password Modal -->
+    <div class="change-modal" id="changePasswordModal">
+        <div class="profile-backdrop" onclick="closeChangePassword()"></div>
+        <div class="change-modal-content">
+            <button class="change-modal-close" onclick="closeChangePassword()">
+                <svg viewBox="0 0 24 24" fill="none">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+            <div class="change-modal-title">Change Password</div>
+            <div class="form-group">
+                <label class="form-label">Current Password</label>
+                <input type="password" class="form-input" id="currentPassword" placeholder="Enter current password">
+            </div>
+            <div class="form-group">
+                <label class="form-label">New Password</label>
+                <input type="password" class="form-input" id="newPassword" placeholder="Enter new password">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Confirm New Password</label>
+                <input type="password" class="form-input" id="confirmPassword" placeholder="Confirm new password">
+            </div>
+            <button class="profile-action-btn" onclick="changePassword()">
+                ✓ Update Password
+            </button>
+        </div>
+    </div>
+    
+    <!-- Delete Account Modal -->
+    <div class="change-modal" id="deleteAccountModal">
+        <div class="profile-backdrop" onclick="closeDeleteAccount()"></div>
+        <div class="change-modal-content">
+            <button class="change-modal-close" onclick="closeDeleteAccount()">
+                <svg viewBox="0 0 24 24" fill="none">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+            <div class="change-modal-title" style="color: #ef4444;">Delete Account</div>
+            <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px; padding: 12px; margin-bottom: 20px;">
+                <div style="color: #fca5a5; font-size: 13px; font-weight: 600;">⚠️ Warning: This action cannot be undone!</div>
+                <div style="color: #fca5a5; font-size: 12px; margin-top: 5px;">All your data, balance, and progress will be permanently deleted.</div>
+            </div>
+            <div id="deleteError" style="display: none; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); border-radius: 10px; padding: 10px; margin-bottom: 15px;">
+                <div style="color: #fca5a5; font-size: 13px; font-weight: 700;">❌ <span id="deleteErrorText"></span></div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Enter Your Password to Confirm</label>
+                <input type="password" class="form-input" id="deletePassword" placeholder="Enter your password">
+            </div>
+            <button class="profile-action-btn profile-delete-btn" onclick="event.stopPropagation(); confirmDeleteAccount();" style="cursor: pointer; pointer-events: auto;">
+                🗑️ Delete Account
+            </button>
+        </div>
+    </div>
+    
+    <!-- Goodbye Modal -->
+    <div class="change-modal" id="goodbyeModal">
+        <div class="profile-backdrop"></div>
+        <div class="change-modal-content" style="text-align: center;">
+            <svg viewBox="0 0 100 100" width="80" height="80" style="margin: 0 auto 20px;">
+                <defs>
+                    <linearGradient id="sadGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#6366f1;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                <!-- Face circle -->
+                <circle cx="50" cy="50" r="45" fill="url(#sadGradient)" opacity="0.2"/>
+                <circle cx="50" cy="50" r="45" fill="none" stroke="url(#sadGradient)" stroke-width="3"/>
+                <!-- Sad eyes -->
+                <circle cx="35" cy="42" r="3" fill="#8b5cf6"/>
+                <circle cx="65" cy="42" r="3" fill="#8b5cf6"/>
+                <!-- Tears -->
+                <path d="M 35 48 Q 33 55 32 60" stroke="#6366f1" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.6"/>
+                <path d="M 65 48 Q 67 55 68 60" stroke="#6366f1" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.6"/>
+                <!-- Sad mouth -->
+                <path d="M 30 70 Q 50 60 70 70" stroke="#8b5cf6" stroke-width="3" fill="none" stroke-linecap="round"/>
+            </svg>
+            <div style="font-size: 20px; font-weight: 900; color: white; margin-bottom: 10px;">Hesabınız silindi.</div>
+            <div style="font-size: 16px; color: #c4b5fd; margin-bottom: 25px;">Sizi kaybettiğimiz için üzgünüz.</div>
+            <button class="profile-action-btn" onclick="window.location.reload()">
+                ✓ Tamam
+            </button>
+        </div>
+    </div>
+    
+    <!-- Full Page Container -->
+    <div class="full-page" id="fullPage">
+        <div class="full-page-header">
+            <button class="back-btn" onclick="closePage()">
+                <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+            </button>
+            <div class="full-page-title" id="fullPageTitle">Page</div>
+        </div>
+        <div class="full-page-content" id="fullPageContent">
+            <!-- Content will be loaded here -->
+        </div>
+    </div>
 
     <script>
         // Auth Management
@@ -1062,6 +1995,11 @@
                     <div class="welcome-card">
                         <span class="welcome-text">Welcome, </span><span class="username-text">${currentUser.username}!</span>
                     </div>
+                    <button class="menu-btn" onclick="toggleMenu()">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
                 </div>
 
                 <div class="card balance-card">
@@ -1302,6 +2240,469 @@
         
         function createParticles() {
             // Disabled for performance
+        }
+        
+        function toggleMenu() {
+            const sidebar = document.getElementById('menuSidebar');
+            const overlay = document.getElementById('menuOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('show');
+        }
+        
+        function showProfile() {
+            toggleMenu();
+            
+            const avatarEl = document.getElementById('profileAvatar');
+            const changeBtn = avatarEl.querySelector('.avatar-change-btn');
+            
+            // Check if user has uploaded avatar
+            if (d.avatarImage) {
+                avatarEl.innerHTML = `<img src="${d.avatarImage}" alt="Profile">`;
+                // Re-add change button
+                avatarEl.appendChild(changeBtn);
+            } else {
+                avatarEl.style.background = 'linear-gradient(135deg, #0096ff, #00ffff)';
+                avatarEl.innerHTML = currentUser.username.charAt(0).toUpperCase();
+                // Re-add change button
+                avatarEl.appendChild(changeBtn);
+            }
+            
+            document.getElementById('profileName').textContent = currentUser.username;
+            document.getElementById('profileUsername').textContent = '@' + currentUser.username;
+            document.getElementById('profileBalance').textContent = d.balance.toFixed(2) + ' π';
+            document.getElementById('profileLevel').textContent = d.level;
+            document.getElementById('profileRefs').textContent = d.refs;
+            document.getElementById('profileDays').textContent = d.miningDays;
+            
+            // Referral earnings
+            const refBonus = 5;
+            const refEarnings = d.refs * refBonus;
+            document.getElementById('profileRefEarnings').textContent = refEarnings.toFixed(2) + ' π';
+            
+            // Global ranking
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            const totalUsers = Object.keys(users).length;
+            const userBalances = Object.values(users).map(u => u.balance || 0).sort((a, b) => b - a);
+            const userRank = userBalances.indexOf(d.balance) + 1;
+            
+            document.getElementById('profileRank').textContent = '#' + userRank;
+            document.getElementById('totalUsers').textContent = totalUsers;
+            
+            document.getElementById('profileModal').classList.add('show');
+        }
+        
+        function closeProfile() {
+            document.getElementById('profileModal').classList.remove('show');
+        }
+        
+        function uploadAvatar() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        // Resize image to 500x500
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = 500;
+                        canvas.height = 500;
+                        
+                        // Calculate crop dimensions to make it square
+                        const size = Math.min(img.width, img.height);
+                        const x = (img.width - size) / 2;
+                        const y = (img.height - size) / 2;
+                        
+                        ctx.drawImage(img, x, y, size, size, 0, 0, 500, 500);
+                        
+                        // Smart compression - try different quality levels
+                        let quality = 0.8;
+                        let resizedImage = canvas.toDataURL('image/jpeg', quality);
+                        let attempts = 0;
+                        const maxAttempts = 5;
+                        const targetSize = 204800; // 200KB in bytes
+                        
+                        // Keep reducing quality until under 200KB or max attempts reached
+                        while (resizedImage.length * 0.75 > targetSize && attempts < maxAttempts) {
+                            quality -= 0.2;
+                            if (quality < 0.1) quality = 0.1;
+                            resizedImage = canvas.toDataURL('image/jpeg', quality);
+                            attempts++;
+                        }
+                        
+                        // Check final size
+                        const finalSize = resizedImage.length * 0.75; // Approximate bytes
+                        if (finalSize > targetSize) {
+                            alert('⚠️ Image is too large even after compression. Please select a smaller image.');
+                            return;
+                        }
+                        
+                        // Save to data
+                        d.avatarImage = resizedImage;
+                        save();
+                        
+                        // Update display
+                        showProfile();
+                        showSuccess('✓ Profile photo updated!');
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            };
+            input.click();
+        }
+        
+        function showChangeEmail() {
+            if (document.getElementById('fullPage').classList.contains('active')) {
+                closePage();
+            } else {
+                closeProfile();
+            }
+            document.getElementById('changeEmailModal').classList.add('show');
+        }
+        
+        function closeChangeEmail() {
+            document.getElementById('changeEmailModal').classList.remove('show');
+            document.getElementById('newEmail').value = '';
+            document.getElementById('emailPassword').value = '';
+        }
+        
+        function changeEmail() {
+            const newEmail = document.getElementById('newEmail').value;
+            const password = document.getElementById('emailPassword').value;
+            
+            if (!newEmail || !password) {
+                alert('Please fill all fields');
+                return;
+            }
+            
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            if (users[currentUser.email].password !== password) {
+                alert('Incorrect password');
+                return;
+            }
+            
+            if (users[newEmail]) {
+                alert('Email already exists');
+                return;
+            }
+            
+            users[newEmail] = users[currentUser.email];
+            users[newEmail].email = newEmail;
+            delete users[currentUser.email];
+            
+            localStorage.setItem('users', JSON.stringify(users));
+            currentUser.email = newEmail;
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            closeChangeEmail();
+            alert('✓ Email changed successfully!');
+        }
+        
+        function showChangePassword() {
+            if (document.getElementById('fullPage').classList.contains('active')) {
+                closePage();
+            } else {
+                closeProfile();
+            }
+            document.getElementById('changePasswordModal').classList.add('show');
+        }
+        
+        function closeChangePassword() {
+            document.getElementById('changePasswordModal').classList.remove('show');
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+        }
+        
+        function changePassword() {
+            const currentPwd = document.getElementById('currentPassword').value;
+            const newPwd = document.getElementById('newPassword').value;
+            const confirmPwd = document.getElementById('confirmPassword').value;
+            
+            if (!currentPwd || !newPwd || !confirmPwd) {
+                alert('Please fill all fields');
+                return;
+            }
+            
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            if (users[currentUser.email].password !== currentPwd) {
+                alert('Incorrect current password');
+                return;
+            }
+            
+            if (newPwd !== confirmPwd) {
+                alert('Passwords do not match');
+                return;
+            }
+            
+            if (newPwd.length < 6) {
+                alert('Password must be at least 6 characters');
+                return;
+            }
+            
+            users[currentUser.email].password = newPwd;
+            localStorage.setItem('users', JSON.stringify(users));
+            
+            closeChangePassword();
+            alert('✓ Password changed successfully!');
+        }
+        
+        function shareProfile() {
+            const shareText = `Check out my Pi Mining profile!\n\n👤 ${currentUser.username}\n⭐ Level ${d.level}\n💰 ${d.balance.toFixed(2)} π\n🔗 Referral Code: ${currentUser.referralCode}`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Pi Mining Profile',
+                    text: shareText
+                }).catch(() => {
+                    copyToClipboard(shareText);
+                });
+            } else {
+                copyToClipboard(shareText);
+            }
+        }
+        
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✓ Profile info copied to clipboard!');
+            }).catch(() => {
+                alert('✓ Share: ' + text);
+            });
+        }
+        
+        function copyProfileLink() {
+            const url = window.location.href;
+            navigator.clipboard.writeText(url).then(() => {
+                alert('✓ Profile link copied!');
+            });
+        }
+        
+        function showDeleteAccount() {
+            if (document.getElementById('fullPage').classList.contains('active')) {
+                closePage();
+            } else {
+                closeProfile();
+            }
+            document.getElementById('deleteError').style.display = 'none';
+            document.getElementById('deleteAccountModal').classList.add('show');
+        }
+        
+        function closeDeleteAccount() {
+            document.getElementById('deleteAccountModal').classList.remove('show');
+            document.getElementById('deletePassword').value = '';
+            document.getElementById('deleteError').style.display = 'none';
+        }
+        
+        function showDeleteError(message) {
+            document.getElementById('deleteErrorText').textContent = message;
+            document.getElementById('deleteError').style.display = 'block';
+        }
+        
+        function confirmDeleteAccount() {
+            const password = document.getElementById('deletePassword').value;
+            
+            if (!password) {
+                showDeleteError('Please enter your password');
+                return;
+            }
+            
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            
+            if (users[currentUser.email].password !== password) {
+                showDeleteError('Incorrect password');
+                return;
+            }
+            
+            // Password correct - delete account
+            deleteAccount();
+        }
+        
+        function deleteAccount() {
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            delete users[currentUser.email];
+            localStorage.setItem('users', JSON.stringify(users));
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('userData_' + currentUser.email);
+            localStorage.removeItem('miningEndTime_' + currentUser.email);
+            
+            // Close delete modal
+            document.getElementById('deleteAccountModal').classList.remove('show');
+            
+            // Show goodbye modal
+            document.getElementById('goodbyeModal').classList.add('show');
+        }
+        
+        function openPage(page) {
+            toggleMenu();
+            
+            const fullPage = document.getElementById('fullPage');
+            const pageTitle = document.getElementById('fullPageTitle');
+            const pageContent = document.getElementById('fullPageContent');
+            
+            switch(page) {
+                case 'profile':
+                    pageTitle.textContent = 'Profile';
+                    pageContent.innerHTML = getProfilePageContent();
+                    break;
+                case 'menu2':
+                    pageTitle.textContent = 'Menü 2';
+                    pageContent.innerHTML = '<div class="card"><h2 style="color: white; text-align: center;">Menü 2 İçeriği</h2><p style="color: #c4b5fd; text-align: center; margin-top: 10px;">Bu sayfa için içerik yakında eklenecek.</p></div>';
+                    break;
+                case 'menu3':
+                    pageTitle.textContent = 'Menü 3';
+                    pageContent.innerHTML = '<div class="card"><h2 style="color: white; text-align: center;">Menü 3 İçeriği</h2><p style="color: #c4b5fd; text-align: center; margin-top: 10px;">Bu sayfa için içerik yakında eklenecek.</p></div>';
+                    break;
+                case 'menu4':
+                    pageTitle.textContent = 'Menü 4';
+                    pageContent.innerHTML = '<div class="card"><h2 style="color: white; text-align: center;">Menü 4 İçeriği</h2><p style="color: #c4b5fd; text-align: center; margin-top: 10px;">Bu sayfa için içerik yakında eklenecek.</p></div>';
+                    break;
+                case 'menu5':
+                    pageTitle.textContent = 'Menü 5';
+                    pageContent.innerHTML = '<div class="card"><h2 style="color: white; text-align: center;">Menü 5 İçeriği</h2><p style="color: #c4b5fd; text-align: center; margin-top: 10px;">Bu sayfa için içerik yakında eklenecek.</p></div>';
+                    break;
+                case 'menu6':
+                    pageTitle.textContent = 'Menü 6';
+                    pageContent.innerHTML = '<div class="card"><h2 style="color: white; text-align: center;">Menü 6 İçeriği</h2><p style="color: #c4b5fd; text-align: center; margin-top: 10px;">Bu sayfa için içerik yakında eklenecek.</p></div>';
+                    break;
+            }
+            
+            fullPage.classList.add('active');
+        }
+        
+        function closePage() {
+            document.getElementById('fullPage').classList.remove('active');
+        }
+        
+        function getProfilePageContent() {
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            const totalUsers = Object.keys(users).length;
+            const userBalances = Object.values(users).map(u => u.balance || 0).sort((a, b) => b - a);
+            const userRank = userBalances.indexOf(d.balance) + 1;
+            
+            let avatarHTML = '';
+            if (d.avatarImage) {
+                avatarHTML = `
+                    <div style="width: 100px; height: 100px; margin: 0 auto 15px; position: relative;">
+                        <img src="${d.avatarImage}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; box-shadow: 0 10px 30px rgba(0, 150, 255, 0.4);" alt="Profile">
+                        <button class="avatar-change-btn" onclick="uploadAvatar()">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="#000">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                                <circle cx="12" cy="13" r="4"/>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+            } else {
+                avatarHTML = `
+                    <div style="width: 100px; height: 100px; margin: 0 auto 15px; position: relative;">
+                        <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #0096ff, #00ffff); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 42px; font-weight: 900; color: white; box-shadow: 0 10px 30px rgba(0, 150, 255, 0.4);">${currentUser.username.charAt(0).toUpperCase()}</div>
+                        <button class="avatar-change-btn" onclick="uploadAvatar()">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="#000">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                                <circle cx="12" cy="13" r="4"/>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+            }
+            
+            return `
+                <div style="text-align: center; margin-bottom: 30px;">
+                    ${avatarHTML}
+                    <div style="font-size: 28px; font-weight: 900; color: white; margin-bottom: 5px;">${currentUser.username}</div>
+                    <div style="font-size: 16px; color: #8b5cf6; font-weight: 600;">@${currentUser.username}</div>
+                </div>
+                
+                <div style="margin-bottom: 25px;">
+                    <div style="font-size: 14px; color: #8b5cf6; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Account Stats</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 14px; padding: 16px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: 900; background: linear-gradient(135deg, #00ffff, #0096ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 4px;">${d.balance.toFixed(2)} π</div>
+                            <div style="font-size: 11px; color: #c4b5fd; font-weight: 600;">Total Balance</div>
+                        </div>
+                        <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 14px; padding: 16px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: 900; background: linear-gradient(135deg, #00ffff, #0096ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 4px;">${d.level}</div>
+                            <div style="font-size: 11px; color: #c4b5fd; font-weight: 600;">Level</div>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 14px; padding: 16px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: 900; background: linear-gradient(135deg, #00ffff, #0096ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 4px;">${d.refs}</div>
+                            <div style="font-size: 11px; color: #c4b5fd; font-weight: 600;">Referrals</div>
+                        </div>
+                        <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 14px; padding: 16px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: 900; background: linear-gradient(135deg, #00ffff, #0096ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 4px;">${d.miningDays}</div>
+                            <div style="font-size: 11px; color: #c4b5fd; font-weight: 600;">Mining Days</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 25px;">
+                    <div style="font-size: 14px; color: #8b5cf6; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Global Ranking</div>
+                    <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 14px; padding: 16px; display: flex; align-items: center; gap: 20px;">
+                        <div style="text-align: center; padding: 10px 20px; background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(249, 115, 22, 0.2)); border: 2px solid rgba(251, 191, 36, 0.4); border-radius: 12px;">
+                            <div style="font-size: 28px; font-weight: 900; background: linear-gradient(135deg, #fbbf24, #f97316); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; margin-bottom: 4px;">#${userRank}</div>
+                            <div style="font-size: 11px; color: #fbbf24; font-weight: 700;">Your Rank</div>
+                        </div>
+                        <div style="flex: 1; display: flex; justify-content: center; align-items: center;">
+                            <div style="display: flex; gap: 10px; align-items: baseline;">
+                                <span style="color: #c4b5fd; font-weight: 600; font-size: 15px;">Total Users:</span>
+                                <span style="color: white; font-weight: 900; font-size: 20px;">${totalUsers}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 25px;">
+                    <div style="font-size: 14px; color: #8b5cf6; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Referral Earnings</div>
+                    <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 14px; padding: 16px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="font-size: 32px;">💰</div>
+                            <div>
+                                <div style="font-size: 24px; font-weight: 900; background: linear-gradient(135deg, #fbbf24, #f97316); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${(d.refs * 5).toFixed(2)} π</div>
+                                <div style="font-size: 12px; color: #c4b5fd; margin-top: 2px;">Total earned from referrals</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 25px;">
+                    <div style="font-size: 14px; color: #8b5cf6; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Account Settings</div>
+                    <button class="profile-action-btn" onclick="showChangeEmail()">📧 Change Email</button>
+                    <button class="profile-action-btn" onclick="showChangePassword()">🔒 Change Password</button>
+                </div>
+                
+                <div style="margin-bottom: 25px;">
+                    <div style="font-size: 14px; color: #8b5cf6; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Share Profile</div>
+                    <button class="profile-action-btn" onclick="shareProfile()">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
+                            <circle cx="18" cy="5" r="3"/>
+                            <circle cx="6" cy="12" r="3"/>
+                            <circle cx="18" cy="19" r="3"/>
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                        </svg>
+                        Share Profile
+                    </button>
+                </div>
+                
+                <div style="margin-bottom: 25px;">
+                    <button class="profile-action-btn profile-logout-btn" onclick="logout()">🚪 Logout</button>
+                    <button class="profile-action-btn profile-delete-btn" onclick="showDeleteAccount()">🗑️ Delete Account</button>
+                </div>
+            `;
+        }
+        
+        function changeAvatarInPage(color) {
+            d.avatarColor = color;
+            save();
+            openPage('profile');
         }
         
         createParticles();
