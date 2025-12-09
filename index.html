@@ -153,6 +153,53 @@
             outline: none;
         }
         
+        /* Date Input Styling */
+        input[type="date"].form-input {
+            color-scheme: dark;
+            position: relative;
+        }
+        
+        input[type="date"].form-input::-webkit-calendar-picker-indicator {
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%2300ffff" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>') center/contain no-repeat;
+            cursor: pointer;
+            opacity: 0.8;
+            width: 20px;
+            height: 20px;
+        }
+        
+        input[type="date"].form-input::-webkit-calendar-picker-indicator:hover {
+            opacity: 1;
+        }
+        
+        input[type="date"].form-input::-webkit-datetime-edit {
+            color: white;
+        }
+        
+        input[type="date"].form-input::-webkit-datetime-edit-fields-wrapper {
+            color: white;
+        }
+        
+        input[type="date"].form-input::-webkit-datetime-edit-text {
+            color: #00ffff;
+            padding: 0 2px;
+        }
+        
+        input[type="date"].form-input::-webkit-datetime-edit-month-field,
+        input[type="date"].form-input::-webkit-datetime-edit-day-field,
+        input[type="date"].form-input::-webkit-datetime-edit-year-field {
+            color: white;
+            background: rgba(0, 255, 255, 0.1);
+            border-radius: 4px;
+            padding: 2px 4px;
+        }
+        
+        input[type="date"].form-input::-webkit-datetime-edit-month-field:focus,
+        input[type="date"].form-input::-webkit-datetime-edit-day-field:focus,
+        input[type="date"].form-input::-webkit-datetime-edit-year-field:focus {
+            background: rgba(0, 255, 255, 0.2);
+            color: #00ffff;
+        }
+        
         .form-input:-webkit-autofill,
         .form-input:-webkit-autofill:hover,
         .form-input:-webkit-autofill:focus,
@@ -351,6 +398,42 @@
             text-align: center;
         }
         
+        /* Toast Notification */
+        .toast-notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(6, 182, 212, 0.95));
+            border: 2px solid rgba(0, 255, 255, 0.5);
+            border-radius: 16px;
+            padding: 16px 24px;
+            color: white;
+            font-size: 15px;
+            font-weight: 700;
+            box-shadow: 
+                0 0 30px rgba(0, 255, 255, 0.4),
+                0 10px 40px rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            opacity: 0;
+            pointer-events: none;
+            max-width: 90%;
+            text-align: center;
+        }
+        
+        .toast-notification.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        .toast-notification.error {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(220, 38, 38, 0.95));
+            border-color: rgba(239, 68, 68, 0.5);
+            box-shadow: 
+                0 0 30px rgba(239, 68, 68, 0.4),
+                0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+        
         /* Header - Minimal */
         .header { text-align: center; padding: 15px 0 10px 0; position: relative; }
         .welcome-card {
@@ -401,8 +484,9 @@
         .menu-sidebar {
             position: fixed;
             top: 0;
-            right: -320px;
-            width: 320px;
+            right: -50%;
+            width: 50%;
+            max-width: 320px;
             height: 100vh;
             background: rgba(10, 20, 40, 0.98);
             border-left: 2px solid transparent;
@@ -415,64 +499,57 @@
             right: 0;
         }
         
+        @media (min-width: 640px) {
+            .menu-sidebar {
+                right: -320px;
+                width: 320px;
+            }
+        }
+        
         .menu-header {
             padding: 12px 20px;
             margin: 15px 15px 10px 15px;
-            background: rgba(10, 20, 40, 0.85);
-            border-radius: 14px;
-            border: 2px solid transparent;
-            background: 
-                linear-gradient(rgba(10, 20, 40, 0.85), rgba(10, 20, 40, 0.85)) padding-box,
-                linear-gradient(145deg, rgba(0, 255, 255, 0.6), rgba(123, 67, 255, 0.6)) border-box;
-            box-shadow: 
-                0 0 35px rgba(0, 255, 255, 0.25),
-                0 6px 25px rgba(0, 0, 0, 0.4);
+            background: rgba(10, 20, 40, 0.9);
+            border-radius: 12px;
+            border: 1.5px solid rgba(0, 255, 255, 0.4);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
             display: inline-block;
             width: auto;
         }
         
         .menu-title {
-            font-size: 20px;
+            font-size: 16px;
             font-weight: 900;
-            background: linear-gradient(135deg, #00ffff, #8b5cf6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #00ffff;
             text-align: center;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
         }
         
         .menu-items {
-            padding: 20px 15px;
+            padding: 15px 12px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 8px;
         }
         
         .menu-item {
-            padding: 18px 20px;
+            padding: 12px 16px;
             color: #c4b5fd;
-            font-size: 16px;
-            font-weight: 700;
+            font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
-            background: rgba(10, 20, 40, 0.6);
-            border-radius: 16px;
-            border: 2px solid transparent;
-            background: 
-                linear-gradient(rgba(10, 20, 40, 0.6), rgba(10, 20, 40, 0.6)) padding-box,
-                linear-gradient(145deg, rgba(0, 255, 255, 0.3), rgba(123, 67, 255, 0.3)) border-box;
-            box-shadow: 
-                0 0 20px rgba(0, 255, 255, 0.1),
-                0 4px 15px rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 255, 255, 0.15);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
         
         .menu-item:hover {
-            background: 
-                linear-gradient(rgba(10, 20, 40, 0.8), rgba(10, 20, 40, 0.8)) padding-box,
-                linear-gradient(145deg, rgba(0, 255, 255, 0.5), rgba(123, 67, 255, 0.5)) border-box;
+            background: rgba(0, 255, 255, 0.1);
+            border-color: rgba(0, 255, 255, 0.4);
             color: #00ffff;
-            box-shadow: 
-                0 0 30px rgba(0, 255, 255, 0.2),
-                0 6px 20px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 4px 12px rgba(0, 255, 255, 0.15);
         }
         
         .menu-item:active {
@@ -1475,6 +1552,9 @@
     </style>
 </head>
 <body>
+    <!-- Toast Notification -->
+    <div id="toastNotification" class="toast-notification"></div>
+    
     <!-- Tech Background -->
     <div class="tech-bg"></div>
     <div class="grid-lines"></div>
@@ -1833,6 +1913,20 @@
             el.textContent = msg;
             el.style.display = 'block';
             setTimeout(() => el.style.display = 'none', 3000);
+        }
+        
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toastNotification');
+            toast.textContent = message;
+            toast.className = 'toast-notification' + (isError ? ' error' : '');
+            
+            // Trigger show
+            setTimeout(() => toast.classList.add('show'), 10);
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
         }
         
         function login() {
@@ -2540,7 +2634,7 @@
             document.getElementById('saveInfoBtn').style.display = 'none';
             document.getElementById('editInfoBtn').style.display = 'block';
             
-            alert('✓ Personal information saved successfully!');
+            showToast('✓ Personal information saved successfully!');
         }
         
         function closeProfile() {
@@ -2590,7 +2684,7 @@
                         // Check final size
                         const finalSize = resizedImage.length * 0.75; // Approximate bytes
                         if (finalSize > targetSize) {
-                            alert('⚠️ Image is too large even after compression. Please select a smaller image.');
+                            showToast('⚠️ Image is too large. Please select a smaller image.', true);
                             return;
                         }
                         
@@ -2706,18 +2800,18 @@
             const password = document.getElementById('emailPassword').value;
             
             if (!newEmail || !password) {
-                alert('Please fill all fields');
+                showToast('Please fill all fields', true);
                 return;
             }
             
             const users = JSON.parse(localStorage.getItem('users') || '{}');
             if (users[currentUser.email].password !== password) {
-                alert('Incorrect password');
+                showToast('Incorrect password', true);
                 return;
             }
             
             if (users[newEmail]) {
-                alert('Email already exists');
+                showToast('Email already exists', true);
                 return;
             }
             
@@ -2730,7 +2824,7 @@
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             
             closeChangeEmail();
-            alert('✓ Email changed successfully!');
+            showToast('✓ Email changed successfully!');
         }
         
         function showChangePassword() {
@@ -2765,23 +2859,23 @@
             const confirmPwd = document.getElementById('confirmPassword').value;
             
             if (!currentPwd || !newPwd || !confirmPwd) {
-                alert('Please fill all fields');
+                showToast('Please fill all fields', true);
                 return;
             }
             
             const users = JSON.parse(localStorage.getItem('users') || '{}');
             if (users[currentUser.email].password !== currentPwd) {
-                alert('Incorrect current password');
+                showToast('Incorrect current password', true);
                 return;
             }
             
             if (newPwd !== confirmPwd) {
-                alert('Passwords do not match');
+                showToast('Passwords do not match', true);
                 return;
             }
             
             if (newPwd.length < 6) {
-                alert('Password must be at least 6 characters');
+                showToast('Password must be at least 6 characters', true);
                 return;
             }
             
@@ -2789,7 +2883,7 @@
             localStorage.setItem('users', JSON.stringify(users));
             
             closeChangePassword();
-            alert('✓ Password changed successfully!');
+            showToast('✓ Password changed successfully!');
         }
         
         function shareProfile() {
@@ -2809,16 +2903,16 @@
         
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
-                alert('✓ Profile info copied to clipboard!');
+                showToast('✓ Profile info copied to clipboard!');
             }).catch(() => {
-                alert('✓ Share: ' + text);
+                showToast('✓ Share: ' + text);
             });
         }
         
         function copyProfileLink() {
             const url = window.location.href;
             navigator.clipboard.writeText(url).then(() => {
-                alert('✓ Profile link copied!');
+                showToast('✓ Profile link copied!');
             });
         }
         
@@ -2922,10 +3016,29 @@
             }
             
             fullPage.classList.add('active');
+            fullPage.dataset.currentPage = page;
+            
+            // Push state for back button handling (with error handling)
+            try {
+                history.pushState({ page: page }, '', '#' + page);
+            } catch(e) {
+                // History API not available or restricted
+            }
         }
         
         function closePage() {
-            document.getElementById('fullPage').classList.remove('active');
+            const fullPage = document.getElementById('fullPage');
+            fullPage.classList.remove('active');
+            fullPage.dataset.currentPage = '';
+            
+            // Replace state to remove hash (with error handling)
+            try {
+                if (window.location.hash) {
+                    history.replaceState(null, '', window.location.pathname);
+                }
+            } catch(e) {
+                // History API not available or restricted
+            }
         }
         
         function getProfilePageContent() {
@@ -3051,7 +3164,7 @@
             document.getElementById('saveInfoBtnPage').style.display = 'none';
             document.getElementById('editInfoBtnPage').style.display = 'block';
             
-            alert('✓ Personal information saved successfully!');
+            showToast('✓ Personal information saved successfully!');
         }
         
         function changeAvatarInPage(color) {
@@ -3062,6 +3175,30 @@
         
         createParticles();
         checkAuth();
+        
+        // Handle back button (with error handling for restricted environments)
+        try {
+            window.addEventListener('popstate', function(event) {
+                const fullPage = document.getElementById('fullPage');
+                if (fullPage && fullPage.classList.contains('active')) {
+                    closePage();
+                }
+            });
+            
+            // Set initial state
+            history.replaceState(null, '', window.location.pathname);
+        } catch(e) {
+            // History API not available or restricted - use alternative
+            // Listen for hashchange as fallback
+            window.addEventListener('hashchange', function() {
+                if (!window.location.hash) {
+                    const fullPage = document.getElementById('fullPage');
+                    if (fullPage && fullPage.classList.contains('active')) {
+                        closePage();
+                    }
+                }
+            });
+        }
     </script>
 </body>
 </html>
