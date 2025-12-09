@@ -1035,6 +1035,10 @@
             display: flex;
         }
         
+        .change-modal .profile-backdrop {
+            z-index: 1;
+        }
+        
         .change-modal-content {
             position: relative;
             max-width: 400px;
@@ -1047,6 +1051,7 @@
                 linear-gradient(rgba(10, 20, 40, 0.98), rgba(10, 20, 40, 0.98)) padding-box,
                 linear-gradient(145deg, rgba(0, 255, 255, 0.4), rgba(123, 67, 255, 0.4)) border-box;
             box-shadow: 0 0 40px rgba(0, 255, 255, 0.3);
+            z-index: 2;
         }
         
         .change-modal-title {
@@ -2827,11 +2832,10 @@
             // Remember where we came from
             if (document.getElementById('fullPage').classList.contains('active')) {
                 profileOpenedFrom = 'fullpage';
-                closePage();
             } else {
                 profileOpenedFrom = 'modal';
-                closeProfile();
             }
+            // Don't close the profile page, just show modal on top
             document.getElementById('changeEmailModal').classList.add('show');
             
             // Push state for back button
@@ -2890,11 +2894,10 @@
             // Remember where we came from
             if (document.getElementById('fullPage').classList.contains('active')) {
                 profileOpenedFrom = 'fullpage';
-                closePage();
             } else {
                 profileOpenedFrom = 'modal';
-                closeProfile();
             }
+            // Don't close the profile page, just show modal on top
             document.getElementById('changePasswordModal').classList.add('show');
             
             // Push state for back button
@@ -2985,11 +2988,10 @@
             // Remember where we came from
             if (document.getElementById('fullPage').classList.contains('active')) {
                 profileOpenedFrom = 'fullpage';
-                closePage();
             } else {
                 profileOpenedFrom = 'modal';
-                closeProfile();
             }
+            // Don't close the profile page, just show modal on top
             document.getElementById('deleteError').style.display = 'none';
             document.getElementById('deleteAccountModal').classList.add('show');
             
