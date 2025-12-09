@@ -435,14 +435,20 @@
         }
         
         .toast-notification.exit {
-            bottom: 20px;
+            bottom: 30px;
             top: auto;
             transform: translateX(-50%) translateY(100px);
-            background: linear-gradient(135deg, rgba(251, 191, 36, 0.95), rgba(245, 158, 11, 0.95));
-            border-color: rgba(251, 191, 36, 0.5);
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.15), rgba(0, 150, 255, 0.15));
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 2px solid rgba(0, 255, 255, 0.3);
             box-shadow: 
-                0 0 30px rgba(251, 191, 36, 0.4),
-                0 10px 40px rgba(0, 0, 0, 0.5);
+                0 0 20px rgba(0, 255, 255, 0.2),
+                0 8px 32px rgba(0, 0, 0, 0.4);
+            padding: 12px 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #00ffff;
         }
         
         .toast-notification.exit.show {
@@ -1946,7 +1952,7 @@
         
         function showExitToast() {
             const toast = document.getElementById('toastNotification');
-            toast.textContent = '⬅️ Press back again to exit';
+            toast.textContent = '← Press back again to exit';
             toast.className = 'toast-notification exit';
             
             // Trigger show
@@ -2841,7 +2847,8 @@
             
             // Return to where we came from
             if (profileOpenedFrom === 'fullpage') {
-                openPage('profile');
+                // Just show the full page again without reopening
+                document.getElementById('fullPage').classList.add('active');
             } else {
                 document.getElementById('profileModal').classList.add('show');
             }
@@ -2904,7 +2911,8 @@
             
             // Return to where we came from
             if (profileOpenedFrom === 'fullpage') {
-                openPage('profile');
+                // Just show the full page again without reopening
+                document.getElementById('fullPage').classList.add('active');
             } else {
                 document.getElementById('profileModal').classList.add('show');
             }
@@ -2998,7 +3006,8 @@
             
             // Return to where we came from
             if (profileOpenedFrom === 'fullpage') {
-                openPage('profile');
+                // Just show the full page again without reopening
+                document.getElementById('fullPage').classList.add('active');
             } else {
                 document.getElementById('profileModal').classList.add('show');
             }
@@ -3255,16 +3264,19 @@
                 
                 if (changeEmailModal && changeEmailModal.classList.contains('show')) {
                     closeChangeEmail();
+                    history.pushState({ page: 'main' }, '', '');
                     return;
                 }
                 
                 if (changePasswordModal && changePasswordModal.classList.contains('show')) {
                     closeChangePassword();
+                    history.pushState({ page: 'main' }, '', '');
                     return;
                 }
                 
                 if (deleteAccountModal && deleteAccountModal.classList.contains('show')) {
                     closeDeleteAccount();
+                    history.pushState({ page: 'main' }, '', '');
                     return;
                 }
                 
@@ -3274,18 +3286,20 @@
                     sidebar.classList.remove('open');
                     document.getElementById('menuOverlay').classList.remove('show');
                     document.body.style.overflow = 'auto';
+                    history.pushState({ page: 'main' }, '', '');
                 } 
                 // Check if full page is open
                 else if (fullPage && fullPage.classList.contains('active')) {
                     closePage();
+                    history.pushState({ page: 'main' }, '', '');
                 }
                 // On main page - handle exit
                 else {
                     const currentTime = Date.now();
                     
                     if (currentTime - lastBackPress < backPressInterval) {
-                        // Second press within interval - allow exit
-                        // Browser will handle the exit
+                        // Second press within interval - allow exit by not preventing it
+                        window.history.back();
                         return;
                     } else {
                         // First press - show warning
