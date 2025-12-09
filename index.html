@@ -1694,7 +1694,7 @@
                     </div>
                     <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 14px; margin-bottom: 10px;">
                         <div style="font-size: 11px; color: #8b5cf6; font-weight: 600; margin-bottom: 6px;">Birth Date</div>
-                        <input type="date" id="inputBirthDate" class="form-input" style="margin: 0;" min="1923-01-01" max="2007-12-31" disabled>
+                        <input type="text" id="inputBirthDate" class="form-input" style="margin: 0;" min="1923-01-01" max="2007-12-31" disabled>
                         <div id="birthDateError" style="display: none; margin-top: 8px; padding: 8px; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); border-radius: 8px; color: #fca5a5; font-size: 12px; font-weight: 600;">
                             ⚠️ Birth year must be between 1923 and 2007
                         </div>
@@ -2081,7 +2081,12 @@
         function closeLogoutModal() {
             document.getElementById('logoutModal').classList.remove('show');
             
-            // Profile is already visible in background - don't reopen
+            // Return to where we came from
+            if (profileOpenedFrom === 'fullpage') {
+                openPage('profile');
+            } else {
+                document.getElementById('profileModal').classList.add('show');
+            }
         }
         
         function confirmLogout() {
@@ -2644,10 +2649,17 @@
             d.birthDate = document.getElementById('inputBirthDate').value;
             d.country = document.getElementById('inputCountry').value;
             
-            // Validate birth date
+            // Validate birth date DD/MM/YYYY
             if (d.birthDate) {
-                const year = parseInt(d.birthDate.split('-')[0]);
+                var parts = d.birthDate.split('/');
+                if (parts.length !== 3) {
+                    document.getElementById('birthDateError').innerHTML = '⚠️ Please use DD/MM/YYYY format';
+                    document.getElementById('birthDateError').style.display = 'block';
+                    return;
+                }
+                var year = parseInt(parts[2]);
                 if (year < 1923 || year > 2007) {
+                    document.getElementById('birthDateError').innerHTML = '⚠️ Birth year must be between 1923 and 2007';
                     document.getElementById('birthDateError').style.display = 'block';
                     return;
                 }
@@ -2675,6 +2687,7 @@
             document.getElementById('editInfoBtn').style.display = 'block';
             
             showToast('✓ Personal information saved successfully!');
+            renderProfile();
         }
         
         function closeProfile() {
@@ -3114,7 +3127,7 @@
                     </div>
                     <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 14px; margin-bottom: 10px;">
                         <div style="font-size: 11px; color: #8b5cf6; font-weight: 600; margin-bottom: 6px;">Birth Date</div>
-                        <input type="date" id="inputBirthDatePage" class="form-input" value="${d.birthDate || ''}" style="margin: 0;" min="1923-01-01" max="2007-12-31" disabled>
+                        <input type="text" id="inputBirthDatePage" class="form-input" value="${d.birthDate || ''}" style="margin: 0;" min="1923-01-01" max="2007-12-31" disabled>
                         <div id="birthDateErrorPage" style="display: none; margin-top: 8px; padding: 8px; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); border-radius: 8px; color: #fca5a5; font-size: 12px; font-weight: 600;">
                             ⚠️ Birth year must be between 1923 and 2007
                         </div>
