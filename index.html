@@ -2827,6 +2827,11 @@
                 closeProfile();
             }
             document.getElementById('changeEmailModal').classList.add('show');
+            
+            // Push state for back button
+            try {
+                history.pushState({ modal: 'changeEmail' }, '', '#change-email');
+            } catch(e) {}
         }
         
         function closeChangeEmail() {
@@ -2884,6 +2889,11 @@
                 closeProfile();
             }
             document.getElementById('changePasswordModal').classList.add('show');
+            
+            // Push state for back button
+            try {
+                history.pushState({ modal: 'changePassword' }, '', '#change-password');
+            } catch(e) {}
         }
         
         function closeChangePassword() {
@@ -2974,6 +2984,11 @@
             }
             document.getElementById('deleteError').style.display = 'none';
             document.getElementById('deleteAccountModal').classList.add('show');
+            
+            // Push state for back button
+            try {
+                history.pushState({ modal: 'deleteAccount' }, '', '#delete-account');
+            } catch(e) {}
         }
         
         function closeDeleteAccount() {
@@ -3232,6 +3247,26 @@
             window.addEventListener('popstate', function(event) {
                 const fullPage = document.getElementById('fullPage');
                 const sidebar = document.getElementById('menuSidebar');
+                
+                // Check if any profile modal is open
+                const changeEmailModal = document.getElementById('changeEmailModal');
+                const changePasswordModal = document.getElementById('changePasswordModal');
+                const deleteAccountModal = document.getElementById('deleteAccountModal');
+                
+                if (changeEmailModal && changeEmailModal.classList.contains('show')) {
+                    closeChangeEmail();
+                    return;
+                }
+                
+                if (changePasswordModal && changePasswordModal.classList.contains('show')) {
+                    closeChangePassword();
+                    return;
+                }
+                
+                if (deleteAccountModal && deleteAccountModal.classList.contains('show')) {
+                    closeDeleteAccount();
+                    return;
+                }
                 
                 // Check if menu is open
                 if (sidebar && sidebar.classList.contains('open')) {
