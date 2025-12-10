@@ -1360,7 +1360,17 @@
         .balance-value { 
             font-size: 28px; 
             font-weight: 900; 
-            line-height: 1; 
+            line-height: 1;
+        }
+        
+        .balance-icon {
+            width: 16px;
+            height: 16px;
+            vertical-align: middle;
+            border: 0.3px solid #00d9ff;
+            border-radius: 4px;
+            padding: 2px;
+            margin: 4px 0;
         }
         .balance-unit { 
             font-size: 16px; 
@@ -2620,7 +2630,10 @@
                 <div class="card balance-card">
                     <p class="balance-label">Total Balance</p>
                     <div class="balance-container">
-                        <div class="balance-value">${balanceVisible ? d.balance.toFixed(2) : '••••••'}</div>
+                        <div class="balance-value">
+                            ${balanceVisible ? d.balance.toFixed(2) : '••••••'}
+                        </div>
+                        <img src="data:image/png;base64,UklGRsYDAABXRUJQVlA4WAoAAAAgAAAAHwAAHwAASUNDUMgBAAAAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADZWUDgg2AEAAFAJAJ0BKiAAIAA+USKNRCOiIZgEADgFBLYATplCPT/VXGAuyXlQPhY8mZ1kv5AK+p8/f773Bv1S/0H5XqHCiCr5zOYZk7aQhpWZYE8sENrVCOgAAP7//iIe8Jxr/7/lZ/VpAM3VwZ2rlviX90Lpvfs7/uvZBG58H24lcf/vaFepSuhUvNP7q/Wtv/lxvgu+3Pp4JcCzR5je/EY7X/JnzjsXB5pIwFgZcDBQqtcA4LKWpyx/dlg1n0k2BZjQtlX+P/qPhyX4sclGNo+vvz8d6i38aC7iAakD0RLj/NuIUa6WfvRTK36kfpxKhEtQ23zUISRJ/ISQX81wJa/57PFGdc4oIXUyUO2U+Sg3KYZvemEnXtwYf/wVRIUOi1xDo8BJ/enrjEaaWH1XBND1ZAp34ylNCV0xkpYD+vFpzwbpPfNO5OnKpYgkoRBjg6XGN5rwXz5pqOBfch3kSbBSbpEYMdEIPePiNdUaNDD14xPUTJ3zg1lYduB/+CqzOmhZPDOpRanuaOPppWGmD59+Czce1pO9m6F0CuMXJYqyf3tlZXy/HKi4//kZ1n8RQoQhC4Mf6sz/xgnfT/9uRJccCVOcKCP6FP/5ft8+Ed1sF8ONhswS8jR9fVkAAAA=" class="balance-icon" alt="ArcAstra">
                         <div class="balance-unit">ARCASTRA</div>
                         <button class="balance-toggle" onclick="toggleBalance()">
                             ${balanceVisible ? `
