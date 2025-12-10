@@ -831,6 +831,52 @@
             object-fit: cover;
         }
         
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 26px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background: linear-gradient(135deg, #00ffff, #0096ff);
+            border-color: rgba(0, 255, 255, 0.5);
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+        
         .avatar-change-btn {
             position: absolute;
             bottom: 0;
@@ -1692,7 +1738,7 @@
             <div class="menu-item" onclick="viewRoadmap()">View Roadmap</div>
             <div class="menu-item" onclick="viewWhitepaper()">Whitepaper</div>
             <div class="menu-item" onclick="openPage('announcements')">Announcements</div>
-            <div class="menu-item" onclick="openPage('menu6')">Menü 6</div>
+            <div class="menu-item" onclick="openPage('settings')">Settings</div>
         </div>
         <div style="padding: 10px;">
             <button class="profile-action-btn profile-logout-btn" onclick="logout()" style="width: 100%;">🚪 Logout</button>
@@ -2142,7 +2188,7 @@
                 refCode: newRefCode,
                 referredBy: referredBy, // Who referred this user
                 balance: 0,
-                rate: 1.0 + referralBonus,
+                rate: 0.25 + referralBonus,
                 level: 1,
                 refs: 0,
                 streak: 0,
@@ -2258,10 +2304,64 @@
             20: {coins: 10000, rate: 0.25}
         };
         
+        function requestNotificationPermission() {
+            // Check if notifications are supported and enabled in settings
+            if (!('Notification' in window)) {
+                return; // Browser doesn't support notifications
+            }
+            
+            const notificationsEnabled = localStorage.getItem('notificationsEnabled') !== 'false';
+            if (!notificationsEnabled) {
+                return; // User disabled notifications in settings
+            }
+            
+            // Request permission if not already granted
+            if (Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+        }
+        
+        function sendMiningCompleteNotification() {
+            // Check if notifications are enabled and permitted
+            const notificationsEnabled = localStorage.getItem('notificationsEnabled') !== 'false';
+            
+            if (!notificationsEnabled || !('Notification' in window) || Notification.permission !== 'granted') {
+                return;
+            }
+            
+            // Create notification
+            const notification = new Notification('⛏️ Mining Complete!', {
+                body: 'Your mining session has ended. Start mining again!',
+                icon: '/favicon.ico', // You can replace with your app icon
+                badge: '/favicon.ico',
+                tag: 'mining-complete',
+                requireInteraction: false,
+                silent: false
+            });
+            
+            // Open app when notification is clicked
+            notification.onclick = function() {
+                window.focus();
+                notification.close();
+            };
+        }
+        
         function initApp() {
+            // Normalize rate to 0.25 for all users (migration)
+            let normalizedRate = currentUser.rate || 0.25;
+            if (normalizedRate > 0.25) {
+                normalizedRate = 0.25;
+                // Update in users object
+                const users = JSON.parse(localStorage.getItem('users') || '{}');
+                if (users[currentUser.email]) {
+                    users[currentUser.email].rate = 0.25;
+                    localStorage.setItem('users', JSON.stringify(users));
+                }
+            }
+            
             d = {
                 balance: currentUser.balance || 0,
-                rate: currentUser.rate || 1.0,
+                rate: normalizedRate,
                 level: currentUser.level || 1,
                 refs: currentUser.refs || 0,
                 activeRefs: 0,
@@ -2287,6 +2387,9 @@
             if (savedBalanceVisible !== null) {
                 balanceVisible = savedBalanceVisible === 'true';
             }
+            
+            // Request notification permission
+            requestNotificationPermission();
             
             checkMining();
             render();
@@ -2448,7 +2551,7 @@
                             <p class="timer-time">${fmt(d.timeLeft)}</p>
                             <p class="timer-label">Time Remaining</p>
                             <div class="earning-box">
-                                <p class="earning-text">Earning: <span class="earning-amount">${(d.rate * 6).toFixed(2)} <span style="font-size: 14px;">ARCASTRA</span></span></p>
+                                <p class="earning-text">Earning: <span class="earning-amount">6.00 <span style="font-size: 14px;">ARCASTRA</span></span></p>
                             </div>
                         </div>
                     `}
@@ -2616,13 +2719,16 @@
             d.mining = false;
             d.timeLeft = 0;
             localStorage.removeItem('miningEndTime_' + currentUser.email);
-            d.balance += d.rate * 6;
+            d.balance += 6; // Fixed 6 ARCASTRA per 24h mining
             d.miningDays++;
             dailyRewardAvailable = true;
             
             save();
             checkLevelUp();
             render();
+            
+            // Send notification
+            sendMiningCompleteNotification();
         }
         
         function claimDailyReward() {
@@ -3218,6 +3324,10 @@
                     pageTitle.textContent = 'Menü 4';
                     pageContent.innerHTML = '<div class="card"><h2 style="color: white; text-align: center;">Menü 4 İçeriği</h2><p style="color: #c4b5fd; text-align: center; margin-top: 10px;">Bu sayfa için içerik yakında eklenecek.</p></div>';
                     break;
+                case 'settings':
+                    pageTitle.textContent = 'Settings';
+                    pageContent.innerHTML = getSettingsPageContent();
+                    break;
                 case 'menu5':
                     pageTitle.textContent = 'Menü 5';
                     pageContent.innerHTML = '<div class="card"><h2 style="color: white; text-align: center;">Menü 5 İçeriği</h2><p style="color: #c4b5fd; text-align: center; margin-top: 10px;">Bu sayfa için içerik yakında eklenecek.</p></div>';
@@ -3266,6 +3376,145 @@
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const year = date.getFullYear();
             return `${day}/${month}/${year}`;
+        }
+        
+        function getSettingsPageContent() {
+            // Get current settings from localStorage
+            const notificationsEnabled = localStorage.getItem('notificationsEnabled') !== 'false';
+            const soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
+            const autoMiningEnabled = localStorage.getItem('autoMiningEnabled') === 'true';
+            const language = localStorage.getItem('language') || 'en';
+            const theme = localStorage.getItem('theme') || 'dark';
+            
+            return `
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    
+                    <!-- General Settings -->
+                    <div>
+                        <div style="font-size: 14px; color: #8b5cf6; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">General</div>
+                        
+                        <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 14px; margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="color: white; font-weight: 700; font-size: 15px; margin-bottom: 4px;">Language</div>
+                                    <div style="color: #8b5cf6; font-size: 13px;">Select your preferred language</div>
+                                </div>
+                                <select id="languageSelect" onchange="changeLanguage(this.value)" style="background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(0, 255, 255, 0.3); border-radius: 8px; padding: 8px 12px; color: white; font-weight: 600; cursor: pointer;">
+                                    <option value="en" ${language === 'en' ? 'selected' : ''}>English</option>
+                                    <option value="tr" ${language === 'tr' ? 'selected' : ''}>Türkçe</option>
+                                    <option value="es" ${language === 'es' ? 'selected' : ''}>Español</option>
+                                    <option value="fr" ${language === 'fr' ? 'selected' : ''}>Français</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 14px; margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="color: white; font-weight: 700; font-size: 15px; margin-bottom: 4px;">Theme</div>
+                                    <div style="color: #8b5cf6; font-size: 13px;">Choose your theme</div>
+                                </div>
+                                <select id="themeSelect" onchange="changeTheme(this.value)" style="background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(0, 255, 255, 0.3); border-radius: 8px; padding: 8px 12px; color: white; font-weight: 600; cursor: pointer;">
+                                    <option value="dark" ${theme === 'dark' ? 'selected' : ''}>Dark</option>
+                                    <option value="light" ${theme === 'light' ? 'selected' : ''}>Light (Coming Soon)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Notifications -->
+                    <div>
+                        <div style="font-size: 14px; color: #8b5cf6; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Notifications</div>
+                        
+                        <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 14px; margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="color: white; font-weight: 700; font-size: 15px; margin-bottom: 4px;">Push Notifications</div>
+                                    <div style="color: #8b5cf6; font-size: 13px;">Get notified about important updates</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="notificationsToggle" ${notificationsEnabled ? 'checked' : ''} onchange="toggleNotifications(this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 14px; margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="color: white; font-weight: 700; font-size: 15px; margin-bottom: 4px;">Sound Effects</div>
+                                    <div style="color: #8b5cf6; font-size: 13px;">Enable sound for actions</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="soundToggle" ${soundEnabled ? 'checked' : ''} onchange="toggleSound(this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Mining Settings -->
+                    <div>
+                        <div style="font-size: 14px; color: #8b5cf6; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Mining</div>
+                        
+                        <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 14px; margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="color: white; font-weight: 700; font-size: 15px; margin-bottom: 4px;">Auto Mining</div>
+                                    <div style="color: #8b5cf6; font-size: 13px;">Automatically start mining after completion</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="autoMiningToggle" ${autoMiningEnabled ? 'checked' : ''} onchange="toggleAutoMining(this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- About -->
+                    <div>
+                        <div style="font-size: 14px; color: #8b5cf6; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">About</div>
+                        
+                        <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 14px; text-align: center;">
+                            <div style="color: white; font-weight: 800; font-size: 18px; margin-bottom: 8px;">Arc Astra</div>
+                            <div style="color: #8b5cf6; font-size: 13px; margin-bottom: 4px;">Version 1.0.0</div>
+                            <div style="color: #666; font-size: 12px;">© 2024 Arc Astra. All rights reserved.</div>
+                        </div>
+                    </div>
+                    
+                </div>
+            `;
+        }
+        
+        function changeLanguage(lang) {
+            localStorage.setItem('language', lang);
+            showToast('🌐 Language changed to ' + lang.toUpperCase());
+            // TODO: Implement language switching logic
+        }
+        
+        function changeTheme(theme) {
+            if (theme === 'light') {
+                showToast('💡 Light theme coming soon!');
+                document.getElementById('themeSelect').value = 'dark';
+                return;
+            }
+            localStorage.setItem('theme', theme);
+            showToast('🎨 Theme changed to ' + theme);
+        }
+        
+        function toggleNotifications(enabled) {
+            localStorage.setItem('notificationsEnabled', enabled);
+            showToast(enabled ? '🔔 Notifications enabled' : '🔕 Notifications disabled');
+        }
+        
+        function toggleSound(enabled) {
+            localStorage.setItem('soundEnabled', enabled);
+            showToast(enabled ? '🔊 Sound enabled' : '🔇 Sound disabled');
+        }
+        
+        function toggleAutoMining(enabled) {
+            localStorage.setItem('autoMiningEnabled', enabled);
+            showToast(enabled ? '⚡ Auto mining enabled' : '⏸️ Auto mining disabled');
         }
         
         function getAnnouncementsPageContent() {
