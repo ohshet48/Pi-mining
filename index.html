@@ -2447,6 +2447,12 @@
         let dailyRewardAvailable = false;
         let hasPendingAirdrops = false;
         
+        // Claiming locks to prevent double-claims
+        let isClaimingLevel = false;
+        let isClaimingReferral = false;
+        let isClaimingDaily = false;
+        let isClaimingAirdrop = false;
+        
         // Level system data
         const levelRequirements = {
             1: 0, 2: 5, 3: 10, 4: 15, 5: 20, 6: 30, 7: 40, 8: 50, 9: 60, 10: 75,
@@ -2651,29 +2657,38 @@
         }
         
         function claimLevelReward() {
+            // Prevent double-claiming
+            if (isClaimingLevel) return;
             if (!d.pendingLevelUp) return;
-            if (d.pendingLevelUp > 20) return; // Safety check: no rewards beyond level 20
+            if (d.pendingLevelUp > 20) return;
             
             const reward = levelRewards[d.pendingLevelUp];
-            if (!reward) return; // Safety check: reward must exist
+            if (!reward) return;
             
-            d.balance += reward.coins;
-            // d.rate += reward.rate; // REMOVED: No longer giving MR rewards from levels
-            const claimedLevel = d.pendingLevelUp;
-            d.level = d.pendingLevelUp;
-            d.pendingLevelUp = null;
+            // Set lock
+            isClaimingLevel = true;
             
-            save();
-            
-            // Show success message
-            showToast(`✓ Claimed Level ${claimedLevel} reward: +${reward.coins} Coins!`);
-            
-            // Check if ready for next level (only if not at max)
-            if (d.level < 20) {
-                checkLevelUp();
+            try {
+                d.balance += reward.coins;
+                const claimedLevel = d.pendingLevelUp;
+                d.level = d.pendingLevelUp;
+                d.pendingLevelUp = null;
+                
+                save();
+                
+                showToast(`✓ Claimed Level ${claimedLevel} reward: +${reward.coins} Coins!`);
+                
+                if (d.level < 20) {
+                    checkLevelUp();
+                }
+                
+                render();
+            } finally {
+                // Release lock after a delay to prevent rapid re-claims
+                setTimeout(() => {
+                    isClaimingLevel = false;
+                }, 1000);
             }
-            
-            render();
         }
 
         function fmt(s) {
@@ -2943,14 +2958,26 @@
         }
         
         function claimDailyReward() {
+            // Prevent double-claiming
+            if (isClaimingDaily) return;
             if (!dailyRewardAvailable) return;
             
-            d.balance += 5;
-            dailyRewardAvailable = false;
+            // Set lock
+            isClaimingDaily = true;
             
-            save();
-            showToast('✓ Daily reward claimed: +5 Coins!');
-            render();
+            try {
+                d.balance += 5;
+                dailyRewardAvailable = false;
+                
+                save();
+                showToast('✓ Daily reward claimed: +5 Coins!');
+                render();
+            } finally {
+                // Release lock after delay
+                setTimeout(() => {
+                    isClaimingDaily = false;
+                }, 1000);
+            }
         }
 
         function claimBonus() {
@@ -3829,84 +3856,105 @@
         }
         
         function claimAirdrop(index) {
+            // Prevent double-claiming
+            if (isClaimingAirdrop) return;
+            
             const userEmail = localStorage.getItem('currentUser');
             let users = JSON.parse(localStorage.getItem('users')) || {};
             
-            if (!users[userEmail] || !users[userEmail].pendingAirdrops) {
+            if (!users[userEmail] || !users[userEmail].pendingAirdrops || !users[userEmail].pendingAirdrops[index]) {
                 showToast('❌ Airdrop not found', true);
                 return;
             }
             
-            const airdrop = users[userEmail].pendingAirdrops[index];
+            // Set lock
+            isClaimingAirdrop = true;
             
-            if (!airdrop) {
-                showToast('❌ Airdrop not found', true);
-                return;
+            try {
+                const airdrop = users[userEmail].pendingAirdrops[index];
+                
+                // Add to balance
+                users[userEmail].balance = (users[userEmail].balance || 0) + airdrop.amount;
+                
+                // Remove from pending airdrops
+                users[userEmail].pendingAirdrops.splice(index, 1);
+                
+                // Save to localStorage
+                localStorage.setItem('users', JSON.stringify(users));
+                
+                // Update current user
+                currentUser = users[userEmail];
+                
+                // Update hasPendingAirdrops
+                hasPendingAirdrops = (currentUser.pendingAirdrops && currentUser.pendingAirdrops.length > 0) || false;
+                
+                // Show success message
+                showToast(`✓ Claimed ${airdrop.amount} Coins!`);
+                
+                // Refresh page content
+                openPage('airdrop');
+                
+                // Update main screen to refresh green indicators
+                render();
+            } finally {
+                // Release lock after delay
+                setTimeout(() => {
+                    isClaimingAirdrop = false;
+                }, 1000);
             }
-            
-            // Add to balance
-            users[userEmail].balance = (users[userEmail].balance || 0) + airdrop.amount;
-            
-            // Remove from pending airdrops
-            users[userEmail].pendingAirdrops.splice(index, 1);
-            
-            // Save to localStorage
-            localStorage.setItem('users', JSON.stringify(users));
-            
-            // Update current user
-            currentUser = users[userEmail];
-            
-            // Update hasPendingAirdrops
-            hasPendingAirdrops = (currentUser.pendingAirdrops && currentUser.pendingAirdrops.length > 0) || false;
-            
-            // Show success message
-            showToast(`✓ Claimed ${airdrop.amount.toFixed(3)} AA!`);
-            
-            // Refresh page content
-            openPage('airdrop');
-            
-            // Update main screen to refresh green indicators
-            render();
         }
         
         function claimReferralEarnings() {
+            // Prevent double-claiming
+            if (isClaimingReferral) return;
+            
             const userEmail = localStorage.getItem('currentUser');
             let users = JSON.parse(localStorage.getItem('users')) || {};
             
-            if (!users[userEmail] || !users[userEmail].pendingReferralEarnings) {
+            if (!users[userEmail] || !users[userEmail].pendingReferralEarnings || users[userEmail].pendingReferralEarnings === 0) {
                 showToast('❌ No earnings to claim', true);
                 return;
             }
             
-            const earnings = users[userEmail].pendingReferralEarnings;
-            const referralCount = users[userEmail].pendingReferralCount || 0;
-            const mrReward = referralCount * 0.05; // 0.05 MR per referral
+            // Set lock
+            isClaimingReferral = true;
             
-            // Add coins to balance
-            users[userEmail].balance = (users[userEmail].balance || 0) + earnings;
-            
-            // Add MR to rate
-            users[userEmail].rate = (users[userEmail].rate || 0.25) + mrReward;
-            
-            // Reset pending earnings and count
-            users[userEmail].pendingReferralEarnings = 0;
-            users[userEmail].pendingReferralCount = 0;
-            
-            // Save to localStorage
-            localStorage.setItem('users', JSON.stringify(users));
-            
-            // Update current user and d object
-            currentUser = users[userEmail];
-            d.balance = currentUser.balance;
-            d.rate = currentUser.rate;
-            d.pendingReferralEarnings = 0;
-            d.pendingReferralCount = 0;
-            
-            // Show success message
-            showToast(`✓ Claimed ${earnings} Coins + ${mrReward.toFixed(2)} MR from referrals!`);
-            
-            // Refresh main screen
-            render();
+            try {
+                const earnings = users[userEmail].pendingReferralEarnings;
+                const referralCount = users[userEmail].pendingReferralCount || 0;
+                const mrReward = referralCount * 0.05;
+                
+                // Add coins to balance
+                users[userEmail].balance = (users[userEmail].balance || 0) + earnings;
+                
+                // Add MR to rate
+                users[userEmail].rate = (users[userEmail].rate || 0.25) + mrReward;
+                
+                // Reset pending earnings and count
+                users[userEmail].pendingReferralEarnings = 0;
+                users[userEmail].pendingReferralCount = 0;
+                
+                // Save to localStorage
+                localStorage.setItem('users', JSON.stringify(users));
+                
+                // Update current user and d object
+                currentUser = users[userEmail];
+                d.balance = currentUser.balance;
+                d.rate = currentUser.rate;
+                d.pendingReferralEarnings = 0;
+                d.pendingReferralCount = 0;
+                
+                // Show success message
+                showToast(`✓ Claimed ${earnings} Coins + ${mrReward.toFixed(2)} MR from referrals!`);
+                
+                // Refresh main screen
+                render();
+            } finally {
+                // Release lock after delay
+                setTimeout(() => {
+                    isClaimingReferral = false;
+                }, 1000);
+            }
         }
         
         function getProfilePageContent() {
