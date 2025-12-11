@@ -591,6 +591,17 @@
             border-radius: 2px;
         }
         
+        .menu-btn-highlight {
+            background: 
+                linear-gradient(rgba(10, 20, 40, 0.85), rgba(10, 20, 40, 0.85)) padding-box,
+                linear-gradient(145deg, #10b981, #059669) border-box !important;
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.5) !important;
+        }
+        
+        .menu-btn-highlight span {
+            background: linear-gradient(135deg, #10b981, #059669) !important;
+        }
+        
         /* Menu Sidebar */
         .menu-sidebar {
             position: fixed;
@@ -683,6 +694,17 @@
         
         .menu-item:active {
             transform: scale(0.98);
+        }
+        
+        .menu-item-highlight {
+            background: rgba(16, 185, 129, 0.2) !important;
+            border-color: #10b981 !important;
+            color: #10b981 !important;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.3) !important;
+        }
+        
+        .menu-item-highlight:hover {
+            background: rgba(16, 185, 129, 0.3) !important;
         }
         
         .menu-overlay {
@@ -1625,7 +1647,7 @@
             font-size: 13px;
             font-weight: 800;
             cursor: pointer;
-            margin-top: 5px;
+            margin-top: 4px;
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
             display: flex;
             align-items: center;
@@ -1853,7 +1875,7 @@
         <div class="menu-items">
             <div class="menu-item" onclick="openPage('profile')">Profile</div>
             <div class="menu-item" onclick="openPage('announcements')">Announcements</div>
-            <div class="menu-item" onclick="openPage('airdrop')">Airdrop</div>
+            <div class="menu-item" id="airdropMenuItem" onclick="openPage('airdrop')">Airdrop</div>
             <div class="menu-item menu-item-disabled">
                 <span>KYC</span>
                 <span style="font-size: 11px; color: #666; margin-left: 8px;">Coming Soon</span>
@@ -2423,6 +2445,7 @@
         let d = {};
         let balanceVisible = true;
         let dailyRewardAvailable = false;
+        let hasPendingAirdrops = false;
         
         // Level system data
         const levelRequirements = {
@@ -2523,10 +2546,27 @@
             if (!d.pendingLevelUp) {
                 d.pendingLevelUp = d.level + 1; // Test pending level up
             }
+            if (!currentUser.pendingAirdrops || currentUser.pendingAirdrops.length === 0) {
+                currentUser.pendingAirdrops = [{
+                    title: "Welcome Bonus",
+                    description: "Thank you for joining Arc Astra!",
+                    amount: 100.500,
+                    date: new Date().toISOString()
+                }];
+                // Save to localStorage
+                const users = JSON.parse(localStorage.getItem('users') || '{}');
+                if (users[currentUser.email]) {
+                    users[currentUser.email].pendingAirdrops = currentUser.pendingAirdrops;
+                    localStorage.setItem('users', JSON.stringify(users));
+                }
+            }
             // END TEST DATA
             
             // Calculate active mining referrals
             d.activeRefs = calculateActiveRefs();
+            
+            // Check for pending airdrops
+            hasPendingAirdrops = (currentUser.pendingAirdrops && currentUser.pendingAirdrops.length > 0) || false;
             
             dailyRewardAvailable = currentUser.dailyRewardAvailable || false;
             
@@ -2651,7 +2691,7 @@
                     <div class="welcome-card">
                         <span class="welcome-text">Welcome, </span><span class="username-text">${currentUser.username}!</span>
                     </div>
-                    <button class="menu-btn" onclick="toggleMenu()">
+                    <button class="menu-btn" id="menuButton" onclick="toggleMenu()">
                         <span></span>
                         <span></span>
                         <span></span>
@@ -2733,7 +2773,7 @@
                                     <p style="font-size: 12px; font-weight: 700; line-height: 1.3; color: white; margin-bottom: 0;">🎉 Congratulations!<br>You reached Level ${d.pendingLevelUp}</p>
                                     <p style="font-size: 11px; font-weight: 700; line-height: 1.3; color: #00ffff; margin-top: 6px; margin-bottom: 0;">+${levelRewards[d.pendingLevelUp].coins} Coins + ${levelRewards[d.pendingLevelUp].rate} MR earned</p>
                                 </div>
-                                <button class="claim-btn" onclick="claimLevelReward()" style="margin-top: 33px;">CLAIM REWARD</button>
+                                <button class="claim-btn" onclick="claimLevelReward()" style="margin-top: 26px;">CLAIM REWARD</button>
                             </div>
                         ` : `
                             <div class="stat-top">
@@ -2758,7 +2798,7 @@
                             <div style="text-align: center; padding: 22px 8px 12px;">
                                 <div style="color: white; font-size: 12px; font-weight: 700; margin-bottom: 6px; line-height: 1.3;">🎉 Congratulations!<br>Referral rewards from ${d.pendingReferralCount} ${d.pendingReferralCount === 1 ? 'friend' : 'friends'}</div>
                                 <div style="color: #00ffff; font-size: 18px; font-weight: 900; margin-bottom: 8px;">${d.pendingReferralEarnings.toFixed(3)} AA</div>
-                                <button onclick="claimReferralEarnings()" style="width: 100%; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 8px; padding: 8px; color: white; font-size: 13px; font-weight: 800; cursor: pointer;">
+                                <button onclick="claimReferralEarnings()" style="width: 100%; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 8px; padding: 8px; color: white; font-size: 13px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);">
                                     CLAIM REWARD
                                 </button>
                             </div>
@@ -2806,22 +2846,6 @@
                                     
                                     <!-- Bow Center -->
                                     <circle cx="50" cy="35" r="5" stroke="#00d4d4" stroke-width="3" fill="none"/>
-                                    
-                                    <!-- Sparkles (when available) -->
-                                    ${dailyRewardAvailable ? `
-                                    <line x1="15" y1="25" x2="15" y2="25" stroke="#00ffff" stroke-width="2" stroke-linecap="round">
-                                        <animate attributeName="y1" values="25;20;25" dur="1.5s" repeatCount="indefinite"/>
-                                        <animate attributeName="y2" values="25;30;25" dur="1.5s" repeatCount="indefinite"/>
-                                    </line>
-                                    <line x1="85" y1="30" x2="85" y2="30" stroke="#00ffff" stroke-width="2" stroke-linecap="round">
-                                        <animate attributeName="y1" values="30;25;30" dur="1.5s" repeatCount="indefinite" begin="0.5s"/>
-                                        <animate attributeName="y2" values="30;35;30" dur="1.5s" repeatCount="indefinite" begin="0.5s"/>
-                                    </line>
-                                    <line x1="20" y1="80" x2="20" y2="80" stroke="#00ffff" stroke-width="2" stroke-linecap="round">
-                                        <animate attributeName="y1" values="80;75;80" dur="1.5s" repeatCount="indefinite" begin="1s"/>
-                                        <animate attributeName="y2" values="80;85;80" dur="1.5s" repeatCount="indefinite" begin="1s"/>
-                                    </line>
-                                    ` : ''}
                                 </svg>
                             </div>
                             ${dailyRewardAvailable ? `
@@ -2856,6 +2880,18 @@
                     <p class="footer-text">⚠️ This is a demo application. Not real cryptocurrency.</p>
                 </div>
             `;
+            
+            // Update Airdrop menu item and hamburger button based on pending airdrops
+            const airdropMenuItem = document.getElementById('airdropMenuItem');
+            const menuButton = document.getElementById('menuButton');
+            
+            if (hasPendingAirdrops) {
+                if (airdropMenuItem) airdropMenuItem.classList.add('menu-item-highlight');
+                if (menuButton) menuButton.classList.add('menu-btn-highlight');
+            } else {
+                if (airdropMenuItem) airdropMenuItem.classList.remove('menu-item-highlight');
+                if (menuButton) menuButton.classList.remove('menu-btn-highlight');
+            }
         }
 
         function startMine() {
