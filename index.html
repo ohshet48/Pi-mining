@@ -1876,7 +1876,7 @@
             <div class="menu-item" onclick="openPage('profile')">Profile</div>
             <div class="menu-item" onclick="openPage('announcements')">Announcements</div>
             <div class="menu-item" id="airdropMenuItem" onclick="openPage('airdrop')">Airdrop</div>
-            <div class="menu-item" onclick="openPage('leaderboard')">🏆 Leaderboard</div>
+            <div class="menu-item" onclick="openPage('leaderboard')">Leaderboard</div>
             <div class="menu-item menu-item-disabled">
                 <span>KYC</span>
                 <span style="font-size: 11px; color: #666; margin-left: 8px;">Coming Soon</span>
@@ -3519,7 +3519,7 @@
                     pageContent.innerHTML = getAirdropPageContent();
                     break;
                 case 'leaderboard':
-                    pageTitle.textContent = '🏆 Leaderboard';
+                    pageTitle.textContent = 'Leaderboard';
                     pageContent.innerHTML = getLeaderboardPageContent();
                     break;
                 case 'menu2':
@@ -3931,7 +3931,78 @@
             
             let html = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <div style="color: white; font-size: 18px; font-weight: 800;">🏆 Leaderboard</div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <svg width="28" height="28" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Shadow -->
+                            <ellipse cx="50" cy="115" rx="30" ry="4" fill="#000" opacity="0.3"/>
+                            
+                            <!-- Base -->
+                            <rect x="35" y="95" width="30" height="15" rx="2" fill="url(#trophyBase)" stroke="#8B6914" stroke-width="1"/>
+                            <rect x="30" y="90" width="40" height="5" rx="1" fill="url(#trophyPlate)" stroke="#DAA520" stroke-width="0.5"/>
+                            
+                            <!-- Stem -->
+                            <rect x="45" y="70" width="10" height="20" fill="url(#trophyStem)" stroke="#B8860B" stroke-width="0.5"/>
+                            
+                            <!-- Cup body -->
+                            <path d="M25 70 Q25 40 30 30 L70 30 Q75 40 75 70 Z" fill="url(#trophyCup)" stroke="#DAA520" stroke-width="1.5"/>
+                            
+                            <!-- Cup rim -->
+                            <ellipse cx="50" cy="30" rx="20" ry="4" fill="url(#trophyRim)" stroke="#B8860B" stroke-width="0.5"/>
+                            
+                            <!-- Inner shadow -->
+                            <path d="M30 32 Q35 35 40 32" fill="#000" opacity="0.2"/>
+                            <path d="M60 32 Q65 35 70 32" fill="#000" opacity="0.2"/>
+                            
+                            <!-- Left handle -->
+                            <path d="M25 45 Q15 45 12 55 Q15 65 25 65" fill="none" stroke="url(#handleGrad)" stroke-width="4" stroke-linecap="round"/>
+                            <path d="M25 45 Q15 45 12 55 Q15 65 25 65" fill="none" stroke="#DAA520" stroke-width="2.5" stroke-linecap="round"/>
+                            
+                            <!-- Right handle -->
+                            <path d="M75 45 Q85 45 88 55 Q85 65 75 65" fill="none" stroke="url(#handleGrad)" stroke-width="4" stroke-linecap="round"/>
+                            <path d="M75 45 Q85 45 88 55 Q85 65 75 65" fill="none" stroke="#DAA520" stroke-width="2.5" stroke-linecap="round"/>
+                            
+                            <!-- Shine highlights -->
+                            <path d="M35 40 Q40 38 45 40" stroke="#FFF" stroke-width="2" opacity="0.6" stroke-linecap="round"/>
+                            <ellipse cx="38" cy="45" rx="3" ry="5" fill="#FFF" opacity="0.3"/>
+                            <path d="M55 50 Q58 48 60 50" stroke="#FFF" stroke-width="1.5" opacity="0.5" stroke-linecap="round"/>
+                            
+                            <!-- Star decoration -->
+                            <path d="M50 50 L51 53 L54 53 L52 55 L53 58 L50 56 L47 58 L48 55 L46 53 L49 53 Z" fill="#FFF" opacity="0.4"/>
+                            
+                            <defs>
+                                <linearGradient id="trophyBase" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" stop-color="#8B6914"/>
+                                    <stop offset="100%" stop-color="#654321"/>
+                                </linearGradient>
+                                <linearGradient id="trophyPlate" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" stop-color="#FFD700"/>
+                                    <stop offset="50%" stop-color="#DAA520"/>
+                                    <stop offset="100%" stop-color="#B8860B"/>
+                                </linearGradient>
+                                <linearGradient id="trophyStem" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#DAA520"/>
+                                    <stop offset="50%" stop-color="#FFD700"/>
+                                    <stop offset="100%" stop-color="#DAA520"/>
+                                </linearGradient>
+                                <radialGradient id="trophyCup">
+                                    <stop offset="0%" stop-color="#FFF8DC"/>
+                                    <stop offset="30%" stop-color="#FFD700"/>
+                                    <stop offset="70%" stop-color="#FFA500"/>
+                                    <stop offset="100%" stop-color="#DAA520"/>
+                                </radialGradient>
+                                <radialGradient id="trophyRim">
+                                    <stop offset="0%" stop-color="#FFFACD"/>
+                                    <stop offset="100%" stop-color="#DAA520"/>
+                                </radialGradient>
+                                <linearGradient id="handleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#B8860B"/>
+                                    <stop offset="50%" stop-color="#FFD700"/>
+                                    <stop offset="100%" stop-color="#B8860B"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <div style="color: white; font-size: 18px; font-weight: 800;">Leaderboard</div>
+                    </div>
                     <div style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 6px; padding: 4px 8px;">
                         <div style="color: rgba(255, 255, 255, 0.5); font-size: 9px; font-weight: 600; text-align: center;">Updates daily at 00:00 UTC</div>
                     </div>
@@ -3985,22 +4056,162 @@
                 const isCurrentUser = user.email === currentEmail;
                 const isMedal = rank <= 3;
                 
-                let medalEmoji = '';
-                let borderColor = 'rgba(0, 255, 255, 0.2)';
-                let bgGradient = 'rgba(0, 0, 0, 0.3)';
+                let medalSVG = '';
                 
                 if (rank === 1) {
-                    medalEmoji = '🥇';
-                    borderColor = '#FFD700';
-                    bgGradient = 'linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 215, 0, 0.05))';
+                    // Gold Medal - 3D with shine and shadows
+                    medalSVG = `<svg width="32" height="32" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Ribbon -->
+                        <path d="M35 5 L40 35 L50 30 L60 35 L65 5 L60 8 L50 3 L40 8 Z" fill="url(#ribbon1)" stroke="#8B0000" stroke-width="0.5"/>
+                        
+                        <!-- Shadow under medal -->
+                        <ellipse cx="50" cy="115" rx="25" ry="4" fill="#000" opacity="0.3"/>
+                        
+                        <!-- Outer ring - dark edge -->
+                        <circle cx="50" cy="70" r="32" fill="url(#goldDark)"/>
+                        
+                        <!-- Main medal body -->
+                        <circle cx="50" cy="70" r="28" fill="url(#goldMedal)" stroke="#B8860B" stroke-width="1.5"/>
+                        
+                        <!-- Inner decorative ring -->
+                        <circle cx="50" cy="70" r="24" fill="none" stroke="url(#goldRing)" stroke-width="2"/>
+                        
+                        <!-- Center circle -->
+                        <circle cx="50" cy="70" r="18" fill="url(#goldCenter)"/>
+                        
+                        <!-- Number 1 -->
+                        <text x="50" y="80" font-family="Arial Black" font-size="24" font-weight="bold" fill="url(#goldText)" text-anchor="middle" stroke="#8B6914" stroke-width="0.5">1</text>
+                        
+                        <!-- Shine effect top left -->
+                        <path d="M30 52 Q35 50 40 52 Q35 54 30 52" fill="#FFF" opacity="0.6"/>
+                        <circle cx="32" cy="54" r="3" fill="#FFF" opacity="0.5"/>
+                        
+                        <!-- Bottom shadow inside -->
+                        <path d="M50 88 Q35 85 30 78" fill="#000" opacity="0.2"/>
+                        
+                        <!-- Star decorations -->
+                        <path d="M50 52 L51 55 L54 55 L52 57 L53 60 L50 58 L47 60 L48 57 L46 55 L49 55 Z" fill="#FFF" opacity="0.4"/>
+                        
+                        <defs>
+                            <linearGradient id="ribbon1" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#DC143C"/>
+                                <stop offset="100%" stop-color="#8B0000"/>
+                            </linearGradient>
+                            <radialGradient id="goldDark">
+                                <stop offset="70%" stop-color="#DAA520"/>
+                                <stop offset="100%" stop-color="#8B6914"/>
+                            </radialGradient>
+                            <radialGradient id="goldMedal">
+                                <stop offset="0%" stop-color="#FFF8DC"/>
+                                <stop offset="30%" stop-color="#FFD700"/>
+                                <stop offset="70%" stop-color="#FFA500"/>
+                                <stop offset="100%" stop-color="#DAA520"/>
+                            </radialGradient>
+                            <linearGradient id="goldRing" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#FFF8DC"/>
+                                <stop offset="50%" stop-color="#DAA520"/>
+                                <stop offset="100%" stop-color="#FFF8DC"/>
+                            </linearGradient>
+                            <radialGradient id="goldCenter">
+                                <stop offset="0%" stop-color="#FFFACD"/>
+                                <stop offset="100%" stop-color="#DAA520"/>
+                            </radialGradient>
+                            <linearGradient id="goldText" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#FFF"/>
+                                <stop offset="100%" stop-color="#DAA520"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>`;
                 } else if (rank === 2) {
-                    medalEmoji = '🥈';
-                    borderColor = '#C0C0C0';
-                    bgGradient = 'linear-gradient(135deg, rgba(192, 192, 192, 0.15), rgba(192, 192, 192, 0.05))';
+                    // Silver Medal - 3D with metallic shine
+                    medalSVG = `<svg width="32" height="32" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M35 5 L40 35 L50 30 L60 35 L65 5 L60 8 L50 3 L40 8 Z" fill="url(#ribbon2)" stroke="#00008B" stroke-width="0.5"/>
+                        <ellipse cx="50" cy="115" rx="25" ry="4" fill="#000" opacity="0.3"/>
+                        <circle cx="50" cy="70" r="32" fill="url(#silverDark)"/>
+                        <circle cx="50" cy="70" r="28" fill="url(#silverMedal)" stroke="#A8A8A8" stroke-width="1.5"/>
+                        <circle cx="50" cy="70" r="24" fill="none" stroke="url(#silverRing)" stroke-width="2"/>
+                        <circle cx="50" cy="70" r="18" fill="url(#silverCenter)"/>
+                        <text x="50" y="80" font-family="Arial Black" font-size="24" font-weight="bold" fill="url(#silverText)" text-anchor="middle" stroke="#696969" stroke-width="0.5">2</text>
+                        <path d="M30 52 Q35 50 40 52 Q35 54 30 52" fill="#FFF" opacity="0.8"/>
+                        <circle cx="32" cy="54" r="3" fill="#FFF" opacity="0.7"/>
+                        <path d="M50 88 Q35 85 30 78" fill="#000" opacity="0.2"/>
+                        <path d="M50 52 L51 55 L54 55 L52 57 L53 60 L50 58 L47 60 L48 57 L46 55 L49 55 Z" fill="#FFF" opacity="0.6"/>
+                        
+                        <defs>
+                            <linearGradient id="ribbon2" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#4169E1"/>
+                                <stop offset="100%" stop-color="#00008B"/>
+                            </linearGradient>
+                            <radialGradient id="silverDark">
+                                <stop offset="70%" stop-color="#C0C0C0"/>
+                                <stop offset="100%" stop-color="#696969"/>
+                            </radialGradient>
+                            <radialGradient id="silverMedal">
+                                <stop offset="0%" stop-color="#FFFFFF"/>
+                                <stop offset="30%" stop-color="#E8E8E8"/>
+                                <stop offset="70%" stop-color="#C0C0C0"/>
+                                <stop offset="100%" stop-color="#A8A8A8"/>
+                            </radialGradient>
+                            <linearGradient id="silverRing" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#FFF"/>
+                                <stop offset="50%" stop-color="#A8A8A8"/>
+                                <stop offset="100%" stop-color="#FFF"/>
+                            </linearGradient>
+                            <radialGradient id="silverCenter">
+                                <stop offset="0%" stop-color="#F5F5F5"/>
+                                <stop offset="100%" stop-color="#C0C0C0"/>
+                            </radialGradient>
+                            <linearGradient id="silverText" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#FFF"/>
+                                <stop offset="100%" stop-color="#A8A8A8"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>`;
                 } else if (rank === 3) {
-                    medalEmoji = '🥉';
-                    borderColor = '#CD7F32';
-                    bgGradient = 'linear-gradient(135deg, rgba(205, 127, 50, 0.15), rgba(205, 127, 50, 0.05))';
+                    // Bronze Medal - 3D with warm tones
+                    medalSVG = `<svg width="32" height="32" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M35 5 L40 35 L50 30 L60 35 L65 5 L60 8 L50 3 L40 8 Z" fill="url(#ribbon3)" stroke="#006400" stroke-width="0.5"/>
+                        <ellipse cx="50" cy="115" rx="25" ry="4" fill="#000" opacity="0.3"/>
+                        <circle cx="50" cy="70" r="32" fill="url(#bronzeDark)"/>
+                        <circle cx="50" cy="70" r="28" fill="url(#bronzeMedal)" stroke="#8B4513" stroke-width="1.5"/>
+                        <circle cx="50" cy="70" r="24" fill="none" stroke="url(#bronzeRing)" stroke-width="2"/>
+                        <circle cx="50" cy="70" r="18" fill="url(#bronzeCenter)"/>
+                        <text x="50" y="80" font-family="Arial Black" font-size="24" font-weight="bold" fill="url(#bronzeText)" text-anchor="middle" stroke="#654321" stroke-width="0.5">3</text>
+                        <path d="M30 52 Q35 50 40 52 Q35 54 30 52" fill="#FFE4B5" opacity="0.6"/>
+                        <circle cx="32" cy="54" r="3" fill="#FFE4B5" opacity="0.5"/>
+                        <path d="M50 88 Q35 85 30 78" fill="#000" opacity="0.2"/>
+                        <path d="M50 52 L51 55 L54 55 L52 57 L53 60 L50 58 L47 60 L48 57 L46 55 L49 55 Z" fill="#FFE4B5" opacity="0.4"/>
+                        
+                        <defs>
+                            <linearGradient id="ribbon3" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#32CD32"/>
+                                <stop offset="100%" stop-color="#006400"/>
+                            </linearGradient>
+                            <radialGradient id="bronzeDark">
+                                <stop offset="70%" stop-color="#B87333"/>
+                                <stop offset="100%" stop-color="#654321"/>
+                            </radialGradient>
+                            <radialGradient id="bronzeMedal">
+                                <stop offset="0%" stop-color="#FFE4C4"/>
+                                <stop offset="30%" stop-color="#CD853F"/>
+                                <stop offset="70%" stop-color="#B87333"/>
+                                <stop offset="100%" stop-color="#8B4513"/>
+                            </radialGradient>
+                            <linearGradient id="bronzeRing" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#FFE4B5"/>
+                                <stop offset="50%" stop-color="#8B4513"/>
+                                <stop offset="100%" stop-color="#FFE4B5"/>
+                            </linearGradient>
+                            <radialGradient id="bronzeCenter">
+                                <stop offset="0%" stop-color="#DEB887"/>
+                                <stop offset="100%" stop-color="#B87333"/>
+                            </radialGradient>
+                            <linearGradient id="bronzeText" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#FFE4B5"/>
+                                <stop offset="100%" stop-color="#8B4513"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>`;
                 }
                 
                 // Calculate progress
@@ -4025,7 +4236,7 @@
                         <div style="display: flex; align-items: center; justify-content: space-between;">
                             <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
                                 ${isMedal ? 
-                                    `<div style="font-size: 24px; width: 30px; text-align: center;">${medalEmoji}</div>` :
+                                    `<div style="width: 30px; display: flex; align-items: center; justify-content: center;">${medalSVG}</div>` :
                                     `<div style="color: rgba(255, 255, 255, 0.5); width: 30px; text-align: center; font-weight: 800; font-size: 14px;">#${rank}</div>`
                                 }
                                 <div style="flex: 1; min-width: 0;">
