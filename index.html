@@ -2532,37 +2532,6 @@
                 pendingReferralCount: currentUser.pendingReferralCount || 0
             };
             
-            // TEMPORARY TEST DATA - Remove in production
-            if (d.pendingReferralEarnings === 0) {
-                d.pendingReferralEarnings = 10; // Test referral earnings
-                d.pendingReferralCount = 1; // Test referral count
-                // Save to localStorage
-                const users = JSON.parse(localStorage.getItem('users') || '{}');
-                if (users[currentUser.email]) {
-                    users[currentUser.email].pendingReferralEarnings = d.pendingReferralEarnings;
-                    users[currentUser.email].pendingReferralCount = d.pendingReferralCount;
-                    localStorage.setItem('users', JSON.stringify(users));
-                }
-            }
-            if (!d.pendingLevelUp && d.level < 20) {
-                d.pendingLevelUp = d.level + 1; // Test pending level up (only if not max level)
-            }
-            if (!currentUser.pendingAirdrops || currentUser.pendingAirdrops.length === 0) {
-                currentUser.pendingAirdrops = [{
-                    title: "Welcome Bonus",
-                    description: "Thank you for joining Arc Astra!",
-                    amount: 100.500,
-                    date: new Date().toISOString()
-                }];
-                // Save to localStorage
-                const users = JSON.parse(localStorage.getItem('users') || '{}');
-                if (users[currentUser.email]) {
-                    users[currentUser.email].pendingAirdrops = currentUser.pendingAirdrops;
-                    localStorage.setItem('users', JSON.stringify(users));
-                }
-            }
-            // END TEST DATA
-            
             // Calculate active mining referrals
             d.activeRefs = calculateActiveRefs();
             
@@ -2570,12 +2539,6 @@
             hasPendingAirdrops = (currentUser.pendingAirdrops && currentUser.pendingAirdrops.length > 0) || false;
             
             dailyRewardAvailable = currentUser.dailyRewardAvailable || false;
-            
-            // TEMPORARY TEST DATA - Remove in production
-            if (!dailyRewardAvailable) {
-                dailyRewardAvailable = true; // Test daily reward as available
-            }
-            // END TEST DATA
             
             // Load balance visibility preference
             const savedBalanceVisible = localStorage.getItem('balanceVisible_' + currentUser.email);
