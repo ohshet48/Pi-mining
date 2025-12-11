@@ -1647,7 +1647,7 @@
             font-size: 13px;
             font-weight: 800;
             cursor: pointer;
-            margin-top: -4px;
+            margin-top: -7px;
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
             display: flex;
             align-items: center;
@@ -2770,7 +2770,7 @@
                         ${d.pendingLevelUp ? `
                             <div style="display: flex; flex-direction: column; text-align: center; padding: 0 8px;">
                                 <div style="margin-top: 20px;">
-                                    <p style="font-size: 12px; font-weight: 700; line-height: 1.3; color: white; margin-bottom: 0;">🎉 Congratulations!<br>You reached Level <span style="color: #fbbf24;">${d.pendingLevelUp}</span></p>
+                                    <p style="font-size: 12px; font-weight: 700; line-height: 1.3; color: white; margin-bottom: 0;">🎉 Congratulations!<br>You reached Level <span style="color: white;">${d.pendingLevelUp}!</span></p>
                                     <p style="font-size: 11px; font-weight: 600; line-height: 1.3; color: rgba(255, 255, 255, 0.6); margin-top: 6px; margin-bottom: 0;"><span style="color: #fbbf24;">+${levelRewards[d.pendingLevelUp].coins}</span> Coins<span style="color: #fbbf24;"> +${levelRewards[d.pendingLevelUp].rate}</span> MR earned</p>
                                 </div>
                                 <button class="claim-btn" onclick="claimLevelReward()" style="margin-top: 20px;">CLAIM REWARD</button>
@@ -2796,7 +2796,7 @@
                     <div class="stat ${(d.pendingReferralEarnings && d.pendingReferralEarnings > 0) ? 'reward-available' : ''}">
                         ${(d.pendingReferralEarnings && d.pendingReferralEarnings > 0) ? `
                             <div style="text-align: center; padding: 22px 8px 12px;">
-                                <div style="color: white; font-size: 12px; font-weight: 700; margin-bottom: 6px; line-height: 1.3;">🎉 Congratulations!<br>Referral rewards from <span style="color: #fbbf24;">${d.pendingReferralCount}</span> ${d.pendingReferralCount === 1 ? 'friend' : 'friends'}</div>
+                                <div style="color: white; font-size: 12px; font-weight: 700; margin-bottom: 6px; line-height: 1.3;">🎉 Congratulations!<br>Referral rewards from <span style="color: white;">${d.pendingReferralCount}</span> ${d.pendingReferralCount === 1 ? 'friend.' : 'friends.'}</div>
                                 <div style="color: #fbbf24; font-size: 16px; font-weight: 700; margin-bottom: 8px;">${d.pendingReferralEarnings.toFixed(3)} <span style="font-size: 12px; color: rgba(255, 255, 255, 0.6); font-weight: 600;">Coins</span></div>
                                 <button onclick="claimReferralEarnings()" style="width: 100%; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 8px; padding: 8px; color: white; font-size: 13px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);">
                                     CLAIM REWARD
