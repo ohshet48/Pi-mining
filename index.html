@@ -1876,6 +1876,7 @@
             <div class="menu-item" onclick="openPage('profile')">Profile</div>
             <div class="menu-item" onclick="openPage('announcements')">Announcements</div>
             <div class="menu-item" id="airdropMenuItem" onclick="openPage('airdrop')">Airdrop</div>
+            <div class="menu-item" onclick="openPage('leaderboard')">🏆 Leaderboard</div>
             <div class="menu-item menu-item-disabled">
                 <span>KYC</span>
                 <span style="font-size: 11px; color: #666; margin-left: 8px;">Coming Soon</span>
@@ -3517,6 +3518,10 @@
                     pageTitle.textContent = 'Airdrop';
                     pageContent.innerHTML = getAirdropPageContent();
                     break;
+                case 'leaderboard':
+                    pageTitle.textContent = '🏆 Leaderboard';
+                    pageContent.innerHTML = getLeaderboardPageContent();
+                    break;
                 case 'menu2':
                     pageTitle.textContent = 'Menü 2';
                     pageContent.innerHTML = '<div class="card"><h2 style="color: white; text-align: center;">Menü 2 İçeriği</h2><p style="color: #c4b5fd; text-align: center; margin-top: 10px;">Bu sayfa için içerik yakında eklenecek.</p></div>';
@@ -3865,6 +3870,190 @@
                     isClaimingAirdrop = false;
                 }, 1000);
             }
+        }
+        
+        function getLeaderboardPageContent() {
+            // Check cache first (24 hour cache)
+            const cacheKey = 'leaderboard_cache';
+            const cacheTimeKey = 'leaderboard_cache_time';
+            const cacheData = localStorage.getItem(cacheKey);
+            const cacheTime = localStorage.getItem(cacheTimeKey);
+            const now = Date.now();
+            const cacheValid = cacheTime && (now - parseInt(cacheTime)) < (24 * 60 * 60 * 1000); // 24 hours
+            
+            let leaderboardData = [];
+            
+            if (cacheValid && cacheData) {
+                // Use cached data
+                leaderboardData = JSON.parse(cacheData);
+            } else {
+                // Generate new leaderboard from localStorage
+                const users = JSON.parse(localStorage.getItem('users') || '{}');
+                leaderboardData = Object.entries(users)
+                    .map(([email, user]) => ({
+                        email: email,
+                        username: user.username || 'Anonymous',
+                        balance: user.balance || 0,
+                        level: user.level || 1,
+                        rate: user.rate || 0.25,
+                        miningDays: user.miningDays || 0
+                    }))
+                    .sort((a, b) => b.level - a.level)
+                    .slice(0, 100); // Top 100
+                
+                // Save to cache
+                localStorage.setItem(cacheKey, JSON.stringify(leaderboardData));
+                localStorage.setItem(cacheTimeKey, now.toString());
+            }
+            
+            // Find current user's rank
+            const currentEmail = localStorage.getItem('currentUser');
+            const currentUserRank = leaderboardData.findIndex(u => u.email === currentEmail) + 1;
+            const currentUserData = leaderboardData.find(u => u.email === currentEmail);
+            
+            if (leaderboardData.length === 0) {
+                return `
+                    <div style="display: flex; align-items: center; justify-content: center; min-height: 400px; padding: 20px;">
+                        <div style="background: rgba(0, 0, 0, 0.5); border: 2px solid rgba(100, 100, 100, 0.4); border-radius: 20px; padding: 40px 30px; max-width: 340px; width: 100%; text-align: center; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
+                            <div style="background: rgba(100, 100, 100, 0.2); border: 2px solid rgba(100, 100, 100, 0.3); border-radius: 16px; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 40px;">
+                                🏆
+                            </div>
+                            <h2 style="color: rgba(255, 255, 255, 0.6); font-size: 22px; font-weight: 900; margin-bottom: 12px;">
+                                No Rankings Yet
+                            </h2>
+                            <p style="color: rgba(139, 92, 246, 0.7); font-size: 14px; line-height: 1.6;">
+                                Start mining to appear on the leaderboard!
+                            </p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            let html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
+            
+            // Current user card (if in top 100)
+            if (currentUserRank > 0 && currentUserData) {
+                // Calculate current user progress
+                const userCurrentReq = levelRequirements[currentUserData.level] || 0;
+                const userNextReq = levelRequirements[currentUserData.level + 1];
+                let userProgressPercent = 0;
+                
+                if (currentUserData.level >= 20) {
+                    userProgressPercent = 100;
+                } else if (userNextReq) {
+                    userProgressPercent = Math.min(((currentUserData.miningDays - userCurrentReq) / (userNextReq - userCurrentReq)) * 100, 100);
+                }
+                
+                html += `
+                    <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(124, 58, 237, 0.2)); border: 2px solid #8b5cf6; border-radius: 16px; padding: 16px; margin-bottom: 8px; box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                                <div style="background: #8b5cf6; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 16px;">
+                                    #${currentUserRank}
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="color: white; font-weight: 800; font-size: 16px;">You</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div class="level-progress-bar" style="width: 80px; height: 18px; background: rgba(10, 20, 40, 0.85); border-radius: 10px; overflow: hidden; position: relative; border: 1px solid rgba(16, 185, 129, 0.3);">
+                                    <div class="level-progress-fill" style="height: 100%; background: linear-gradient(90deg, #10b981, #059669); width: ${userProgressPercent}%;"></div>
+                                    <div class="level-progress-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 9px; font-weight: 700; color: white; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);">
+                                        ${currentUserData.level >= 20 ? `365/365 Days` : `${currentUserData.miningDays}/${userNextReq || '?'} Days`}
+                                    </div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="color: #00ffff; font-weight: 900; font-size: 18px;">Level ${currentUserData.level}</div>
+                                    <div style="color: rgba(255, 255, 255, 0.5); font-size: 11px; font-weight: 600;">RANK #${currentUserRank}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Top 100 list
+            leaderboardData.forEach((user, index) => {
+                const rank = index + 1;
+                const isCurrentUser = user.email === currentEmail;
+                const isMedal = rank <= 3;
+                
+                let medalEmoji = '';
+                let borderColor = 'rgba(0, 255, 255, 0.2)';
+                let bgGradient = 'rgba(0, 0, 0, 0.3)';
+                
+                if (rank === 1) {
+                    medalEmoji = '🥇';
+                    borderColor = '#FFD700';
+                    bgGradient = 'linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 215, 0, 0.05))';
+                } else if (rank === 2) {
+                    medalEmoji = '🥈';
+                    borderColor = '#C0C0C0';
+                    bgGradient = 'linear-gradient(135deg, rgba(192, 192, 192, 0.15), rgba(192, 192, 192, 0.05))';
+                } else if (rank === 3) {
+                    medalEmoji = '🥉';
+                    borderColor = '#CD7F32';
+                    bgGradient = 'linear-gradient(135deg, rgba(205, 127, 50, 0.15), rgba(205, 127, 50, 0.05))';
+                }
+                
+                // Calculate progress
+                const currentReq = levelRequirements[user.level] || 0;
+                const nextReq = levelRequirements[user.level + 1];
+                let progressPercent = 0;
+                let progressText = '';
+                
+                if (user.level >= 20) {
+                    progressPercent = 100;
+                    progressText = 'MAX LEVEL';
+                } else if (nextReq) {
+                    progressPercent = Math.min(((user.miningDays - currentReq) / (nextReq - currentReq)) * 100, 100);
+                    progressText = `${user.miningDays}/${nextReq} Days`;
+                } else {
+                    progressPercent = 100;
+                    progressText = `${user.miningDays} Days`;
+                }
+                
+                html += `
+                    <div style="background: ${bgGradient}; border: 1px solid ${borderColor}; border-radius: 12px; padding: 14px; ${isCurrentUser && rank > 3 ? 'box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);' : ''}">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                                ${isMedal ? 
+                                    `<div style="font-size: 32px; width: 40px; text-align: center;">${medalEmoji}</div>` :
+                                    `<div style="color: rgba(255, 255, 255, 0.5); width: 40px; text-align: center; font-weight: 800; font-size: 16px;">#${rank}</div>`
+                                }
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="color: ${isCurrentUser ? '#8b5cf6' : 'white'}; font-weight: 700; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        ${user.username}${isCurrentUser ? ' (You)' : ''}
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div class="level-progress-bar" style="width: 80px; height: 18px; background: rgba(10, 20, 40, 0.85); border-radius: 10px; overflow: hidden; position: relative; border: 1px solid rgba(16, 185, 129, 0.3);">
+                                    <div class="level-progress-fill" style="height: 100%; background: linear-gradient(90deg, #10b981, #059669); width: ${progressPercent}%;"></div>
+                                    <div class="level-progress-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 9px; font-weight: 700; color: white; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);">
+                                        ${user.level >= 20 ? `365/365 Days` : `${user.miningDays}/${nextReq || '?'} Days`}
+                                    </div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="color: ${isMedal ? borderColor : '#00ffff'}; font-weight: 900; font-size: 16px;">Level ${user.level}</div>
+                                    <div style="color: rgba(255, 255, 255, 0.4); font-size: 10px; font-weight: 600;">RANK #${rank}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            
+            // Add refresh note at bottom
+            html += `
+                <div style="text-align: center; color: rgba(255, 255, 255, 0.4); font-size: 12px; margin-top: 20px; padding: 12px; background: rgba(0, 0, 0, 0.3); border-radius: 8px;">
+                    💡 Leaderboard updates daily
+                </div>
+            `;
+            
+            return html;
         }
         
         function claimReferralEarnings() {
