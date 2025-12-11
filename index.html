@@ -2659,10 +2659,14 @@
             
             d.balance += reward.coins;
             // d.rate += reward.rate; // REMOVED: No longer giving MR rewards from levels
+            const claimedLevel = d.pendingLevelUp;
             d.level = d.pendingLevelUp;
             d.pendingLevelUp = null;
             
             save();
+            
+            // Show success message
+            showToast(`✓ Claimed Level ${claimedLevel} reward: +${reward.coins} Coins!`);
             
             // Check if ready for next level (only if not at max)
             if (d.level < 20) {
@@ -2945,7 +2949,7 @@
             dailyRewardAvailable = false;
             
             save();
-            showSuccess('✨ Daily reward claimed: +5 Pi!');
+            showToast('✓ Daily reward claimed: +5 Coins!');
             render();
         }
 
