@@ -2770,8 +2770,8 @@
                         ${d.pendingLevelUp ? `
                             <div style="display: flex; flex-direction: column; text-align: center; padding: 0 8px;">
                                 <div style="margin-top: 20px;">
-                                    <p style="font-size: 12px; font-weight: 700; line-height: 1.3; color: white; margin-bottom: 0;">🎉 Congratulations!<br>You reached Level ${d.pendingLevelUp}</p>
-                                    <p style="font-size: 11px; font-weight: 700; line-height: 1.3; color: #00ffff; margin-top: 6px; margin-bottom: 0;">+${levelRewards[d.pendingLevelUp].coins} Coins + ${levelRewards[d.pendingLevelUp].rate} MR earned</p>
+                                    <p style="font-size: 12px; font-weight: 700; line-height: 1.3; color: white; margin-bottom: 0;">🎉 Congratulations!<br>You reached Level <span style="color: #fbbf24;">${d.pendingLevelUp}</span></p>
+                                    <p style="font-size: 11px; font-weight: 700; line-height: 1.3; color: #fbbf24; margin-top: 6px; margin-bottom: 0;">+${levelRewards[d.pendingLevelUp].coins} Coins + ${levelRewards[d.pendingLevelUp].rate} MR earned</p>
                                 </div>
                                 <button class="claim-btn" onclick="claimLevelReward()" style="margin-top: 20px;">CLAIM REWARD</button>
                             </div>
@@ -2796,8 +2796,8 @@
                     <div class="stat ${(d.pendingReferralEarnings && d.pendingReferralEarnings > 0) ? 'reward-available' : ''}">
                         ${(d.pendingReferralEarnings && d.pendingReferralEarnings > 0) ? `
                             <div style="text-align: center; padding: 22px 8px 12px;">
-                                <div style="color: white; font-size: 12px; font-weight: 700; margin-bottom: 6px; line-height: 1.3;">🎉 Congratulations!<br>Referral rewards from ${d.pendingReferralCount} ${d.pendingReferralCount === 1 ? 'friend' : 'friends'}</div>
-                                <div style="color: #00ffff; font-size: 18px; font-weight: 900; margin-bottom: 8px;">${d.pendingReferralEarnings.toFixed(3)} AA</div>
+                                <div style="color: white; font-size: 12px; font-weight: 700; margin-bottom: 6px; line-height: 1.3;">🎉 Congratulations!<br>Referral rewards from <span style="color: #fbbf24;">${d.pendingReferralCount}</span> ${d.pendingReferralCount === 1 ? 'friend' : 'friends'}</div>
+                                <div style="color: #fbbf24; font-size: 18px; font-weight: 900; margin-bottom: 8px;">${d.pendingReferralEarnings.toFixed(3)} AA</div>
                                 <button onclick="claimReferralEarnings()" style="width: 100%; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 8px; padding: 8px; color: white; font-size: 13px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);">
                                     CLAIM REWARD
                                 </button>
@@ -2822,7 +2822,7 @@
                             <span class="stat-label">Daily Reward</span>
                         </div>
                         <div class="reward-card" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 90px; padding: 15px 10px 10px 10px;">
-                            <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: -18px; margin-bottom: 10px;">
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: -21px; margin-bottom: 10px;">
                                 <div class="reward-chest ${dailyRewardAvailable ? 'available' : 'locked'}" style="width: 50px; height: 50px;">
                                     <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <!-- Gift Box Base -->
@@ -2849,7 +2849,7 @@
                                         <circle cx="50" cy="35" r="5" stroke="#00d4d4" stroke-width="3" fill="none"/>
                                     </svg>
                                 </div>
-                                <div style="color: #00ffff; font-size: 20px; font-weight: 900;">+5</div>
+                                <div style="color: #fbbf24; font-size: 16px; font-weight: 700;">+5 <span style="font-size: 12px; color: rgba(251, 191, 36, 0.7); font-weight: 600;">Coins</span></div>
                             </div>
                             ${dailyRewardAvailable ? `
                                 <button class="reward-claim-btn" onclick="claimDailyReward()">
