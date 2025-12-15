@@ -3060,6 +3060,7 @@
                         if (!card.classList.contains('reward-available')) {
                             card.style.cursor = 'pointer';
                             card.onclick = function() {
+                                showToast('DEBUG: Card clicked!');
                                 openPage('referrals');
                             };
                         }
@@ -3783,12 +3784,8 @@
         }
         
         function openPage(page) {
-            // Push state FIRST for immediate back button response
-            try {
-                history.pushState({ page: page }, '', '#' + page);
-            } catch(e) {
-                // History API not available or restricted
-            }
+            // Use hash-based navigation (works in iframes, unlike pushState)
+            window.location.hash = page;
             
             toggleMenu();
             
@@ -5005,7 +5002,20 @@
         let lastBackPress = 0;
         const backPressInterval = 2000; // 2 seconds
         
-        // Handle back button (with error handling for restricted environments)
+        // Handle back button using hashchange (works in iframes, unlike popstate)
+        window.addEventListener('hashchange', function() {
+            const fullPage = document.getElementById('fullPage');
+            const hash = window.location.hash.substring(1); // Remove #
+            
+            if (!hash || hash === '') {
+                // Back to main page
+                if (fullPage && fullPage.classList.contains('active')) {
+                    closePage();
+                }
+            }
+        });
+        
+        // Legacy popstate handler (for non-iframe environments)
         try {
             window.addEventListener('popstate', function(event) {
                 const fullPage = document.getElementById('fullPage');
