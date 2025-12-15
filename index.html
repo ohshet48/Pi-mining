@@ -2893,7 +2893,7 @@
                         `}
                     </div>
 
-                    <div class="stat ${(d.pendingReferralEarnings && d.pendingReferralEarnings > 0) ? 'reward-available' : ''}" ${(d.pendingReferralEarnings && d.pendingReferralEarnings > 0) ? '' : 'onclick="openReferralsPage()" style="cursor: pointer;"'}>
+                    <div class="stat ${(d.pendingReferralEarnings && d.pendingReferralEarnings > 0) ? 'reward-available' : ''}" ${(d.pendingReferralEarnings && d.pendingReferralEarnings > 0) ? '' : 'onclick="openPage(\'referrals\')" style="cursor: pointer;"'}>
                         ${(d.pendingReferralEarnings && d.pendingReferralEarnings > 0) ? `
                             <div style="text-align: center; padding: 16px 8px 12px; position: relative; min-height: 140px;">
                                 <div style="color: white; font-size: 12px; font-weight: 700; margin-bottom: 6px; line-height: 1.3;">🎉 Congratulations!<br>Referral reward earned!</div>
@@ -4318,14 +4318,14 @@
                 }
                 
                 html += `
-                    <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 255, 0.2); border-radius: 10px; padding: 10px; margin-bottom: 6px;">
+                    <div style="background: rgba(255, 215, 0, 0.1); border: 1px solid #fbbf24; border-radius: 10px; padding: 10px; margin-bottom: 6px;">
                         <div style="display: flex; align-items: center; justify-content: space-between;">
                             <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
-                                <div style="color: #8b5cf6; width: 30px; text-align: center; font-weight: 800; font-size: 14px;">
+                                <div style="color: #fbbf24; width: 30px; text-align: center; font-weight: 800; font-size: 14px;">
                                     #${currentUserRank}
                                 </div>
                                 <div style="flex: 1;">
-                                    <div style="color: #8b5cf6; font-weight: 700; font-size: 14px;">You</div>
+                                    <div style="color: #fbbf24; font-weight: 700; font-size: 14px;">You</div>
                                 </div>
                             </div>
                             <div style="display: flex; align-items: center; gap: 6px;">
@@ -4534,7 +4534,7 @@
                                     `<div style="color: rgba(255, 255, 255, 0.5); width: 30px; text-align: center; font-weight: 800; font-size: 14px;">#${rank}</div>`
                                 }
                                 <div style="flex: 1; min-width: 0;">
-                                    <div style="color: ${isCurrentUser ? '#8b5cf6' : 'white'}; font-weight: 700; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    <div style="color: ${isCurrentUser ? '#8b5cf6' : (rank <= 3 ? '#00ffff' : 'white')}; font-weight: 700; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                         ${user.username}${isCurrentUser ? ' (You)' : ''}
                                     </div>
                                 </div>
@@ -4719,10 +4719,14 @@
         }
         
         function openReferralsPage() {
-            // Immediate state push for faster back button response
+            // AGGRESSIVE state management for instant back button
             try {
+                // Push TWO states for immediate response
+                history.pushState({ page: 'main' }, '', '');
                 history.pushState({ page: 'referrals' }, '', '#referrals');
             } catch(e) {}
+            
+            // Now open the page normally
             openPage('referrals');
         }
         
