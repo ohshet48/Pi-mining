@@ -2497,6 +2497,7 @@
         let isClaimingReferral = false;
         let isClaimingDaily = false;
         let isClaimingAirdrop = false;
+        let isWatchingAd = false;
         
         // Level system data
         const levelRequirements = {
@@ -3123,12 +3124,17 @@
         }
         
         function watchAdBoost() {
+            // Prevent double-clicking
+            if (isWatchingAd) return;
+            isWatchingAd = true;
+            
             const userEmail = localStorage.getItem('currentUser');
             const currentRate = d.rate;
             
             // Check if already at max
             if (currentRate >= 5.0) {
                 showToast('❌ Already at maximum rate (5.0 MR)', true);
+                isWatchingAd = false;
                 return;
             }
             
@@ -3140,6 +3146,7 @@
             if (now < adCooldownEnd) {
                 const remaining = Math.ceil((adCooldownEnd - now) / 1000);
                 showToast(`⏳ Please wait ${remaining} seconds`, true);
+                isWatchingAd = false;
                 return;
             }
             
@@ -3186,10 +3193,8 @@
                 // Update display
                 initApp();
                 
-                // Auto-refresh after cooldown
-                setTimeout(() => {
-                    render();
-                }, 15000);
+                // Release lock
+                isWatchingAd = false;
                 
             }, 5000); // 5 second ad simulation
         }
@@ -3208,7 +3213,12 @@
             }
         }
 
+        let timerStarted = false;
+        
         function startTimer() {
+            if (timerStarted) return; // Prevent multiple timers
+            timerStarted = true;
+            
             setInterval(function() {
                 if (d.mining && d.timeLeft > 0) {
                     d.timeLeft--;
