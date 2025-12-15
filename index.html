@@ -2893,8 +2893,8 @@
                         `}
                     </div>
 
-                    <div class="stat ${(d.pendingReferralEarnings && d.pendingReferralEarnings > 0) ? 'reward-available' : ''}" ${(d.pendingReferralEarnings && d.pendingReferralEarnings > 0) ? '' : 'onclick="openPage(\'referrals\')" style="cursor: pointer;"'}>
-                        ${(d.pendingReferralEarnings && d.pendingReferralEarnings > 0) ? `
+                    ${(d.pendingReferralEarnings && d.pendingReferralEarnings > 0) ? `
+                        <div class="stat reward-available">
                             <div style="text-align: center; padding: 16px 8px 12px; position: relative; min-height: 140px;">
                                 <div style="color: white; font-size: 12px; font-weight: 700; margin-bottom: 6px; line-height: 1.3;">🎉 Congratulations!<br>Referral reward earned!</div>
                                 <div style="color: #fbbf24; font-size: 14px; font-weight: 700; margin-bottom: 8px; white-space: nowrap; overflow: visible;">+${d.pendingReferralEarnings} <span style="font-size: 11px; color: rgba(255, 255, 255, 0.6); font-weight: 600;">Coins</span></div>
@@ -2902,7 +2902,9 @@
                                     CLAIM REWARD
                                 </button>
                             </div>
-                        ` : `
+                        </div>
+                    ` : `
+                        <div class="stat" onclick="openPage('referrals')" style="cursor: pointer;">
                             <div class="stat-top">
                                 <div class="stat-icon icon-green">
                                     <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -2911,8 +2913,8 @@
                             </div>
                             <div class="stat-value">${d.activeRefs}/${d.refs}</div>
                             <div class="stat-unit">Active Mining</div>
-                        `}
-                    </div>
+                        </div>
+                    `}
 
                     <div class="stat ${dailyRewardAvailable ? 'reward-available' : ''}">
                         <div class="stat-top">
@@ -4609,18 +4611,6 @@
                                 Copy
                             </button>
                         </div>
-                    </div>
-                </div>
-                
-                <!-- Stats Summary -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
-                    <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 16px; text-align: center;">
-                        <div style="color: #10b981; font-size: 28px; font-weight: 900;">${activeRefs.length}</div>
-                        <div style="color: rgba(255, 255, 255, 0.6); font-size: 12px; font-weight: 600;">Active Mining</div>
-                    </div>
-                    <div style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 12px; padding: 16px; text-align: center;">
-                        <div style="color: #8b5cf6; font-size: 28px; font-weight: 900;">${inactiveRefs.length}</div>
-                        <div style="color: rgba(255, 255, 255, 0.6); font-size: 12px; font-weight: 600;">Inactive</div>
                     </div>
                 </div>
                 
