@@ -3051,6 +3051,21 @@
                 if (airdropMenuItem) airdropMenuItem.classList.remove('menu-item-highlight');
                 if (menuButton) menuButton.classList.remove('menu-btn-highlight');
             }
+            
+            // MANUAL event listener for referrals card (fix for back button issue)
+            setTimeout(() => {
+                const referralsCards = document.querySelectorAll('.stat');
+                referralsCards.forEach(card => {
+                    if (card.textContent.includes('Referrals') && card.textContent.includes('Active Mining')) {
+                        if (!card.classList.contains('reward-available')) {
+                            card.style.cursor = 'pointer';
+                            card.onclick = function() {
+                                openPage('referrals');
+                            };
+                        }
+                    }
+                });
+            }, 50);
         }
 
         function startMine() {
