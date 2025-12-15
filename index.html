@@ -2685,6 +2685,29 @@
                 d.level = d.pendingLevelUp;
                 d.pendingLevelUp = null;
                 
+                // Update user's base rate with level bonus, but ensure MAX 5.0
+                const users = JSON.parse(localStorage.getItem('users') || '{}');
+                const userEmail = localStorage.getItem('currentUser');
+                if (users[userEmail]) {
+                    const baseRate = 0.25;
+                    const levelBonus = (claimedLevel - 1) * 0.05;
+                    const newBaseRate = baseRate + levelBonus;
+                    
+                    // Check if current total rate would exceed 5.0
+                    const activeRefs = calculateActiveRefs();
+                    const totalRate = newBaseRate + (activeRefs * 0.05);
+                    
+                    if (totalRate > 5.0) {
+                        // Cap at 5.0
+                        users[userEmail].rate = Math.min(newBaseRate, 5.0 - (activeRefs * 0.05));
+                    } else {
+                        users[userEmail].rate = newBaseRate;
+                    }
+                    
+                    localStorage.setItem('users', JSON.stringify(users));
+                    currentUser = users[userEmail];
+                }
+                
                 save();
                 
                 showToast(`✓ Claimed Level ${claimedLevel} reward: +${reward.coins} Coins!`);
@@ -2839,7 +2862,7 @@
                             </div>
                             <span class="stat-label">Mining Rate</span>
                         </div>
-                        <div class="stat-value">${d.rate.toFixed(2)}</div>
+                        <div class="stat-value">${d.rate.toFixed(2)}${d.rate >= 5.0 ? '<span style="font-size: 9px; color: #00ffff; margin-left: 4px; font-weight: 600;">MAX</span>' : ''}</div>
                         <div class="stat-unit">ARCASTRA/hour</div>
                     </div>
 
@@ -4101,6 +4124,13 @@
                 // Add to balance
                 users[userEmail].balance = (users[userEmail].balance || 0) + airdrop.amount;
                 
+                // Ensure user's rate doesn't exceed 5.0 (safety check)
+                const activeRefs = calculateActiveRefs();
+                const currentTotalRate = (users[userEmail].rate || 0.25) + (activeRefs * 0.05);
+                if (currentTotalRate > 5.0) {
+                    users[userEmail].rate = Math.max(0.25, 5.0 - (activeRefs * 0.05));
+                }
+                
                 // Remove from pending airdrops
                 users[userEmail].pendingAirdrops.splice(index, 1);
                 
@@ -4711,6 +4741,13 @@
                 users[userEmail].balance = (users[userEmail].balance || 0) + earnings;
                 
                 // DO NOT add MR to rate - it will be dynamic based on active refs
+                
+                // Ensure user's rate doesn't exceed 5.0 (safety check)
+                const activeRefs = calculateActiveRefs();
+                const currentTotalRate = (users[userEmail].rate || 0.25) + (activeRefs * 0.05);
+                if (currentTotalRate > 5.0) {
+                    users[userEmail].rate = Math.max(0.25, 5.0 - (activeRefs * 0.05));
+                }
                 
                 // Reset pending earnings and MR
                 users[userEmail].pendingReferralEarnings = 0;
