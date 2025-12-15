@@ -2822,7 +2822,7 @@
                         `}
                     </div>
 
-                    <div class="stat ${(d.pendingReferralEarnings && d.pendingReferralEarnings > 0) ? 'reward-available' : ''}">
+                    <div class="stat ${(d.pendingReferralEarnings && d.pendingReferralEarnings > 0) ? 'reward-available' : ''}" ${(d.pendingReferralEarnings && d.pendingReferralEarnings > 0) ? '' : 'onclick="openPage(\'referrals\')" style="cursor: pointer;"'}>
                         ${(d.pendingReferralEarnings && d.pendingReferralEarnings > 0) ? `
                             <div style="text-align: center; padding: 16px 8px 12px; position: relative; min-height: 140px;">
                                 <div style="color: white; font-size: 12px; font-weight: 700; margin-bottom: 6px; line-height: 1.3;">🎉 Congratulations!<br>Referral reward earned!</div>
@@ -3622,6 +3622,10 @@
                     pageTitle.textContent = 'Leaderboard';
                     pageContent.innerHTML = getLeaderboardPageContent();
                     break;
+                case 'referrals':
+                    pageTitle.textContent = 'My Referrals';
+                    pageContent.innerHTML = getReferralsPageContent();
+                    break;
                 case 'menu2':
                     pageTitle.textContent = 'Menü 2';
                     pageContent.innerHTML = '<div class="card"><h2 style="color: white; text-align: center;">Menü 2 İçeriği</h2><p style="color: #c4b5fd; text-align: center; margin-top: 10px;">Bu sayfa için içerik yakında eklenecek.</p></div>';
@@ -4371,6 +4375,164 @@
             html += '</div></div>'; // Close items container and main container
             
             return html;
+        }
+        
+        function getReferralsPageContent() {
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            const currentEmail = localStorage.getItem('currentUser');
+            
+            // Get all referrals
+            let activeRefs = [];
+            let inactiveRefs = [];
+            const now = Date.now();
+            
+            for (let email in users) {
+                const user = users[email];
+                if (user.referredBy === currentUser.refCode) {
+                    const miningEndTime = localStorage.getItem('miningEndTime_' + email);
+                    const isMining = miningEndTime && now < parseInt(miningEndTime);
+                    
+                    const refData = {
+                        username: user.username,
+                        email: email,
+                        level: user.level || 1,
+                        isMining: isMining
+                    };
+                    
+                    if (isMining) {
+                        activeRefs.push(refData);
+                    } else {
+                        inactiveRefs.push(refData);
+                    }
+                }
+            }
+            
+            // Check notification cooldown (5 minutes)
+            const lastNotifTime = parseInt(localStorage.getItem('lastReferralNotif_' + currentEmail) || '0');
+            const canSendNotif = (now - lastNotifTime) > (5 * 60 * 1000);
+            
+            return `
+                <!-- Referral Code Section -->
+                <div class="card" style="margin-bottom: 20px;">
+                    <div style="text-align: center; margin-bottom: 15px;">
+                        <div style="color: #8b5cf6; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">Your Referral Code</div>
+                        <div class="ref-compact">
+                            <div class="ref-code-text">${currentUser.username}</div>
+                            <button class="copy-btn" onclick="copyReferralCode()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                                </svg>
+                                Copy
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Stats Summary -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                    <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 16px; text-align: center;">
+                        <div style="color: #10b981; font-size: 28px; font-weight: 900;">${activeRefs.length}</div>
+                        <div style="color: rgba(255, 255, 255, 0.6); font-size: 12px; font-weight: 600;">Active Mining</div>
+                    </div>
+                    <div style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 12px; padding: 16px; text-align: center;">
+                        <div style="color: #8b5cf6; font-size: 28px; font-weight: 900;">${inactiveRefs.length}</div>
+                        <div style="color: rgba(255, 255, 255, 0.6); font-size: 12px; font-weight: 600;">Inactive</div>
+                    </div>
+                </div>
+                
+                <!-- Tabs -->
+                <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                    <button id="activeTab" onclick="switchReferralTab('active')" style="flex: 1; background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 8px; padding: 10px; color: #10b981; font-size: 13px; font-weight: 700; cursor: pointer;">
+                        🟢 Active (${activeRefs.length})
+                    </button>
+                    <button id="inactiveTab" onclick="switchReferralTab('inactive')" style="flex: 1; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 10px; color: rgba(255, 255, 255, 0.5); font-size: 13px; font-weight: 700; cursor: pointer;">
+                        ⚪ Inactive (${inactiveRefs.length})
+                    </button>
+                </div>
+                
+                <!-- Active List -->
+                <div id="activeList" style="display: flex; flex-direction: column; gap: 10px;">
+                    ${activeRefs.length > 0 ? activeRefs.map(ref => `
+                        <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 14px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="color: white; font-size: 15px; font-weight: 700; margin-bottom: 4px;">${ref.username}</div>
+                                    <div style="color: rgba(255, 255, 255, 0.5); font-size: 12px;">Level ${ref.level}</div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 6px; color: #10b981; font-size: 12px; font-weight: 700;">
+                                    <div style="width: 8px; height: 8px; background: #10b981; border-radius: 50%;"></div>
+                                    Mining
+                                </div>
+                            </div>
+                        </div>
+                    `).join('') : '<div style="text-align: center; padding: 40px 20px; color: rgba(255, 255, 255, 0.4); font-size: 14px;">No active referrals yet</div>'}
+                </div>
+                
+                <!-- Inactive List -->
+                <div id="inactiveList" style="display: none; flex-direction: column; gap: 10px;">
+                    ${inactiveRefs.length > 0 ? `
+                        ${inactiveRefs.map(ref => `
+                            <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 14px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <div style="color: white; font-size: 15px; font-weight: 700; margin-bottom: 4px;">${ref.username}</div>
+                                        <div style="color: rgba(255, 255, 255, 0.5); font-size: 12px;">Level ${ref.level}</div>
+                                    </div>
+                                    <div style="color: rgba(255, 255, 255, 0.3); font-size: 12px; font-weight: 600;">
+                                        💤 Idle
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                        
+                        <!-- Notify Button -->
+                        <button onclick="sendReferralNotification()" ${!canSendNotif ? 'disabled' : ''} style="background: ${canSendNotif ? 'linear-gradient(135deg, #8b5cf6, #7c3aed)' : 'rgba(0, 0, 0, 0.3)'}; border: none; border-radius: 12px; padding: 14px; color: white; font-size: 14px; font-weight: 700; cursor: ${canSendNotif ? 'pointer' : 'not-allowed'}; margin-top: 10px; opacity: ${canSendNotif ? '1' : '0.5'};">
+                            ${canSendNotif ? '📢 Notify Inactive Friends' : '⏳ Wait 5 minutes'}
+                        </button>
+                    ` : '<div style="text-align: center; padding: 40px 20px; color: rgba(255, 255, 255, 0.4); font-size: 14px;">All your referrals are active! 🎉</div>'}
+                </div>
+            `;
+        }
+        
+        function switchReferralTab(tab) {
+            const activeTab = document.getElementById('activeTab');
+            const inactiveTab = document.getElementById('inactiveTab');
+            const activeList = document.getElementById('activeList');
+            const inactiveList = document.getElementById('inactiveList');
+            
+            if (tab === 'active') {
+                activeTab.style.background = 'rgba(16, 185, 129, 0.2)';
+                activeTab.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+                activeTab.style.color = '#10b981';
+                inactiveTab.style.background = 'rgba(0, 0, 0, 0.3)';
+                inactiveTab.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                inactiveTab.style.color = 'rgba(255, 255, 255, 0.5)';
+                activeList.style.display = 'flex';
+                inactiveList.style.display = 'none';
+            } else {
+                inactiveTab.style.background = 'rgba(139, 92, 246, 0.2)';
+                inactiveTab.style.borderColor = 'rgba(139, 92, 246, 0.4)';
+                inactiveTab.style.color = '#8b5cf6';
+                activeTab.style.background = 'rgba(0, 0, 0, 0.3)';
+                activeTab.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                activeTab.style.color = 'rgba(255, 255, 255, 0.5)';
+                inactiveList.style.display = 'flex';
+                activeList.style.display = 'none';
+            }
+        }
+        
+        function sendReferralNotification() {
+            const currentEmail = localStorage.getItem('currentUser');
+            const now = Date.now();
+            
+            // Set cooldown
+            localStorage.setItem('lastReferralNotif_' + currentEmail, now.toString());
+            
+            showToast('✓ Notification sent to inactive friends!');
+            
+            // Reload page to update button state
+            openPage('referrals');
         }
         
         function claimReferralEarnings() {
