@@ -591,17 +591,6 @@
             border-radius: 2px;
         }
         
-        .menu-btn-highlight {
-            background: 
-                linear-gradient(rgba(10, 20, 40, 0.85), rgba(10, 20, 40, 0.85)) padding-box,
-                linear-gradient(145deg, #10b981, #059669) border-box !important;
-            box-shadow: 0 0 25px rgba(16, 185, 129, 0.5) !important;
-        }
-        
-        .menu-btn-highlight span {
-            background: linear-gradient(135deg, #10b981, #059669) !important;
-        }
-        
         /* Menu Sidebar */
         .menu-sidebar {
             position: fixed;
@@ -694,17 +683,6 @@
         
         .menu-item:active {
             transform: scale(0.98);
-        }
-        
-        .menu-item-highlight {
-            background: rgba(16, 185, 129, 0.2) !important;
-            border-color: #10b981 !important;
-            color: #10b981 !important;
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.3) !important;
-        }
-        
-        .menu-item-highlight:hover {
-            background: rgba(16, 185, 129, 0.3) !important;
         }
         
         .menu-overlay {
@@ -1647,7 +1625,7 @@
             font-size: 13px;
             font-weight: 800;
             cursor: pointer;
-            margin-top: -7px;
+            margin-top: 6px;
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
             display: flex;
             align-items: center;
@@ -1875,8 +1853,7 @@
         <div class="menu-items">
             <div class="menu-item" onclick="openPage('profile')">Profile</div>
             <div class="menu-item" onclick="openPage('announcements')">Announcements</div>
-            <div class="menu-item" id="airdropMenuItem" onclick="openPage('airdrop')">Airdrop</div>
-            <div class="menu-item" onclick="openPage('leaderboard')">Leaderboard</div>
+            <div class="menu-item" onclick="openPage('airdrop')">Airdrop</div>
             <div class="menu-item menu-item-disabled">
                 <span>KYC</span>
                 <span style="font-size: 11px; color: #666; margin-left: 8px;">Coming Soon</span>
@@ -2318,19 +2295,13 @@
             let referredBy = null;
             if (referralCode) {
                 let referrerFound = false;
-                let referrerEmail = null;
                 for (let userEmail in users) {
                     if (users[userEmail].refCode === referralCode) {
                         referrerFound = true;
-                        referrerEmail = userEmail;
-                        
-                        // Referrer gets reward (10 coins + 0.05 MR)
                         users[userEmail].refs = (users[userEmail].refs || 0) + 1;
-                        users[userEmail].pendingReferralEarnings = (users[userEmail].pendingReferralEarnings || 0) + 10;
-                        users[userEmail].pendingReferralMR = (users[userEmail].pendingReferralMR || 0) + 0.05;
-                        
-                        referralBonus = 0.05;
-                        referredBy = referralCode;
+                        users[userEmail].rate = (users[userEmail].rate || 1.0) + 0.25;
+                        referralBonus = 0.25;
+                        referredBy = referralCode; // Store who referred this user
                         break;
                     }
                 }
@@ -2343,8 +2314,7 @@
             
             const newRefCode = username;
             
-            // New user object
-            const newUserData = {
+            users[email] = {
                 username: username,
                 fullName: fullName,
                 birthDate: birthDate,
@@ -2352,9 +2322,9 @@
                 password: password,
                 country: country,
                 refCode: newRefCode,
-                referredBy: referredBy,
+                referredBy: referredBy, // Who referred this user
                 balance: 0,
-                rate: 0.25,
+                rate: 0.25 + referralBonus,
                 level: 1,
                 refs: 0,
                 streak: 0,
@@ -2362,17 +2332,6 @@
                 mining: false,
                 timeLeft: 0
             };
-            
-            // Only add referral rewards if referral code was used
-            if (referralCode && referredBy) {
-                newUserData.pendingReferralEarnings = 10;
-                newUserData.pendingReferralMR = 0.05;
-            } else {
-                newUserData.pendingReferralEarnings = 0;
-                newUserData.pendingReferralMR = 0;
-            }
-            
-            users[email] = newUserData;
             
             localStorage.setItem('users', JSON.stringify(users));
             
@@ -2464,13 +2423,6 @@
         let d = {};
         let balanceVisible = true;
         let dailyRewardAvailable = false;
-        let hasPendingAirdrops = false;
-        
-        // Claiming locks to prevent double-claims
-        let isClaimingLevel = false;
-        let isClaimingReferral = false;
-        let isClaimingDaily = false;
-        let isClaimingAirdrop = false;
         
         // Level system data
         const levelRequirements = {
@@ -2531,9 +2483,21 @@
         }
         
         function initApp() {
+            // Normalize rate to 0.25 for all users (migration)
+            let normalizedRate = currentUser.rate || 0.25;
+            if (normalizedRate > 0.25) {
+                normalizedRate = 0.25;
+                // Update in users object
+                const users = JSON.parse(localStorage.getItem('users') || '{}');
+                if (users[currentUser.email]) {
+                    users[currentUser.email].rate = 0.25;
+                    localStorage.setItem('users', JSON.stringify(users));
+                }
+            }
+            
             d = {
                 balance: currentUser.balance || 0,
-                rate: currentUser.rate || 0.25,
+                rate: normalizedRate,
                 level: currentUser.level || 1,
                 refs: currentUser.refs || 0,
                 activeRefs: 0,
@@ -2548,16 +2512,29 @@
                 miningDays: currentUser.miningDays || 0,
                 pendingLevelUp: currentUser.pendingLevelUp || null,
                 pendingReferralEarnings: currentUser.pendingReferralEarnings || 0,
-                pendingReferralMR: currentUser.pendingReferralMR || 0
+                pendingReferralCount: currentUser.pendingReferralCount || 0
             };
+            
+            // TEMPORARY TEST DATA - Remove in production
+            if (d.pendingReferralEarnings === 0) {
+                d.pendingReferralEarnings = 45.750; // Test referral earnings
+                d.pendingReferralCount = 3; // Test referral count
+            }
+            if (!d.pendingLevelUp) {
+                d.pendingLevelUp = d.level + 1; // Test pending level up
+            }
+            // END TEST DATA
             
             // Calculate active mining referrals
             d.activeRefs = calculateActiveRefs();
             
-            // Check for pending airdrops
-            hasPendingAirdrops = (currentUser.pendingAirdrops && currentUser.pendingAirdrops.length > 0) || false;
-            
             dailyRewardAvailable = currentUser.dailyRewardAvailable || false;
+            
+            // TEMPORARY TEST DATA - Remove in production
+            if (!dailyRewardAvailable) {
+                dailyRewardAvailable = true; // Test daily reward as available
+            }
+            // END TEST DATA
             
             // Load balance visibility preference
             const savedBalanceVisible = localStorage.getItem('balanceVisible_' + currentUser.email);
@@ -2639,38 +2616,20 @@
         }
         
         function claimLevelReward() {
-            // Prevent double-claiming
-            if (isClaimingLevel) return;
             if (!d.pendingLevelUp) return;
-            if (d.pendingLevelUp > 20) return;
             
             const reward = levelRewards[d.pendingLevelUp];
-            if (!reward) return;
+            d.balance += reward.coins;
+            d.rate += reward.rate;
+            d.level = d.pendingLevelUp;
+            d.pendingLevelUp = null;
             
-            // Set lock
-            isClaimingLevel = true;
+            save();
             
-            try {
-                d.balance += reward.coins;
-                const claimedLevel = d.pendingLevelUp;
-                d.level = d.pendingLevelUp;
-                d.pendingLevelUp = null;
-                
-                save();
-                
-                showToast(`✓ Claimed Level ${claimedLevel} reward: +${reward.coins} Coins!`);
-                
-                if (d.level < 20) {
-                    checkLevelUp();
-                }
-                
-                render();
-            } finally {
-                // Release lock after a delay to prevent rapid re-claims
-                setTimeout(() => {
-                    isClaimingLevel = false;
-                }, 1000);
-            }
+            // Check if ready for next level
+            checkLevelUp();
+            
+            render();
         }
 
         function fmt(s) {
@@ -2692,7 +2651,7 @@
                     <div class="welcome-card">
                         <span class="welcome-text">Welcome, </span><span class="username-text">${currentUser.username}!</span>
                     </div>
-                    <button class="menu-btn" id="menuButton" onclick="toggleMenu()">
+                    <button class="menu-btn" onclick="toggleMenu()">
                         <span></span>
                         <span></span>
                         <span></span>
@@ -2749,7 +2708,7 @@
                             <p class="timer-time">${fmt(d.timeLeft)}</p>
                             <p class="timer-label">Time Remaining</p>
                             <div class="earning-box">
-                                <p class="earning-text">Earning: <span class="earning-amount">${(d.rate * 24).toFixed(2)} <span style="font-size: 14px;">ARCASTRA</span></span></p>
+                                <p class="earning-text">Earning: <span class="earning-amount">6.00 <span style="font-size: 14px;">ARCASTRA</span></span></p>
                             </div>
                         </div>
                     `}
@@ -2769,12 +2728,8 @@
 
                     <div class="stat ${d.pendingLevelUp ? 'reward-available' : ''}">
                         ${d.pendingLevelUp ? `
-                            <div style="display: flex; flex-direction: column; text-align: center; padding: 0 8px; position: relative; min-height: 140px;">
-                                <div style="margin-top: 12px;">
-                                    <p style="font-size: 12px; font-weight: 700; line-height: 1.3; color: white; margin-bottom: 0;">🎉 Congratulations!<br>You reached Level <span style="color: white;">${d.pendingLevelUp}!</span></p>
-                                    <p style="font-size: 11px; font-weight: 600; line-height: 1.3; color: rgba(255, 255, 255, 0.6); margin-top: 6px; margin-bottom: 0;"><span style="color: #fbbf24;">+${levelRewards[d.pendingLevelUp].coins}</span> Coins earned</p>
-                                </div>
-                                <button class="claim-btn" onclick="claimLevelReward()" style="position: absolute; bottom: 12px; left: 8px; right: 8px;">CLAIM REWARD</button>
+                            <div style="display: flex; flex-direction: column; text-align: center;">
+                                <button class="claim-btn" onclick="claimLevelReward()" style="margin-top: 105px;">CLAIM REWARD</button>
                             </div>
                         ` : `
                             <div class="stat-top">
@@ -2796,10 +2751,10 @@
 
                     <div class="stat ${(d.pendingReferralEarnings && d.pendingReferralEarnings > 0) ? 'reward-available' : ''}">
                         ${(d.pendingReferralEarnings && d.pendingReferralEarnings > 0) ? `
-                            <div style="text-align: center; padding: 16px 8px 12px; position: relative; min-height: 140px;">
-                                <div style="color: white; font-size: 12px; font-weight: 700; margin-bottom: 6px; line-height: 1.3;">🎉 Congratulations!<br>Referral reward earned!</div>
-                                <div style="color: #fbbf24; font-size: 14px; font-weight: 700; margin-bottom: 8px; white-space: nowrap; overflow: visible;">+${d.pendingReferralEarnings} <span style="font-size: 11px; color: rgba(255, 255, 255, 0.6); font-weight: 600;">Coins</span> +${(d.pendingReferralMR || 0).toFixed(2)} <span style="font-size: 10px; color: rgba(255, 255, 255, 0.6); font-weight: 600;">MR</span></div>
-                                <button onclick="claimReferralEarnings()" style="position: absolute; bottom: 5px; left: 8px; right: 8px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 8px; padding: 8px; color: white; font-size: 13px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);">
+                            <div style="text-align: center; padding: 22px 8px 12px;">
+                                <div style="color: white; font-size: 12px; font-weight: 700; margin-bottom: 6px; line-height: 1.3;">🎉 Congratulations!<br>Referral rewards from ${d.pendingReferralCount} ${d.pendingReferralCount === 1 ? 'friend' : 'friends'}</div>
+                                <div style="color: #00ffff; font-size: 18px; font-weight: 900; margin-bottom: 8px;">${d.pendingReferralEarnings.toFixed(3)} AA</div>
+                                <button onclick="claimReferralEarnings()" style="width: 100%; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 8px; padding: 8px; color: white; font-size: 13px; font-weight: 800; cursor: pointer;">
                                     CLAIM REWARD
                                 </button>
                             </div>
@@ -2823,34 +2778,47 @@
                             <span class="stat-label">Daily Reward</span>
                         </div>
                         <div class="reward-card" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 90px; padding: 15px 10px 10px 10px;">
-                            <div style="display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: -21px; margin-bottom: 10px;">
-                                <div class="reward-chest ${dailyRewardAvailable ? 'available' : 'locked'}" style="width: 50px; height: 50px;">
-                                    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <!-- Gift Box Base -->
-                                        <rect x="20" y="45" width="60" height="40" rx="3" stroke="#00bcd4" stroke-width="3" fill="none"/>
-                                        
-                                        <!-- Gift Box Lid -->
-                                        <path d="M 18 40 L 82 40 L 82 48 L 18 48 Z" stroke="#00bcd4" stroke-width="3" fill="none"/>
-                                        
-                                        <!-- Vertical Ribbon -->
-                                        <line x1="50" y1="40" x2="50" y2="85" stroke="#00ffff" stroke-width="4"/>
-                                        
-                                        <!-- Horizontal Ribbon -->
-                                        <line x1="20" y1="65" x2="80" y2="65" stroke="#00ffff" stroke-width="4"/>
-                                        
-                                        <!-- Bow Left -->
-                                        <path d="M 35 30 Q 30 35 35 40" stroke="#00ffff" stroke-width="3" fill="none"/>
-                                        <path d="M 35 30 Q 40 25 45 30" stroke="#00ffff" stroke-width="3" fill="none"/>
-                                        
-                                        <!-- Bow Right -->
-                                        <path d="M 65 30 Q 70 35 65 40" stroke="#00ffff" stroke-width="3" fill="none"/>
-                                        <path d="M 65 30 Q 60 25 55 30" stroke="#00ffff" stroke-width="3" fill="none"/>
-                                        
-                                        <!-- Bow Center -->
-                                        <circle cx="50" cy="35" r="5" stroke="#00d4d4" stroke-width="3" fill="none"/>
-                                    </svg>
-                                </div>
-                                ${dailyRewardAvailable ? '<div style="color: #fbbf24; font-size: 16px; font-weight: 700;">+5 <span style="font-size: 12px; color: rgba(255, 255, 255, 0.6); font-weight: 600;">Coins</span></div>' : ''}
+                            <div class="reward-chest ${dailyRewardAvailable ? 'available' : 'locked'}" style="width: 50px; height: 50px; margin: -18px auto 10px;">
+                                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <!-- Gift Box Base -->
+                                    <rect x="20" y="45" width="60" height="40" rx="3" stroke="#00bcd4" stroke-width="3" fill="none"/>
+                                    
+                                    <!-- Gift Box Lid -->
+                                    <path d="M 18 40 L 82 40 L 82 48 L 18 48 Z" stroke="#00bcd4" stroke-width="3" fill="none"/>
+                                    
+                                    <!-- Vertical Ribbon -->
+                                    <line x1="50" y1="40" x2="50" y2="85" stroke="#00ffff" stroke-width="4"/>
+                                    
+                                    <!-- Horizontal Ribbon -->
+                                    <line x1="20" y1="65" x2="80" y2="65" stroke="#00ffff" stroke-width="4"/>
+                                    
+                                    <!-- Bow Left -->
+                                    <path d="M 35 30 Q 30 35 35 40" stroke="#00ffff" stroke-width="3" fill="none"/>
+                                    <path d="M 35 30 Q 40 25 45 30" stroke="#00ffff" stroke-width="3" fill="none"/>
+                                    
+                                    <!-- Bow Right -->
+                                    <path d="M 65 30 Q 70 35 65 40" stroke="#00ffff" stroke-width="3" fill="none"/>
+                                    <path d="M 65 30 Q 60 25 55 30" stroke="#00ffff" stroke-width="3" fill="none"/>
+                                    
+                                    <!-- Bow Center -->
+                                    <circle cx="50" cy="35" r="5" stroke="#00d4d4" stroke-width="3" fill="none"/>
+                                    
+                                    <!-- Sparkles (when available) -->
+                                    ${dailyRewardAvailable ? `
+                                    <line x1="15" y1="25" x2="15" y2="25" stroke="#00ffff" stroke-width="2" stroke-linecap="round">
+                                        <animate attributeName="y1" values="25;20;25" dur="1.5s" repeatCount="indefinite"/>
+                                        <animate attributeName="y2" values="25;30;25" dur="1.5s" repeatCount="indefinite"/>
+                                    </line>
+                                    <line x1="85" y1="30" x2="85" y2="30" stroke="#00ffff" stroke-width="2" stroke-linecap="round">
+                                        <animate attributeName="y1" values="30;25;30" dur="1.5s" repeatCount="indefinite" begin="0.5s"/>
+                                        <animate attributeName="y2" values="30;35;30" dur="1.5s" repeatCount="indefinite" begin="0.5s"/>
+                                    </line>
+                                    <line x1="20" y1="80" x2="20" y2="80" stroke="#00ffff" stroke-width="2" stroke-linecap="round">
+                                        <animate attributeName="y1" values="80;75;80" dur="1.5s" repeatCount="indefinite" begin="1s"/>
+                                        <animate attributeName="y2" values="80;85;80" dur="1.5s" repeatCount="indefinite" begin="1s"/>
+                                    </line>
+                                    ` : ''}
+                                </svg>
                             </div>
                             ${dailyRewardAvailable ? `
                                 <button class="reward-claim-btn" onclick="claimDailyReward()">
@@ -2884,18 +2852,6 @@
                     <p class="footer-text">⚠️ This is a demo application. Not real cryptocurrency.</p>
                 </div>
             `;
-            
-            // Update Airdrop menu item and hamburger button based on pending airdrops
-            const airdropMenuItem = document.getElementById('airdropMenuItem');
-            const menuButton = document.getElementById('menuButton');
-            
-            if (hasPendingAirdrops) {
-                if (airdropMenuItem) airdropMenuItem.classList.add('menu-item-highlight');
-                if (menuButton) menuButton.classList.add('menu-btn-highlight');
-            } else {
-                if (airdropMenuItem) airdropMenuItem.classList.remove('menu-item-highlight');
-                if (menuButton) menuButton.classList.remove('menu-btn-highlight');
-            }
         }
 
         function startMine() {
@@ -2927,7 +2883,7 @@
             d.mining = false;
             d.timeLeft = 0;
             localStorage.removeItem('miningEndTime_' + currentUser.email);
-            d.balance += (d.rate * 24); // Dynamic earning based on rate (rate per hour * 24 hours)
+            d.balance += 6; // Fixed 6 ARCASTRA per 24h mining
             d.miningDays++;
             dailyRewardAvailable = true;
             
@@ -2940,26 +2896,14 @@
         }
         
         function claimDailyReward() {
-            // Prevent double-claiming
-            if (isClaimingDaily) return;
             if (!dailyRewardAvailable) return;
             
-            // Set lock
-            isClaimingDaily = true;
+            d.balance += 5;
+            dailyRewardAvailable = false;
             
-            try {
-                d.balance += 5;
-                dailyRewardAvailable = false;
-                
-                save();
-                showToast('✓ Claimed +5 Coins daily reward!');
-                render();
-            } finally {
-                // Release lock after delay
-                setTimeout(() => {
-                    isClaimingDaily = false;
-                }, 1000);
-            }
+            save();
+            showSuccess('✨ Daily reward claimed: +5 Pi!');
+            render();
         }
 
         function claimBonus() {
@@ -3536,10 +3480,6 @@
                     pageTitle.textContent = 'Airdrop';
                     pageContent.innerHTML = getAirdropPageContent();
                     break;
-                case 'leaderboard':
-                    pageTitle.textContent = 'Leaderboard';
-                    pageContent.innerHTML = getLeaderboardPageContent();
-                    break;
                 case 'menu2':
                     pageTitle.textContent = 'Menü 2';
                     pageContent.innerHTML = '<div class="card"><h2 style="color: white; text-align: center;">Menü 2 İçeriği</h2><p style="color: #c4b5fd; text-align: center; margin-top: 10px;">Bu sayfa için içerik yakında eklenecek.</p></div>';
@@ -3842,498 +3782,74 @@
         }
         
         function claimAirdrop(index) {
-            // Prevent double-claiming
-            if (isClaimingAirdrop) return;
-            
             const userEmail = localStorage.getItem('currentUser');
             let users = JSON.parse(localStorage.getItem('users')) || {};
             
-            if (!users[userEmail] || !users[userEmail].pendingAirdrops || !users[userEmail].pendingAirdrops[index]) {
+            if (!users[userEmail] || !users[userEmail].pendingAirdrops) {
                 showToast('❌ Airdrop not found', true);
                 return;
             }
             
-            // Set lock
-            isClaimingAirdrop = true;
+            const airdrop = users[userEmail].pendingAirdrops[index];
             
-            try {
-                const airdrop = users[userEmail].pendingAirdrops[index];
-                
-                // Add to balance
-                users[userEmail].balance = (users[userEmail].balance || 0) + airdrop.amount;
-                
-                // Remove from pending airdrops
-                users[userEmail].pendingAirdrops.splice(index, 1);
-                
-                // Save to localStorage
-                localStorage.setItem('users', JSON.stringify(users));
-                
-                // Update current user
-                currentUser = users[userEmail];
-                
-                // Update hasPendingAirdrops
-                hasPendingAirdrops = (currentUser.pendingAirdrops && currentUser.pendingAirdrops.length > 0) || false;
-                
-                // Show success message
-                showToast(`✓ Claimed ${airdrop.amount} Coins!`);
-                
-                // Refresh page content
-                openPage('airdrop');
-                
-                // Update main screen to refresh green indicators
-                render();
-            } finally {
-                // Release lock after delay
-                setTimeout(() => {
-                    isClaimingAirdrop = false;
-                }, 1000);
-            }
-        }
-        
-        function getLeaderboardPageContent() {
-            // Check cache first (24 hour cache)
-            const cacheKey = 'leaderboard_cache';
-            const cacheTimeKey = 'leaderboard_cache_time';
-            const cacheData = localStorage.getItem(cacheKey);
-            const cacheTime = localStorage.getItem(cacheTimeKey);
-            const now = Date.now();
-            const cacheValid = cacheTime && (now - parseInt(cacheTime)) < (24 * 60 * 60 * 1000); // 24 hours
-            
-            let leaderboardData = [];
-            
-            if (cacheValid && cacheData) {
-                // Use cached data
-                leaderboardData = JSON.parse(cacheData);
-            } else {
-                // Generate new leaderboard from localStorage
-                const users = JSON.parse(localStorage.getItem('users') || '{}');
-                leaderboardData = Object.entries(users)
-                    .map(([email, user]) => ({
-                        email: email,
-                        username: user.username || 'Anonymous',
-                        balance: user.balance || 0,
-                        level: user.level || 1,
-                        rate: user.rate || 0.25,
-                        miningDays: user.miningDays || 0
-                    }))
-                    .sort((a, b) => b.level - a.level)
-                    .slice(0, 100); // Top 100
-                
-                // Save to cache
-                localStorage.setItem(cacheKey, JSON.stringify(leaderboardData));
-                localStorage.setItem(cacheTimeKey, now.toString());
+            if (!airdrop) {
+                showToast('❌ Airdrop not found', true);
+                return;
             }
             
-            // Find current user's rank
-            const currentEmail = localStorage.getItem('currentUser');
-            const currentUserRank = leaderboardData.findIndex(u => u.email === currentEmail) + 1;
-            const currentUserData = leaderboardData.find(u => u.email === currentEmail);
+            // Add to balance
+            users[userEmail].balance = (users[userEmail].balance || 0) + airdrop.amount;
             
-            if (leaderboardData.length === 0) {
-                return `
-                    <div style="display: flex; align-items: center; justify-content: center; min-height: 400px; padding: 20px;">
-                        <div style="background: rgba(0, 0, 0, 0.5); border: 2px solid rgba(100, 100, 100, 0.4); border-radius: 20px; padding: 40px 30px; max-width: 340px; width: 100%; text-align: center; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
-                            <div style="background: rgba(100, 100, 100, 0.2); border: 2px solid rgba(100, 100, 100, 0.3); border-radius: 16px; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 40px;">
-                                🏆
-                            </div>
-                            <h2 style="color: rgba(255, 255, 255, 0.6); font-size: 22px; font-weight: 900; margin-bottom: 12px;">
-                                No Rankings Yet
-                            </h2>
-                            <p style="color: rgba(139, 92, 246, 0.7); font-size: 14px; line-height: 1.6;">
-                                Start mining to appear on the leaderboard!
-                            </p>
-                        </div>
-                    </div>
-                `;
+            // Remove from pending airdrops
+            users[userEmail].pendingAirdrops.splice(index, 1);
+            
+            // Save to localStorage
+            localStorage.setItem('users', JSON.stringify(users));
+            
+            // Update current user
+            currentUser = users[userEmail];
+            
+            // Show success message
+            showToast(`✓ Claimed ${airdrop.amount.toFixed(3)} AA!`);
+            
+            // Refresh page content
+            openPage('airdrop');
+            
+            // Update main screen if visible
+            if (document.getElementById('mainScreen').style.display !== 'none') {
+                renderMainScreen();
             }
-            
-            let html = `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <svg width="28" height="28" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
-                            <!-- Shadow -->
-                            <ellipse cx="50" cy="115" rx="30" ry="4" fill="#000" opacity="0.3"/>
-                            
-                            <!-- Base -->
-                            <rect x="35" y="95" width="30" height="15" rx="2" fill="url(#trophyBase)" stroke="#8B6914" stroke-width="1"/>
-                            <rect x="30" y="90" width="40" height="5" rx="1" fill="url(#trophyPlate)" stroke="#DAA520" stroke-width="0.5"/>
-                            
-                            <!-- Stem -->
-                            <rect x="45" y="70" width="10" height="20" fill="url(#trophyStem)" stroke="#B8860B" stroke-width="0.5"/>
-                            
-                            <!-- Cup body -->
-                            <path d="M25 70 Q25 40 30 30 L70 30 Q75 40 75 70 Z" fill="url(#trophyCup)" stroke="#DAA520" stroke-width="1.5"/>
-                            
-                            <!-- Cup rim -->
-                            <ellipse cx="50" cy="30" rx="20" ry="4" fill="url(#trophyRim)" stroke="#B8860B" stroke-width="0.5"/>
-                            
-                            <!-- Inner shadow -->
-                            <path d="M30 32 Q35 35 40 32" fill="#000" opacity="0.2"/>
-                            <path d="M60 32 Q65 35 70 32" fill="#000" opacity="0.2"/>
-                            
-                            <!-- Left handle -->
-                            <path d="M25 45 Q15 45 12 55 Q15 65 25 65" fill="none" stroke="url(#handleGrad)" stroke-width="4" stroke-linecap="round"/>
-                            <path d="M25 45 Q15 45 12 55 Q15 65 25 65" fill="none" stroke="#DAA520" stroke-width="2.5" stroke-linecap="round"/>
-                            
-                            <!-- Right handle -->
-                            <path d="M75 45 Q85 45 88 55 Q85 65 75 65" fill="none" stroke="url(#handleGrad)" stroke-width="4" stroke-linecap="round"/>
-                            <path d="M75 45 Q85 45 88 55 Q85 65 75 65" fill="none" stroke="#DAA520" stroke-width="2.5" stroke-linecap="round"/>
-                            
-                            <!-- Shine highlights -->
-                            <path d="M35 40 Q40 38 45 40" stroke="#FFF" stroke-width="2" opacity="0.6" stroke-linecap="round"/>
-                            <ellipse cx="38" cy="45" rx="3" ry="5" fill="#FFF" opacity="0.3"/>
-                            <path d="M55 50 Q58 48 60 50" stroke="#FFF" stroke-width="1.5" opacity="0.5" stroke-linecap="round"/>
-                            
-                            <!-- Star decoration -->
-                            <path d="M50 50 L51 53 L54 53 L52 55 L53 58 L50 56 L47 58 L48 55 L46 53 L49 53 Z" fill="#FFF" opacity="0.4"/>
-                            
-                            <defs>
-                                <linearGradient id="trophyBase" x1="0%" y1="0%" x2="0%" y2="100%">
-                                    <stop offset="0%" stop-color="#8B6914"/>
-                                    <stop offset="100%" stop-color="#654321"/>
-                                </linearGradient>
-                                <linearGradient id="trophyPlate" x1="0%" y1="0%" x2="0%" y2="100%">
-                                    <stop offset="0%" stop-color="#FFD700"/>
-                                    <stop offset="50%" stop-color="#DAA520"/>
-                                    <stop offset="100%" stop-color="#B8860B"/>
-                                </linearGradient>
-                                <linearGradient id="trophyStem" x1="0%" y1="0%" x2="100%" y2="0%">
-                                    <stop offset="0%" stop-color="#DAA520"/>
-                                    <stop offset="50%" stop-color="#FFD700"/>
-                                    <stop offset="100%" stop-color="#DAA520"/>
-                                </linearGradient>
-                                <radialGradient id="trophyCup">
-                                    <stop offset="0%" stop-color="#FFF8DC"/>
-                                    <stop offset="30%" stop-color="#FFD700"/>
-                                    <stop offset="70%" stop-color="#FFA500"/>
-                                    <stop offset="100%" stop-color="#DAA520"/>
-                                </radialGradient>
-                                <radialGradient id="trophyRim">
-                                    <stop offset="0%" stop-color="#FFFACD"/>
-                                    <stop offset="100%" stop-color="#DAA520"/>
-                                </radialGradient>
-                                <linearGradient id="handleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                                    <stop offset="0%" stop-color="#B8860B"/>
-                                    <stop offset="50%" stop-color="#FFD700"/>
-                                    <stop offset="100%" stop-color="#B8860B"/>
-                                </linearGradient>
-                            </defs>
-                        </svg>
-                        <div style="color: white; font-size: 18px; font-weight: 800;">Leaderboard</div>
-                    </div>
-                    <div style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 6px; padding: 4px 8px;">
-                        <div style="color: rgba(255, 255, 255, 0.5); font-size: 9px; font-weight: 600; text-align: center;">Updates daily at 00:00 UTC</div>
-                    </div>
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 6px;">
-            `;
-            
-            // Current user card (if in top 100)
-            if (currentUserRank > 0 && currentUserData) {
-                // Calculate current user progress
-                const userCurrentReq = levelRequirements[currentUserData.level] || 0;
-                const userNextReq = levelRequirements[currentUserData.level + 1];
-                let userProgressPercent = 0;
-                
-                if (currentUserData.level >= 20) {
-                    userProgressPercent = 100;
-                } else if (userNextReq) {
-                    userProgressPercent = Math.min(((currentUserData.miningDays - userCurrentReq) / (userNextReq - userCurrentReq)) * 100, 100);
-                }
-                
-                html += `
-                    <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 255, 0.2); border-radius: 10px; padding: 10px; margin-bottom: 6px;">
-                        <div style="display: flex; align-items: center; justify-content: space-between;">
-                            <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
-                                <div style="color: #8b5cf6; width: 30px; text-align: center; font-weight: 800; font-size: 14px;">
-                                    #${currentUserRank}
-                                </div>
-                                <div style="flex: 1;">
-                                    <div style="color: #8b5cf6; font-weight: 700; font-size: 14px;">You</div>
-                                </div>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <div class="level-progress-bar" style="width: 70px; height: 16px; background: rgba(10, 20, 40, 0.85); border-radius: 8px; overflow: hidden; position: relative; border: 1px solid rgba(16, 185, 129, 0.3);">
-                                    <div class="level-progress-fill" style="height: 100%; background: linear-gradient(90deg, #10b981, #059669); width: ${userProgressPercent}%;"></div>
-                                    <div class="level-progress-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8px; font-weight: 700; color: white; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);">
-                                        ${currentUserData.level >= 20 ? `365/365 Days` : `${currentUserData.miningDays}/${userNextReq || '?'} Days`}
-                                    </div>
-                                </div>
-                                <div style="text-align: right;">
-                                    <div style="color: #00ffff; font-weight: 800; font-size: 14px;">Lvl ${currentUserData.level}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            // Top 100 list
-            leaderboardData.forEach((user, index) => {
-                const rank = index + 1;
-                const isCurrentUser = user.email === currentEmail;
-                const isMedal = rank <= 3;
-                
-                let medalSVG = '';
-                
-                if (rank === 1) {
-                    // Gold Medal - 3D with shine and shadows
-                    medalSVG = `<svg width="32" height="32" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
-                        <!-- Ribbon -->
-                        <path d="M35 5 L40 35 L50 30 L60 35 L65 5 L60 8 L50 3 L40 8 Z" fill="url(#ribbon1)" stroke="#8B0000" stroke-width="0.5"/>
-                        
-                        <!-- Shadow under medal -->
-                        <ellipse cx="50" cy="115" rx="25" ry="4" fill="#000" opacity="0.3"/>
-                        
-                        <!-- Outer ring - dark edge -->
-                        <circle cx="50" cy="70" r="32" fill="url(#goldDark)"/>
-                        
-                        <!-- Main medal body -->
-                        <circle cx="50" cy="70" r="28" fill="url(#goldMedal)" stroke="#B8860B" stroke-width="1.5"/>
-                        
-                        <!-- Inner decorative ring -->
-                        <circle cx="50" cy="70" r="24" fill="none" stroke="url(#goldRing)" stroke-width="2"/>
-                        
-                        <!-- Center circle -->
-                        <circle cx="50" cy="70" r="18" fill="url(#goldCenter)"/>
-                        
-                        <!-- Number 1 -->
-                        <text x="50" y="80" font-family="Arial Black" font-size="24" font-weight="bold" fill="url(#goldText)" text-anchor="middle" stroke="#8B6914" stroke-width="0.5">1</text>
-                        
-                        <!-- Shine effect top left -->
-                        <path d="M30 52 Q35 50 40 52 Q35 54 30 52" fill="#FFF" opacity="0.6"/>
-                        <circle cx="32" cy="54" r="3" fill="#FFF" opacity="0.5"/>
-                        
-                        <!-- Bottom shadow inside -->
-                        <path d="M50 88 Q35 85 30 78" fill="#000" opacity="0.2"/>
-                        
-                        <!-- Star decorations -->
-                        <path d="M50 52 L51 55 L54 55 L52 57 L53 60 L50 58 L47 60 L48 57 L46 55 L49 55 Z" fill="#FFF" opacity="0.4"/>
-                        
-                        <defs>
-                            <linearGradient id="ribbon1" x1="0%" y1="0%" x2="0%" y2="100%">
-                                <stop offset="0%" stop-color="#DC143C"/>
-                                <stop offset="100%" stop-color="#8B0000"/>
-                            </linearGradient>
-                            <radialGradient id="goldDark">
-                                <stop offset="70%" stop-color="#DAA520"/>
-                                <stop offset="100%" stop-color="#8B6914"/>
-                            </radialGradient>
-                            <radialGradient id="goldMedal">
-                                <stop offset="0%" stop-color="#FFF8DC"/>
-                                <stop offset="30%" stop-color="#FFD700"/>
-                                <stop offset="70%" stop-color="#FFA500"/>
-                                <stop offset="100%" stop-color="#DAA520"/>
-                            </radialGradient>
-                            <linearGradient id="goldRing" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="#FFF8DC"/>
-                                <stop offset="50%" stop-color="#DAA520"/>
-                                <stop offset="100%" stop-color="#FFF8DC"/>
-                            </linearGradient>
-                            <radialGradient id="goldCenter">
-                                <stop offset="0%" stop-color="#FFFACD"/>
-                                <stop offset="100%" stop-color="#DAA520"/>
-                            </radialGradient>
-                            <linearGradient id="goldText" x1="0%" y1="0%" x2="0%" y2="100%">
-                                <stop offset="0%" stop-color="#FFF"/>
-                                <stop offset="100%" stop-color="#DAA520"/>
-                            </linearGradient>
-                        </defs>
-                    </svg>`;
-                } else if (rank === 2) {
-                    // Silver Medal - 3D with metallic shine
-                    medalSVG = `<svg width="32" height="32" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M35 5 L40 35 L50 30 L60 35 L65 5 L60 8 L50 3 L40 8 Z" fill="url(#ribbon2)" stroke="#00008B" stroke-width="0.5"/>
-                        <ellipse cx="50" cy="115" rx="25" ry="4" fill="#000" opacity="0.3"/>
-                        <circle cx="50" cy="70" r="32" fill="url(#silverDark)"/>
-                        <circle cx="50" cy="70" r="28" fill="url(#silverMedal)" stroke="#A8A8A8" stroke-width="1.5"/>
-                        <circle cx="50" cy="70" r="24" fill="none" stroke="url(#silverRing)" stroke-width="2"/>
-                        <circle cx="50" cy="70" r="18" fill="url(#silverCenter)"/>
-                        <text x="50" y="80" font-family="Arial Black" font-size="24" font-weight="bold" fill="url(#silverText)" text-anchor="middle" stroke="#696969" stroke-width="0.5">2</text>
-                        <path d="M30 52 Q35 50 40 52 Q35 54 30 52" fill="#FFF" opacity="0.8"/>
-                        <circle cx="32" cy="54" r="3" fill="#FFF" opacity="0.7"/>
-                        <path d="M50 88 Q35 85 30 78" fill="#000" opacity="0.2"/>
-                        <path d="M50 52 L51 55 L54 55 L52 57 L53 60 L50 58 L47 60 L48 57 L46 55 L49 55 Z" fill="#FFF" opacity="0.6"/>
-                        
-                        <defs>
-                            <linearGradient id="ribbon2" x1="0%" y1="0%" x2="0%" y2="100%">
-                                <stop offset="0%" stop-color="#4169E1"/>
-                                <stop offset="100%" stop-color="#00008B"/>
-                            </linearGradient>
-                            <radialGradient id="silverDark">
-                                <stop offset="70%" stop-color="#C0C0C0"/>
-                                <stop offset="100%" stop-color="#696969"/>
-                            </radialGradient>
-                            <radialGradient id="silverMedal">
-                                <stop offset="0%" stop-color="#FFFFFF"/>
-                                <stop offset="30%" stop-color="#E8E8E8"/>
-                                <stop offset="70%" stop-color="#C0C0C0"/>
-                                <stop offset="100%" stop-color="#A8A8A8"/>
-                            </radialGradient>
-                            <linearGradient id="silverRing" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="#FFF"/>
-                                <stop offset="50%" stop-color="#A8A8A8"/>
-                                <stop offset="100%" stop-color="#FFF"/>
-                            </linearGradient>
-                            <radialGradient id="silverCenter">
-                                <stop offset="0%" stop-color="#F5F5F5"/>
-                                <stop offset="100%" stop-color="#C0C0C0"/>
-                            </radialGradient>
-                            <linearGradient id="silverText" x1="0%" y1="0%" x2="0%" y2="100%">
-                                <stop offset="0%" stop-color="#FFF"/>
-                                <stop offset="100%" stop-color="#A8A8A8"/>
-                            </linearGradient>
-                        </defs>
-                    </svg>`;
-                } else if (rank === 3) {
-                    // Bronze Medal - 3D with warm tones
-                    medalSVG = `<svg width="32" height="32" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M35 5 L40 35 L50 30 L60 35 L65 5 L60 8 L50 3 L40 8 Z" fill="url(#ribbon3)" stroke="#006400" stroke-width="0.5"/>
-                        <ellipse cx="50" cy="115" rx="25" ry="4" fill="#000" opacity="0.3"/>
-                        <circle cx="50" cy="70" r="32" fill="url(#bronzeDark)"/>
-                        <circle cx="50" cy="70" r="28" fill="url(#bronzeMedal)" stroke="#8B4513" stroke-width="1.5"/>
-                        <circle cx="50" cy="70" r="24" fill="none" stroke="url(#bronzeRing)" stroke-width="2"/>
-                        <circle cx="50" cy="70" r="18" fill="url(#bronzeCenter)"/>
-                        <text x="50" y="80" font-family="Arial Black" font-size="24" font-weight="bold" fill="url(#bronzeText)" text-anchor="middle" stroke="#654321" stroke-width="0.5">3</text>
-                        <path d="M30 52 Q35 50 40 52 Q35 54 30 52" fill="#FFE4B5" opacity="0.6"/>
-                        <circle cx="32" cy="54" r="3" fill="#FFE4B5" opacity="0.5"/>
-                        <path d="M50 88 Q35 85 30 78" fill="#000" opacity="0.2"/>
-                        <path d="M50 52 L51 55 L54 55 L52 57 L53 60 L50 58 L47 60 L48 57 L46 55 L49 55 Z" fill="#FFE4B5" opacity="0.4"/>
-                        
-                        <defs>
-                            <linearGradient id="ribbon3" x1="0%" y1="0%" x2="0%" y2="100%">
-                                <stop offset="0%" stop-color="#32CD32"/>
-                                <stop offset="100%" stop-color="#006400"/>
-                            </linearGradient>
-                            <radialGradient id="bronzeDark">
-                                <stop offset="70%" stop-color="#B87333"/>
-                                <stop offset="100%" stop-color="#654321"/>
-                            </radialGradient>
-                            <radialGradient id="bronzeMedal">
-                                <stop offset="0%" stop-color="#FFE4C4"/>
-                                <stop offset="30%" stop-color="#CD853F"/>
-                                <stop offset="70%" stop-color="#B87333"/>
-                                <stop offset="100%" stop-color="#8B4513"/>
-                            </radialGradient>
-                            <linearGradient id="bronzeRing" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="#FFE4B5"/>
-                                <stop offset="50%" stop-color="#8B4513"/>
-                                <stop offset="100%" stop-color="#FFE4B5"/>
-                            </linearGradient>
-                            <radialGradient id="bronzeCenter">
-                                <stop offset="0%" stop-color="#DEB887"/>
-                                <stop offset="100%" stop-color="#B87333"/>
-                            </radialGradient>
-                            <linearGradient id="bronzeText" x1="0%" y1="0%" x2="0%" y2="100%">
-                                <stop offset="0%" stop-color="#FFE4B5"/>
-                                <stop offset="100%" stop-color="#8B4513"/>
-                            </linearGradient>
-                        </defs>
-                    </svg>`;
-                }
-                
-                // Calculate progress
-                const currentReq = levelRequirements[user.level] || 0;
-                const nextReq = levelRequirements[user.level + 1];
-                let progressPercent = 0;
-                let progressText = '';
-                
-                if (user.level >= 20) {
-                    progressPercent = 100;
-                    progressText = 'MAX LEVEL';
-                } else if (nextReq) {
-                    progressPercent = Math.min(((user.miningDays - currentReq) / (nextReq - currentReq)) * 100, 100);
-                    progressText = `${user.miningDays}/${nextReq} Days`;
-                } else {
-                    progressPercent = 100;
-                    progressText = `${user.miningDays} Days`;
-                }
-                
-                html += `
-                    <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 255, 0.2); border-radius: 10px; padding: 10px; ${isCurrentUser ? 'box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);' : ''}">
-                        <div style="display: flex; align-items: center; justify-content: space-between;">
-                            <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
-                                ${isMedal ? 
-                                    `<div style="width: 30px; display: flex; align-items: center; justify-content: center;">${medalSVG}</div>` :
-                                    `<div style="color: rgba(255, 255, 255, 0.5); width: 30px; text-align: center; font-weight: 800; font-size: 14px;">#${rank}</div>`
-                                }
-                                <div style="flex: 1; min-width: 0;">
-                                    <div style="color: ${isCurrentUser ? '#8b5cf6' : 'white'}; font-weight: 700; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                        ${user.username}${isCurrentUser ? ' (You)' : ''}
-                                    </div>
-                                </div>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <div class="level-progress-bar" style="width: 70px; height: 16px; background: rgba(10, 20, 40, 0.85); border-radius: 8px; overflow: hidden; position: relative; border: 1px solid rgba(16, 185, 129, 0.3);">
-                                    <div class="level-progress-fill" style="height: 100%; background: linear-gradient(90deg, #10b981, #059669); width: ${progressPercent}%;"></div>
-                                    <div class="level-progress-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8px; font-weight: 700; color: white; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);">
-                                        ${user.level >= 20 ? `365/365 Days` : `${user.miningDays}/${nextReq || '?'} Days`}
-                                    </div>
-                                </div>
-                                <div style="text-align: right;">
-                                    <div style="color: #00ffff; font-weight: 800; font-size: 14px;">Lvl ${user.level}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            html += '</div></div>'; // Close items container and main container
-            
-            return html;
         }
         
         function claimReferralEarnings() {
-            // Prevent double-claiming
-            if (isClaimingReferral) return;
-            
             const userEmail = localStorage.getItem('currentUser');
             let users = JSON.parse(localStorage.getItem('users')) || {};
             
-            if (!users[userEmail] || !users[userEmail].pendingReferralEarnings || users[userEmail].pendingReferralEarnings === 0) {
+            if (!users[userEmail] || !users[userEmail].pendingReferralEarnings) {
                 showToast('❌ No earnings to claim', true);
                 return;
             }
             
-            // Set lock
-            isClaimingReferral = true;
+            const earnings = users[userEmail].pendingReferralEarnings;
             
-            try {
-                const earnings = users[userEmail].pendingReferralEarnings;
-                const mrReward = users[userEmail].pendingReferralMR || 0;
-                
-                // Add coins to balance
-                users[userEmail].balance = (users[userEmail].balance || 0) + earnings;
-                
-                // Add MR to rate
-                users[userEmail].rate = (users[userEmail].rate || 0.25) + mrReward;
-                
-                // Reset pending earnings and MR
-                users[userEmail].pendingReferralEarnings = 0;
-                users[userEmail].pendingReferralMR = 0;
-                
-                // Save to localStorage
-                localStorage.setItem('users', JSON.stringify(users));
-                
-                // Update current user and d object
-                currentUser = users[userEmail];
-                d.balance = currentUser.balance;
-                d.rate = currentUser.rate;
-                d.pendingReferralEarnings = 0;
-                d.pendingReferralMR = 0;
-                
-                // Show success message
-                showToast(`✓ Claimed ${earnings} Coins + ${mrReward.toFixed(2)} MR from referrals!`);
-                
-                // Refresh main screen
-                render();
-            } finally {
-                // Release lock after delay
-                setTimeout(() => {
-                    isClaimingReferral = false;
-                }, 1000);
-            }
+            // Add to balance
+            users[userEmail].balance = (users[userEmail].balance || 0) + earnings;
+            
+            // Reset pending earnings and count
+            users[userEmail].pendingReferralEarnings = 0;
+            users[userEmail].pendingReferralCount = 0;
+            
+            // Save to localStorage
+            localStorage.setItem('users', JSON.stringify(users));
+            
+            // Update current user
+            currentUser = users[userEmail];
+            
+            // Show success message
+            showToast(`✓ Claimed ${earnings.toFixed(3)} AA from referrals!`);
+            
+            // Refresh main screen
+            renderMainScreen();
         }
         
         function getProfilePageContent() {
