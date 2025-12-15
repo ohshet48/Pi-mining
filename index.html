@@ -3665,13 +3665,22 @@
         
         function closePage() {
             const fullPage = document.getElementById('fullPage');
+            const sidebar = document.getElementById('menuSidebar');
+            const menuOverlay = document.getElementById('menuOverlay');
+            
+            // Close full page
             fullPage.classList.remove('active');
             fullPage.dataset.currentPage = '';
+            
+            // Close menu if open
+            if (sidebar) sidebar.classList.remove('open');
+            if (menuOverlay) menuOverlay.classList.remove('show');
+            document.body.style.overflow = 'auto';
             
             // Replace state to remove hash (with error handling)
             try {
                 if (window.location.hash) {
-                    history.replaceState(null, '', window.location.pathname);
+                    history.replaceState({ page: 'main' }, '', window.location.pathname);
                 }
             } catch(e) {
                 // History API not available or restricted
@@ -4811,29 +4820,33 @@
                 
                 if (changeEmailModal && changeEmailModal.classList.contains('show')) {
                     closeChangeEmail();
+                    history.pushState({ page: 'main' }, '', '');
                     return;
                 }
                 
                 if (changePasswordModal && changePasswordModal.classList.contains('show')) {
                     closeChangePassword();
+                    history.pushState({ page: 'main' }, '', '');
                     return;
                 }
                 
                 if (deleteAccountModal && deleteAccountModal.classList.contains('show')) {
                     closeDeleteAccount();
+                    history.pushState({ page: 'main' }, '', '');
                     return;
                 }
                 
-                // Check if menu is open
+                // Check if menu is open - close it and go to main
                 if (sidebar && sidebar.classList.contains('open')) {
-                    // Close menu
                     sidebar.classList.remove('open');
                     document.getElementById('menuOverlay').classList.remove('show');
                     document.body.style.overflow = 'auto';
+                    history.pushState({ page: 'main' }, '', '');
                 } 
-                // Check if full page is open
+                // Check if full page is open - close it and go to main
                 else if (fullPage && fullPage.classList.contains('active')) {
                     closePage();
+                    history.pushState({ page: 'main' }, '', '');
                 }
                 // On main page - handle exit
                 else {
