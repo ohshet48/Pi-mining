@@ -2783,6 +2783,53 @@
                     `}
                 </div>
 
+                ${d.mining ? `
+                    <!-- Ad Boost Button -->
+                    <div style="margin: 12px 0;">
+                        ${(() => {
+                            const currentRate = d.rate;
+                            const adCooldownKey = 'adCooldown_' + localStorage.getItem('currentUser');
+                            const adCooldownEnd = parseInt(localStorage.getItem(adCooldownKey) || '0');
+                            const now = Date.now();
+                            const cooldownRemaining = Math.max(0, Math.ceil((adCooldownEnd - now) / 1000));
+                            const isOnCooldown = cooldownRemaining > 0;
+                            const isMaxRate = currentRate >= 5.0;
+                            const isDisabled = isOnCooldown || isMaxRate;
+                            
+                            return `
+                                <button 
+                                    onclick="${isDisabled ? '' : 'watchAdBoost()'}" 
+                                    style="
+                                        width: 100%; 
+                                        height: 45px; 
+                                        background: ${isMaxRate ? 'rgba(100, 100, 100, 0.3)' : (isOnCooldown ? 'rgba(0, 255, 255, 0.1)' : 'rgba(0, 255, 255, 0.15)')}; 
+                                        border: 1px solid ${isMaxRate ? 'rgba(150, 150, 150, 0.3)' : (isOnCooldown ? 'rgba(0, 255, 255, 0.3)' : 'rgba(0, 255, 255, 0.4)')}; 
+                                        border-radius: 12px; 
+                                        color: ${isDisabled ? 'rgba(255, 255, 255, 0.4)' : '#00ffff'}; 
+                                        font-size: 13px; 
+                                        font-weight: 700; 
+                                        cursor: ${isDisabled ? 'not-allowed' : 'pointer'}; 
+                                        display: flex; 
+                                        align-items: center; 
+                                        justify-content: center; 
+                                        gap: 8px;
+                                        opacity: ${isDisabled ? '0.6' : '1'};
+                                    "
+                                    ${isDisabled ? 'disabled' : ''}
+                                >
+                                    ${isMaxRate ? 
+                                        '🔒 Max Rate Reached (5.0 MR)' : 
+                                        (isOnCooldown ? 
+                                            `⏳ Wait ${cooldownRemaining}s` : 
+                                            '📺 Watch Ad +0.25 MR'
+                                        )
+                                    }
+                                </button>
+                            `;
+                        })()}
+                    </div>
+                ` : ''}
+
                 <div class="stats">
                     <div class="stat">
                         <div class="stat-top">
@@ -2984,6 +3031,21 @@
             const now = Date.now();
             const end = now + (24 * 60 * 60 * 1000);
             localStorage.setItem('miningEndTime_' + currentUser.email, end);
+            
+            // Reset ad boost for new session
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            if (users[currentUser.email]) {
+                // Remove any ad boost from previous session
+                const baseRate = 0.25; // Starting rate
+                const levelBonus = (users[currentUser.email].level - 1) * 0.05; // Level rewards
+                users[currentUser.email].rate = baseRate + levelBonus;
+                localStorage.setItem('users', JSON.stringify(users));
+                currentUser = users[currentUser.email];
+            }
+            
+            // Clear ad cooldown
+            localStorage.removeItem('adCooldown_' + currentUser.email);
+            
             d.mining = true;
             d.timeLeft = 24 * 60 * 60;
 
@@ -3058,6 +3120,78 @@
             balanceVisible = !balanceVisible;
             localStorage.setItem('balanceVisible_' + currentUser.email, balanceVisible);
             render();
+        }
+        
+        function watchAdBoost() {
+            const userEmail = localStorage.getItem('currentUser');
+            const currentRate = d.rate;
+            
+            // Check if already at max
+            if (currentRate >= 5.0) {
+                showToast('❌ Already at maximum rate (5.0 MR)', true);
+                return;
+            }
+            
+            // Check cooldown
+            const adCooldownKey = 'adCooldown_' + userEmail;
+            const adCooldownEnd = parseInt(localStorage.getItem(adCooldownKey) || '0');
+            const now = Date.now();
+            
+            if (now < adCooldownEnd) {
+                const remaining = Math.ceil((adCooldownEnd - now) / 1000);
+                showToast(`⏳ Please wait ${remaining} seconds`, true);
+                return;
+            }
+            
+            // Simulate ad watching (5 seconds)
+            showToast('📺 Loading ad...');
+            
+            setTimeout(() => {
+                // Check again if rate is still under 5.0
+                const users = JSON.parse(localStorage.getItem('users') || '{}');
+                const user = users[userEmail];
+                
+                if (!user) return;
+                
+                // Calculate current total rate
+                const baseRate = user.rate || 0.25;
+                const activeRefs = calculateActiveRefs();
+                const currentTotalRate = baseRate + (activeRefs * 0.05);
+                
+                // Add boost if possible
+                const newRate = currentTotalRate + 0.25;
+                
+                if (newRate > 5.0) {
+                    const maxBoost = 5.0 - currentTotalRate;
+                    if (maxBoost > 0) {
+                        user.rate = baseRate + maxBoost - (activeRefs * 0.05);
+                        showToast(`✓ Ad watched! +${maxBoost.toFixed(2)} MR boost added`);
+                    } else {
+                        showToast('❌ Already at maximum rate (5.0 MR)', true);
+                        return;
+                    }
+                } else {
+                    user.rate = baseRate + 0.25;
+                    showToast('✓ Ad watched! +0.25 MR boost added for this session');
+                }
+                
+                // Save
+                localStorage.setItem('users', JSON.stringify(users));
+                currentUser = user;
+                
+                // Set 15 second cooldown
+                const cooldownEnd = Date.now() + (15 * 1000);
+                localStorage.setItem(adCooldownKey, cooldownEnd.toString());
+                
+                // Update display
+                initApp();
+                
+                // Auto-refresh after cooldown
+                setTimeout(() => {
+                    render();
+                }, 15000);
+                
+            }, 5000); // 5 second ad simulation
         }
 
         function checkMining() {
@@ -3599,6 +3733,13 @@
         }
         
         function openPage(page) {
+            // Push state FIRST for immediate back button response
+            try {
+                history.pushState({ page: page }, '', '#' + page);
+            } catch(e) {
+                // History API not available or restricted
+            }
+            
             toggleMenu();
             
             const fullPage = document.getElementById('fullPage');
@@ -3654,13 +3795,6 @@
             
             fullPage.classList.add('active');
             fullPage.dataset.currentPage = page;
-            
-            // Push state for back button handling (with error handling)
-            try {
-                history.pushState({ page: page }, '', '#' + page);
-            } catch(e) {
-                // History API not available or restricted
-            }
         }
         
         function closePage() {
