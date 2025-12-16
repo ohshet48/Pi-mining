@@ -4621,11 +4621,11 @@
                         <div style="display: flex; align-items: center; justify-content: space-between;">
                             <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
                                 ${isMedal ? 
-                                    `<div style="display: flex; align-items: center; gap: 6px;">
+                                    `<div style="display: flex; align-items: center; gap: 1px;">
                                         <div style="width: 32px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">${medalSVG}</div>
-                                        <div style="color: rgba(255, 255, 255, 0.7); font-size: 14px; font-weight: 800; width: 24px; text-align: right;">#${rank}</div>
+                                        <div style="color: rgba(255, 255, 255, 0.7); font-size: 14px; font-weight: 800; min-width: 26px;">#${rank}</div>
                                     </div>` :
-                                    `<div style="color: rgba(255, 255, 255, 0.5); font-weight: 800; font-size: 14px; width: 62px; text-align: right; padding-right: 0;">#${rank}</div>`
+                                    `<div style="color: rgba(255, 255, 255, 0.5); font-weight: 800; font-size: 14px; min-width: 26px; margin-left: 33px;">#${rank}</div>`
                                 }
                                 <div style="flex: 1; min-width: 0;">
                                     <div style="color: ${isCurrentUser ? '#8b5cf6' : (rank <= 3 ? '#00ffff' : 'white')}; font-weight: 700; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
