@@ -3572,12 +3572,12 @@
             }
             
             const filtered = countries.filter(country => 
-                country.toLowerCase().includes(filter)
+                country.name.toLowerCase().includes(filter)
             );
             
             if (filtered.length > 0) {
                 dropdown.innerHTML = filtered.map(country => 
-                    `<div class="country-option" onclick="selectCountry('${country}', '${inputId}', '${dropdownId}')">${country}</div>`
+                    `<div class="country-option" onclick="selectCountry('${country.name}', '${inputId}', '${dropdownId}')">${country.flag} ${country.name}</div>`
                 ).join('');
                 dropdown.classList.add('show');
             } else {
@@ -3598,7 +3598,7 @@
             
             // Check if the entered value is in the countries list
             const isValid = countries.some(country => 
-                country.toLowerCase() === inputValue.toLowerCase()
+                country.name.toLowerCase() === inputValue.toLowerCase()
             );
             
             if (!isValid && inputValue !== '') {
