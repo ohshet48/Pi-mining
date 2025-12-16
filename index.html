@@ -2742,7 +2742,7 @@
             document.getElementById('app').innerHTML = `
                 <div class="header">
                     <div class="welcome-card">
-                        <span class="welcome-text">Welcome, </span><span class="username-text">${currentUser.username}!</span>
+                        <span class="welcome-text">Welcome, </span><span class="username-text">${getCountryFlag(currentUser.country || 'Turkey')} ${currentUser.username}!</span>
                     </div>
                     <button class="menu-btn" id="menuButton" onclick="toggleMenu()">
                         <span></span>
@@ -3467,17 +3467,85 @@
         let profileOpenedFrom = 'modal'; // Track where profile was opened from
         
         const countries = [
-            'Afghanistan', 'Albania', 'Algeria', 'Argentina', 'Australia', 'Austria', 'Azerbaijan',
-            'Bangladesh', 'Belgium', 'Brazil', 'Bulgaria', 'Canada', 'Chile', 'China', 'Colombia',
-            'Croatia', 'Czech Republic', 'Denmark', 'Egypt', 'Finland', 'France', 'Germany', 'Greece',
-            'Hungary', 'Iceland', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland', 'Israel', 'Italy',
-            'Japan', 'Jordan', 'Kazakhstan', 'Kenya', 'Kuwait', 'Lebanon', 'Libya', 'Malaysia', 'Mexico',
-            'Morocco', 'Netherlands', 'New Zealand', 'Nigeria', 'Norway', 'Pakistan', 'Philippines',
-            'Poland', 'Portugal', 'Qatar', 'Romania', 'Russia', 'Saudi Arabia', 'Serbia', 'Singapore',
-            'South Africa', 'South Korea', 'Spain', 'Sweden', 'Switzerland', 'Syria', 'Taiwan', 'Thailand',
-            'Tunisia', 'Turkey', 'Ukraine', 'United Arab Emirates', 'United Kingdom', 'United States',
-            'Uzbekistan', 'Venezuela', 'Vietnam'
+            { name: 'Afghanistan', flag: '🇦🇫' },
+            { name: 'Albania', flag: '🇦🇱' },
+            { name: 'Algeria', flag: '🇩🇿' },
+            { name: 'Argentina', flag: '🇦🇷' },
+            { name: 'Australia', flag: '🇦🇺' },
+            { name: 'Austria', flag: '🇦🇹' },
+            { name: 'Azerbaijan', flag: '🇦🇿' },
+            { name: 'Bangladesh', flag: '🇧🇩' },
+            { name: 'Belgium', flag: '🇧🇪' },
+            { name: 'Brazil', flag: '🇧🇷' },
+            { name: 'Bulgaria', flag: '🇧🇬' },
+            { name: 'Canada', flag: '🇨🇦' },
+            { name: 'Chile', flag: '🇨🇱' },
+            { name: 'China', flag: '🇨🇳' },
+            { name: 'Colombia', flag: '🇨🇴' },
+            { name: 'Croatia', flag: '🇭🇷' },
+            { name: 'Czech Republic', flag: '🇨🇿' },
+            { name: 'Denmark', flag: '🇩🇰' },
+            { name: 'Egypt', flag: '🇪🇬' },
+            { name: 'Finland', flag: '🇫🇮' },
+            { name: 'France', flag: '🇫🇷' },
+            { name: 'Germany', flag: '🇩🇪' },
+            { name: 'Greece', flag: '🇬🇷' },
+            { name: 'Hungary', flag: '🇭🇺' },
+            { name: 'Iceland', flag: '🇮🇸' },
+            { name: 'India', flag: '🇮🇳' },
+            { name: 'Indonesia', flag: '🇮🇩' },
+            { name: 'Iran', flag: '🇮🇷' },
+            { name: 'Iraq', flag: '🇮🇶' },
+            { name: 'Ireland', flag: '🇮🇪' },
+            { name: 'Israel', flag: '🇮🇱' },
+            { name: 'Italy', flag: '🇮🇹' },
+            { name: 'Japan', flag: '🇯🇵' },
+            { name: 'Jordan', flag: '🇯🇴' },
+            { name: 'Kazakhstan', flag: '🇰🇿' },
+            { name: 'Kenya', flag: '🇰🇪' },
+            { name: 'Kuwait', flag: '🇰🇼' },
+            { name: 'Lebanon', flag: '🇱🇧' },
+            { name: 'Libya', flag: '🇱🇾' },
+            { name: 'Malaysia', flag: '🇲🇾' },
+            { name: 'Mexico', flag: '🇲🇽' },
+            { name: 'Morocco', flag: '🇲🇦' },
+            { name: 'Netherlands', flag: '🇳🇱' },
+            { name: 'New Zealand', flag: '🇳🇿' },
+            { name: 'Nigeria', flag: '🇳🇬' },
+            { name: 'Norway', flag: '🇳🇴' },
+            { name: 'Pakistan', flag: '🇵🇰' },
+            { name: 'Philippines', flag: '🇵🇭' },
+            { name: 'Poland', flag: '🇵🇱' },
+            { name: 'Portugal', flag: '🇵🇹' },
+            { name: 'Qatar', flag: '🇶🇦' },
+            { name: 'Romania', flag: '🇷🇴' },
+            { name: 'Russia', flag: '🇷🇺' },
+            { name: 'Saudi Arabia', flag: '🇸🇦' },
+            { name: 'Serbia', flag: '🇷🇸' },
+            { name: 'Singapore', flag: '🇸🇬' },
+            { name: 'South Africa', flag: '🇿🇦' },
+            { name: 'South Korea', flag: '🇰🇷' },
+            { name: 'Spain', flag: '🇪🇸' },
+            { name: 'Sweden', flag: '🇸🇪' },
+            { name: 'Switzerland', flag: '🇨🇭' },
+            { name: 'Syria', flag: '🇸🇾' },
+            { name: 'Taiwan', flag: '🇹🇼' },
+            { name: 'Thailand', flag: '🇹🇭' },
+            { name: 'Tunisia', flag: '🇹🇳' },
+            { name: 'Turkey', flag: '🇹🇷' },
+            { name: 'Ukraine', flag: '🇺🇦' },
+            { name: 'United Arab Emirates', flag: '🇦🇪' },
+            { name: 'United Kingdom', flag: '🇬🇧' },
+            { name: 'United States', flag: '🇺🇸' },
+            { name: 'Uzbekistan', flag: '🇺🇿' },
+            { name: 'Venezuela', flag: '🇻🇪' },
+            { name: 'Vietnam', flag: '🇻🇳' }
         ];
+        
+        function getCountryFlag(countryName) {
+            const country = countries.find(c => c.name === countryName);
+            return country ? country.flag : '🌍';
+        }
         
         function showCountryDropdown(inputId, dropdownId) {
             const input = document.getElementById(inputId);
@@ -3487,7 +3555,7 @@
             
             // Populate dropdown
             dropdown.innerHTML = countries.map(country => 
-                `<div class="country-option" onclick="selectCountry('${country}', '${inputId}', '${dropdownId}')">${country}</div>`
+                `<div class="country-option" onclick="selectCountry('${country.name}', '${inputId}', '${dropdownId}')">${country.flag} ${country.name}</div>`
             ).join('');
             
             dropdown.classList.add('show');
@@ -4343,7 +4411,7 @@
                                     #${currentUserRank}
                                 </div>
                                 <div style="flex: 1;">
-                                    <div style="color: #fbbf24; font-weight: 700; font-size: 14px;">You</div>
+                                    <div style="color: #fbbf24; font-weight: 700; font-size: 14px;">${getCountryFlag(currentUserData.country || 'Turkey')} You</div>
                                 </div>
                             </div>
                             <div style="display: flex; align-items: center; gap: 6px;">
@@ -4553,7 +4621,7 @@
                                 }
                                 <div style="flex: 1; min-width: 0;">
                                     <div style="color: ${isCurrentUser ? '#8b5cf6' : (rank <= 3 ? '#00ffff' : 'white')}; font-weight: 700; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                        ${user.username}${isCurrentUser ? ' (You)' : ''}
+                                        ${getCountryFlag(user.country || 'Turkey')} ${user.username}${isCurrentUser ? ' (You)' : ''}
                                     </div>
                                 </div>
                             </div>
