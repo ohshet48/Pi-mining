@@ -4246,13 +4246,18 @@
         }
         
         function getLeaderboardPageContent() {
-            // Check cache first (24 hour cache)
+            // Check cache first (updates at 00:00 UTC daily)
             const cacheKey = 'leaderboard_cache';
             const cacheTimeKey = 'leaderboard_cache_time';
             const cacheData = localStorage.getItem(cacheKey);
             const cacheTime = localStorage.getItem(cacheTimeKey);
-            const now = Date.now();
-            const cacheValid = cacheTime && (now - parseInt(cacheTime)) < (24 * 60 * 60 * 1000); // 24 hours
+            
+            const now = new Date();
+            const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+            const todayUTCTimestamp = todayUTC.getTime();
+            
+            // Cache is valid if it was created today (UTC)
+            const cacheValid = cacheTime && parseInt(cacheTime) >= todayUTCTimestamp;
             
             let leaderboardData = [];
             
@@ -4281,9 +4286,9 @@
                     })
                     .slice(0, 100); // Top 100
                 
-                // Save to cache
+                // Save to cache with today's UTC date
                 localStorage.setItem(cacheKey, JSON.stringify(leaderboardData));
-                localStorage.setItem(cacheTimeKey, now.toString());
+                localStorage.setItem(cacheTimeKey, todayUTCTimestamp.toString());
             }
             
             // Find current user's rank
@@ -4616,8 +4621,11 @@
                         <div style="display: flex; align-items: center; justify-content: space-between;">
                             <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
                                 ${isMedal ? 
-                                    `<div style="width: 30px; display: flex; align-items: center; justify-content: center;">${medalSVG}</div>` :
-                                    `<div style="color: rgba(255, 255, 255, 0.5); width: 30px; text-align: center; font-weight: 800; font-size: 14px;">#${rank}</div>`
+                                    `<div style="display: flex; align-items: center; gap: 6px;">
+                                        <div style="width: 32px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">${medalSVG}</div>
+                                        <div style="color: rgba(255, 255, 255, 0.7); font-size: 14px; font-weight: 800; width: 24px; text-align: right;">#${rank}</div>
+                                    </div>` :
+                                    `<div style="color: rgba(255, 255, 255, 0.5); font-weight: 800; font-size: 14px; width: 62px; text-align: right; padding-right: 0;">#${rank}</div>`
                                 }
                                 <div style="flex: 1; min-width: 0;">
                                     <div style="color: ${isCurrentUser ? '#8b5cf6' : (rank <= 3 ? '#00ffff' : 'white')}; font-weight: 700; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
@@ -4889,7 +4897,10 @@
                     </div>
                     <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 14px; margin-bottom: 10px;">
                         <div style="font-size: 11px; color: #8b5cf6; font-weight: 600; margin-bottom: 6px;">Country</div>
-                        <input type="text" id="inputCountryPage" class="form-input" placeholder="Enter your country" value="${d.country || ''}" style="margin: 0;" disabled>
+                        <div class="country-dropdown">
+                            <input type="text" id="inputCountryPage" class="form-input" placeholder="Select or type your country" value="${d.country || ''}" style="margin: 0;" disabled autocomplete="off" onfocus="showCountryDropdown('inputCountryPage', 'countryDropdownPage')" oninput="filterCountries('inputCountryPage', 'countryDropdownPage')" onblur="setTimeout(() => validateCountryInput('inputCountryPage'), 200)">
+                            <div id="countryDropdownPage" class="country-dropdown-list"></div>
+                        </div>
                     </div>
                     <button id="saveInfoBtnPage" class="profile-action-btn" onclick="savePersonalInfoPage()" style="background: linear-gradient(135deg, #00ffff, #0096ff); color: #000; font-weight: 900; display: none;">
                         ✓ Save Information
