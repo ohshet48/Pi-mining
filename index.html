@@ -2177,13 +2177,6 @@
         }
         
         function showExitToast() {
-            console.log('🔴 EXIT TOAST TRIGGERED');
-            console.log('fullPage active?', document.getElementById('fullPage')?.classList.contains('active'));
-            console.log('menu open?', document.getElementById('menuSidebar')?.classList.contains('open'));
-            
-            // TEMPORARILY DISABLED TO TEST
-            return;
-            
             const toast = document.getElementById('toastNotification');
             toast.textContent = '⬅️ Press back again to exit';
             toast.className = 'toast-notification exit';
