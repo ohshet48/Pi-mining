@@ -2177,6 +2177,13 @@
         }
         
         function showExitToast() {
+            console.log('🔴 EXIT TOAST TRIGGERED');
+            console.log('fullPage active?', document.getElementById('fullPage')?.classList.contains('active'));
+            console.log('menu open?', document.getElementById('menuSidebar')?.classList.contains('open'));
+            
+            // TEMPORARILY DISABLED TO TEST
+            return;
+            
             const toast = document.getElementById('toastNotification');
             toast.textContent = '⬅️ Press back again to exit';
             toast.className = 'toast-notification exit';
@@ -2904,7 +2911,7 @@
                             </div>
                         </div>
                     ` : `
-                        <div class="stat" onclick="openPage('referrals')" style="cursor: pointer;">
+                        <div class="stat" onclick="openReferralsDirectly()" style="cursor: pointer;">
                             <div class="stat-top">
                                 <div class="stat-icon icon-green">
                                     <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -4800,6 +4807,32 @@
             openPage('referrals');
         }
         
+        function openReferralsDirectly() {
+            // Set flag to ignore next popstate
+            ignoreNextPopstate = true;
+            
+            // Manually close menu without history manipulation
+            const sidebar = document.getElementById('menuSidebar');
+            const overlay = document.getElementById('menuOverlay');
+            if (sidebar && sidebar.classList.contains('open')) {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('show');
+                document.body.style.overflow = 'auto';
+            }
+            
+            const fullPage = document.getElementById('fullPage');
+            const pageTitle = document.getElementById('fullPageTitle');
+            const pageContent = document.getElementById('fullPageContent');
+            
+            pageTitle.textContent = 'My Referrals';
+            pageContent.innerHTML = getReferralsPageContent();
+            fullPage.classList.add('active');
+            fullPage.dataset.currentPage = 'referrals';
+            
+            // Reset flag after a moment
+            setTimeout(() => { ignoreNextPopstate = false; }, 200);
+        }
+        
         function openReferralsPage() {
             // AGGRESSIVE state management for instant back button
             try {
@@ -5084,10 +5117,17 @@
         // Exit handling - double back press
         let lastBackPress = 0;
         const backPressInterval = 2000; // 2 seconds
+        let ignoreNextPopstate = false; // Flag to ignore popstate
         
         // Handle back button (with error handling for restricted environments)
         try {
             window.addEventListener('popstate', function(event) {
+                // Check ignore flag
+                if (ignoreNextPopstate) {
+                    ignoreNextPopstate = false;
+                    return;
+                }
+                
                 const fullPage = document.getElementById('fullPage');
                 const sidebar = document.getElementById('menuSidebar');
                 
@@ -5114,34 +5154,36 @@
                     return;
                 }
                 
+                // Check if full page is open - close it and go to main (CHECK THIS FIRST!)
+                if (fullPage && fullPage.classList.contains('active')) {
+                    closePage();
+                    history.pushState({ page: 'main' }, '', '');
+                    return; // IMPORTANT: return here!
+                }
+                
                 // Check if menu is open - close it and go to main
                 if (sidebar && sidebar.classList.contains('open')) {
                     sidebar.classList.remove('open');
                     document.getElementById('menuOverlay').classList.remove('show');
                     document.body.style.overflow = 'auto';
                     history.pushState({ page: 'main' }, '', '');
-                } 
-                // Check if full page is open - close it and go to main
-                else if (fullPage && fullPage.classList.contains('active')) {
-                    closePage();
-                    history.pushState({ page: 'main' }, '', '');
+                    return; // IMPORTANT: return here!
                 }
-                // On main page - handle exit
-                else {
-                    const currentTime = Date.now();
+                
+                // On main page - handle exit (only if nothing else is open)
+                const currentTime = Date.now();
+                
+                if (currentTime - lastBackPress < backPressInterval) {
+                    // Second press within interval - allow exit
+                    // Browser will handle the exit
+                    return;
+                } else {
+                    // First press - show warning
+                    lastBackPress = currentTime;
+                    showExitToast();
                     
-                    if (currentTime - lastBackPress < backPressInterval) {
-                        // Second press within interval - allow exit
-                        // Browser will handle the exit
-                        return;
-                    } else {
-                        // First press - show warning
-                        lastBackPress = currentTime;
-                        showExitToast();
-                        
-                        // Push a new state so back button can be pressed again
-                        history.pushState({ page: 'main' }, '', '');
-                    }
+                    // Push a new state so back button can be pressed again
+                    history.pushState({ page: 'main' }, '', '');
                 }
             });
             
