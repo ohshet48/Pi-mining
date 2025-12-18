@@ -2579,9 +2579,13 @@
             // Calculate active mining referrals
             d.activeRefs = calculateActiveRefs();
             
-            // Calculate dynamic rate: base rate + (0.05 × active refs)
-            // Base rate includes level bonuses only
-            d.rate = (currentUser.rate || 0.25) + (d.activeRefs * 0.05);
+            // Calculate dynamic rate: base rate + referral bonus + ad boost
+            // Base rate includes level bonuses only (permanent)
+            const baseRate = currentUser.rate || 0.25;
+            const refBonus = d.activeRefs * 0.05;
+            const adBonus = currentUser.adBoostAmount || 0;
+            
+            d.rate = baseRate + refBonus + adBonus;
             
             // Check for pending airdrops
             hasPendingAirdrops = (currentUser.pendingAirdrops && currentUser.pendingAirdrops.length > 0) || false;
