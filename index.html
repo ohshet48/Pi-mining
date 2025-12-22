@@ -3123,11 +3123,20 @@
             d.mining = false;
             d.timeLeft = 0;
             localStorage.removeItem('miningEndTime_' + currentUser.email);
-            d.balance += (d.rate / 60); // Dynamic earning based on rate (rate per hour * 24 hours)
+            d.balance += (d.rate / 60);
             d.miningDays++;
             dailyRewardAvailable = true;
             
             save();
+            
+            // Reset ad boost when mining completes
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            if (users[currentUser.email]) {
+                users[currentUser.email].adBoostAmount = 0;
+                localStorage.setItem('users', JSON.stringify(users));
+                currentUser.adBoostAmount = 0;
+            }
+            
             checkLevelUp();
             render();
             
