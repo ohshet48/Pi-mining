@@ -3180,11 +3180,20 @@
             isWatchingAd = true;
             
             const userEmail = localStorage.getItem('currentUser');
-            const currentRate = d.rate;
             
-            // Check if already at max
-            if (currentRate >= 5.0) {
-                showToast('❌ Already at maximum rate (5.0 MR)', true);
+            // Check if mining is active
+            if (!d.mining) {
+                showToast('❌ Start mining first to earn ad boost', true);
+                isWatchingAd = false;
+                return;
+            }
+            
+            // Check current ad boost
+            const currentAdBoost = currentUser.adBoostAmount || 0;
+            
+            // Check if already at max (1.0 ad boost)
+            if (currentAdBoost >= 1.0) {
+                showToast('❌ Maximum ad boost reached (1.0 MR)', true);
                 isWatchingAd = false;
                 return;
             }
@@ -3205,39 +3214,25 @@
             showToast('📺 Loading ad...');
             
             setTimeout(() => {
-                // Check again if rate is still under 5.0
                 const users = JSON.parse(localStorage.getItem('users') || '{}');
                 const user = users[userEmail];
                 
-                if (!user) return;
-                
-                // Calculate current total rate
-                const baseRate = user.rate || 0.25;
-                const activeRefs = calculateActiveRefs();
-                const currentTotalRate = baseRate + (activeRefs * 0.05);
-                
-                // Add boost if possible
-                const newRate = currentTotalRate + 0.25;
-                
-                if (newRate > 5.0) {
-                    const maxBoost = 5.0 - currentTotalRate;
-                    if (maxBoost > 0) {
-                        user.rate = baseRate + maxBoost - (activeRefs * 0.05);
-                        showToast(`✓ Ad watched! +${maxBoost.toFixed(2)} MR boost added`);
-                    } else {
-                        showToast('❌ Already at maximum rate (5.0 MR)', true);
-                        return;
-                    }
-                } else {
-                    user.rate = baseRate + 0.25;
-                    showToast('✓ Ad watched! +0.25 MR boost added for this session');
+                if (!user) {
+                    isWatchingAd = false;
+                    return;
                 }
+                
+                // Add temporary boost (active until mining claim)
+                const newAdBoost = Math.min((user.adBoostAmount || 0) + 0.25, 1.0);
+                user.adBoostAmount = newAdBoost;
                 
                 // Save
                 localStorage.setItem('users', JSON.stringify(users));
                 currentUser = user;
                 
-                // Set 15 second cooldown
+                showToast(`✓ Ad watched! +0.25 MR boost (Total: ${newAdBoost.toFixed(2)} MR)`);
+                
+                // Set 15 second cooldown for next ad
                 const cooldownEnd = Date.now() + (15 * 1000);
                 localStorage.setItem(adCooldownKey, cooldownEnd.toString());
                 
@@ -3247,7 +3242,7 @@
                 // Release lock
                 isWatchingAd = false;
                 
-            }, 5000); // 5 second ad simulation
+            }, 5000);
         }
 
         function checkMining() {
