@@ -2583,7 +2583,7 @@
             // Base rate includes level bonuses only (permanent)
             const baseRate = currentUser.rate || 0.25;
             const refBonus = d.activeRefs * 0.05;
-            const adBonus = (currentUser.adBoosts || []).reduce((sum, b) => sum + b.amount, 0);
+            const adBonus = currentUser.adBoostAmount || 0;
             
             d.rate = baseRate + refBonus + adBonus;
             
@@ -2632,7 +2632,7 @@
             
             if (users[userEmail]) {
                 users[userEmail].balance = d.balance;
-                users[userEmail].rate = d.rate;
+                users[userEmail].rate = (currentUser.rate || 0.25); // Save base rate only (no referral/ad session bonuses)
                 users[userEmail].level = d.level;
                 users[userEmail].refs = d.refs;
                 users[userEmail].streak = d.streak;
@@ -3090,7 +3090,8 @@
                 const baseRate = 0.25; // Starting rate
                 const levelBonus = (users[currentUser.email].level - 1) * 0.05; // Level rewards
                 users[currentUser.email].rate = baseRate + levelBonus;
-                localStorage.setItem('users', JSON.stringify(users));
+                                users[currentUser.email].adBoostAmount = 0; // Clear ad boost for new session
+localStorage.setItem('users', JSON.stringify(users));
                 currentUser = users[currentUser.email];
             }
             
@@ -3123,20 +3124,26 @@
             d.mining = false;
             d.timeLeft = 0;
             localStorage.removeItem('miningEndTime_' + currentUser.email);
-            d.balance += (d.rate / 60);
+                        // Clear session ad boost now that mining ended
+            try {
+                const users = JSON.parse(localStorage.getItem('users') || '{}');
+                const userEmail = localStorage.getItem('currentUser');
+                if (users[userEmail]) {
+                    users[userEmail].adBoostAmount = 0;
+                    localStorage.setItem('users', JSON.stringify(users));
+                    currentUser = users[userEmail];
+                }
+            } catch(e) {}
+
+            // Update displayed rate after clearing ad boost (referral bonus stays dynamic)
+            d.activeRefs = calculateActiveRefs();
+            d.rate = (currentUser.rate || 0.25) + (d.activeRefs * 0.05);
+
+d.balance += (d.rate / 60); // Dynamic earning based on rate (rate per hour * 24 hours)
             d.miningDays++;
             dailyRewardAvailable = true;
             
             save();
-            
-            // Reset ad boost when mining completes
-            const users = JSON.parse(localStorage.getItem('users') || '{}');
-            if (users[currentUser.email]) {
-                users[currentUser.email].adBoosts = [];
-                localStorage.setItem('users', JSON.stringify(users));
-                currentUser.adBoosts = [];
-            }
-            
             checkLevelUp();
             render();
             
@@ -3184,80 +3191,16 @@
         }
         
         function watchAdBoost() {
-            function watchAdBoost() {
+            // Prevent double-clicking
             if (isWatchingAd) return;
             isWatchingAd = true;
             
             const userEmail = localStorage.getItem('currentUser');
+            const currentRate = d.rate;
             
-            if (!d.mining) {
-                showToast('❌ Start mining first to earn ad boost', true);
-                isWatchingAd = false;
-                return;
-            }
-            
-            const users = JSON.parse(localStorage.getItem('users') || '{}');
-            const user = users[userEmail];
-            
-            if (!user) {
-                isWatchingAd = false;
-                return;
-            }
-            
-            const currentAdBonus = (user.adBoosts || []).reduce((sum, b) => sum + b.amount, 0);
-            
-            if (currentAdBonus >= 1.0) {
-                showToast('❌ Maximum ad boost reached (1.0 MR)', true);
-                isWatchingAd = false;
-                return;
-            }
-            
-            const adCooldownKey = 'adCooldown_' + userEmail;
-            const adCooldownEnd = parseInt(localStorage.getItem(adCooldownKey) || '0');
-            const now = Date.now();
-            
-            if (now < adCooldownEnd) {
-                const remaining = Math.ceil((adCooldownEnd - now) / 1000);
-                showToast(`⏳ Please wait ${remaining} seconds`, true);
-                isWatchingAd = false;
-                return;
-            }
-            
-            showToast('📺 Loading ad...');
-            
-            setTimeout(() => {
-                const users = JSON.parse(localStorage.getItem('users') || '{}');
-                const user = users[userEmail];
-                
-                if (!user) {
-                    isWatchingAd = false;
-                    return;
-                }
-                
-                user.adBoosts = user.adBoosts || [];
-                user.adBoosts.push({ amount: 0.25 });
-                
-                const totalAdBonus = user.adBoosts.reduce((sum, b) => sum + b.amount, 0);
-                
-                localStorage.setItem('users', JSON.stringify(users));
-                currentUser = user;
-                
-                showToast(`✓ Ad watched! +0.25 MR boost (Total: ${totalAdBonus.toFixed(2)} MR)`);
-                
-                const cooldownEnd = Date.now() + (15 * 1000);
-                localStorage.setItem(adCooldownKey, cooldownEnd.toString());
-                
-                initApp();
-                isWatchingAd = false;
-                
-            }, 5000);
-        }
-            
-            // Check current ad boost
-            
-            // Check if already at max (1.0 ad boost)
-            if (currentAdBoost >= 1.0) {
-                showToast('❌ Maximum ad boost reached (1.0 MR)', true);
+            // Check if already at max
+            if (currentRate >= 5.0) {
+                showToast('❌ Already at maximum rate (5.0 MR)', true);
                 isWatchingAd = false;
                 return;
             }
@@ -3278,25 +3221,36 @@
             showToast('📺 Loading ad...');
             
             setTimeout(() => {
+                // Check again if rate is still under 5.0
                 const users = JSON.parse(localStorage.getItem('users') || '{}');
                 const user = users[userEmail];
                 
-                if (!user) {
-                    isWatchingAd = false;
+                if (!user) return;
+                
+                // Calculate current total rate (base + referral + existing ad boost)
+                const baseRate = user.rate || 0.25; // permanent (level) base rate
+                const activeRefs = calculateActiveRefs();
+                const refBonus = activeRefs * 0.05;
+                const currentAdBoost = user.adBoostAmount || 0;
+                const currentTotalRate = baseRate + refBonus + currentAdBoost;
+
+                // Add boost if possible (session-only)
+                const remainingToMax = 5.0 - currentTotalRate;
+                const addedBoost = Math.min(0.25, Math.max(0, remainingToMax));
+
+                if (addedBoost <= 0) {
+                    showToast('❌ Already at maximum rate (5.0 MR)', true);
                     return;
                 }
-                
-                // Add temporary boost (active until mining claim)
-                user.adBoosts = user.adBoosts || [];
-                user.adBoosts.push({ amount: 0.25 });
-                
+
+                user.adBoostAmount = currentAdBoost + addedBoost;
+                showToast(`✓ Ad watched! +${addedBoost.toFixed(2)} MR boost added for this session`);
+
                 // Save
                 localStorage.setItem('users', JSON.stringify(users));
                 currentUser = user;
                 
-                showToast(`✓ Ad watched! +0.25 MR boost (Total: ${newAdBoost.toFixed(2)} MR)`);
-                
-                // Set 15 second cooldown for next ad
+                // Set 15 second cooldown
                 const cooldownEnd = Date.now() + (15 * 1000);
                 localStorage.setItem(adCooldownKey, cooldownEnd.toString());
                 
@@ -3306,7 +3260,7 @@
                 // Release lock
                 isWatchingAd = false;
                 
-            }, 5000);
+            }, 5000); // 5 second ad simulation
         }
 
         function checkMining() {
@@ -5275,6 +5229,140 @@
                 }
             });
         }
+		/* ==================================================
+   PERMA VISUAL LOCK + HARD FUNCTION LOCK (LAST 30s)
+   - No flicker
+   - Survives re-render
+   - Unlocks on new mining session
+   ================================================== */
+(function () {
+  try {
+    const LOCK_BEFORE_MS = 30 * 1000;
+
+    function userEmail() {
+      return localStorage.getItem("currentUser") || "";
+    }
+
+    function miningEndTime() {
+      const email = userEmail();
+      if (!email) return 0;
+      return Number(localStorage.getItem("miningEndTime_" + email)) || 0;
+    }
+
+    function lockKey() {
+      const email = userEmail();
+      const end = miningEndTime();
+      return email && end ? `adUiLocked_${email}_${end}` : "";
+    }
+
+    function shouldLockNow() {
+      const end = miningEndTime();
+      if (!end) return false;
+      return (end - Date.now()) <= LOCK_BEFORE_MS;
+    }
+
+    function isLockedForThisMining() {
+      const k = lockKey();
+      if (!k) return false;
+      return localStorage.getItem(k) === "1";
+    }
+
+    function setLockedForThisMining() {
+      const k = lockKey();
+      if (!k) return;
+      localStorage.setItem(k, "1");
+    }
+
+    // Reklam butonunu bul (senin UI'da "📺 Watch Ad +0.25 MR" var)
+    function findAdButton() {
+      // Eğer ID/class biliyorsan buraya eklemen en iyi seçenek:
+      return (
+        document.querySelector("#watchAdBtn") ||
+        document.querySelector(".btn-bonus") ||
+        [...document.querySelectorAll("button")].find(b =>
+          (b.textContent || "").toLowerCase().includes("watch ad")
+          || (b.textContent || "").includes("📺 Watch Ad")
+        )
+      );
+    }
+
+    // Görsel kilit: render ne yaparsa yapsın tekrar uygula
+    function applyVisualLock(btn) {
+      if (!btn) return;
+
+      // Orijinal yazıyı bir kere sakla (unlock için)
+      if (!btn.dataset.origText) btn.dataset.origText = btn.textContent;
+
+      btn.disabled = true;
+      btn.style.pointerEvents = "none";
+      btn.style.opacity = "0.45";
+      btn.style.filter = "grayscale(1)";
+      btn.textContent = "⛔ DISABLED (last 30s)";
+      btn.dataset.adLocked = "1";
+    }
+
+    function removeVisualLock(btn) {
+      if (!btn) return;
+
+      if (btn.dataset.adLocked === "1") {
+        btn.disabled = false;
+        btn.style.pointerEvents = "auto";
+        btn.style.opacity = "1";
+        btn.style.filter = "";
+        if (btn.dataset.origText) btn.textContent = btn.dataset.origText;
+        delete btn.dataset.adLocked;
+      }
+    }
+
+    // Çekirdek kilit: tıklansa bile çalışmasın
+    function hookAdFunction() {
+      if (typeof window.watchAdBoost === "function" && !window.watchAdBoost.__HARD_LOCKED) {
+        const original = window.watchAdBoost;
+        window.watchAdBoost = function () {
+          // Kilit aktifse asla çalıştırma
+          if (isLockedForThisMining() || shouldLockNow()) return;
+          return original.apply(this, arguments);
+        };
+        window.watchAdBoost.__HARD_LOCKED = true;
+      }
+    }
+
+    // Render sonrası tekrar basılınca bile butonu kilitle
+    function enforce() {
+      const end = miningEndTime();
+      if (!end) return;
+
+      // Son 30 saniyeye girildiyse bir kez kilidi yak
+      if (shouldLockNow()) setLockedForThisMining();
+
+      const btn = findAdButton();
+      if (!btn) return;
+
+      if (isLockedForThisMining()) applyVisualLock(btn);
+      else removeVisualLock(btn);
+    }
+
+    // DOM değişince (render) tekrar uygula
+    const obs = new MutationObserver(() => {
+      hookAdFunction();
+      enforce();
+    });
+
+    obs.observe(document.documentElement, { childList: true, subtree: true });
+
+    // İlk çalıştırma + periyodik garanti
+    hookAdFunction();
+    enforce();
+    setInterval(() => {
+      hookAdFunction();
+      enforce();
+    }, 300);
+
+  } catch (e) {
+    console.warn("Perma ad lock failed", e);
+  }
+})();
+
     </script>
 </body>
 </html>
