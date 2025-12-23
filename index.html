@@ -2583,7 +2583,7 @@
             // Base rate includes level bonuses only (permanent)
             const baseRate = currentUser.rate || 0.25;
             const refBonus = d.activeRefs * 0.05;
-            const adBonus = currentUser.adBoostAmount || 0;
+            const adBonus = (currentUser.adBoosts || []).reduce((sum, b) => sum + b.amount, 0);
             
             d.rate = baseRate + refBonus + adBonus;
             
@@ -3132,9 +3132,9 @@
             // Reset ad boost when mining completes
             const users = JSON.parse(localStorage.getItem('users') || '{}');
             if (users[currentUser.email]) {
-                users[currentUser.email].adBoostAmount = 0;
+                users[currentUser.email].adBoosts = [];
                 localStorage.setItem('users', JSON.stringify(users));
-                currentUser.adBoostAmount = 0;
+                currentUser.adBoosts = [];
             }
             
             checkLevelUp();
@@ -3184,21 +3184,76 @@
         }
         
         function watchAdBoost() {
-            // Prevent double-clicking
+            function watchAdBoost() {
             if (isWatchingAd) return;
             isWatchingAd = true;
             
             const userEmail = localStorage.getItem('currentUser');
             
-            // Check if mining is active
             if (!d.mining) {
                 showToast('❌ Start mining first to earn ad boost', true);
                 isWatchingAd = false;
                 return;
             }
             
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            const user = users[userEmail];
+            
+            if (!user) {
+                isWatchingAd = false;
+                return;
+            }
+            
+            const currentAdBonus = (user.adBoosts || []).reduce((sum, b) => sum + b.amount, 0);
+            
+            if (currentAdBonus >= 1.0) {
+                showToast('❌ Maximum ad boost reached (1.0 MR)', true);
+                isWatchingAd = false;
+                return;
+            }
+            
+            const adCooldownKey = 'adCooldown_' + userEmail;
+            const adCooldownEnd = parseInt(localStorage.getItem(adCooldownKey) || '0');
+            const now = Date.now();
+            
+            if (now < adCooldownEnd) {
+                const remaining = Math.ceil((adCooldownEnd - now) / 1000);
+                showToast(`⏳ Please wait ${remaining} seconds`, true);
+                isWatchingAd = false;
+                return;
+            }
+            
+            showToast('📺 Loading ad...');
+            
+            setTimeout(() => {
+                const users = JSON.parse(localStorage.getItem('users') || '{}');
+                const user = users[userEmail];
+                
+                if (!user) {
+                    isWatchingAd = false;
+                    return;
+                }
+                
+                user.adBoosts = user.adBoosts || [];
+                user.adBoosts.push({ amount: 0.25 });
+                
+                const totalAdBonus = user.adBoosts.reduce((sum, b) => sum + b.amount, 0);
+                
+                localStorage.setItem('users', JSON.stringify(users));
+                currentUser = user;
+                
+                showToast(`✓ Ad watched! +0.25 MR boost (Total: ${totalAdBonus.toFixed(2)} MR)`);
+                
+                const cooldownEnd = Date.now() + (15 * 1000);
+                localStorage.setItem(adCooldownKey, cooldownEnd.toString());
+                
+                initApp();
+                isWatchingAd = false;
+                
+            }, 5000);
+        }
+            
             // Check current ad boost
-            const currentAdBoost = currentUser.adBoostAmount || 0;
             
             // Check if already at max (1.0 ad boost)
             if (currentAdBoost >= 1.0) {
@@ -3232,8 +3287,8 @@
                 }
                 
                 // Add temporary boost (active until mining claim)
-                const newAdBoost = Math.min((user.adBoostAmount || 0) + 0.25, 1.0);
-                user.adBoostAmount = newAdBoost;
+                user.adBoosts = user.adBoosts || [];
+                user.adBoosts.push({ amount: 0.25 });
                 
                 // Save
                 localStorage.setItem('users', JSON.stringify(users));
