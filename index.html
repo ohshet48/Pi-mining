@@ -3083,7 +3083,7 @@
 
         function startMine() {
             const now = Date.now();
-            const end = now + (1 * 60 * 1000); // Test: 1 minute
+            const end = now + (24 * 60 * 60 * 1000);
             localStorage.setItem('miningEndTime_' + currentUser.email, end);
             
             // Reset ad boost for new session
@@ -3142,7 +3142,7 @@ localStorage.setItem('users', JSON.stringify(users));
             d.activeRefs = calculateActiveRefs();
             d.rate = (currentUser.rate || 0.25) + (d.activeRefs * 0.05);
 
-d.balance += (d.rate / 60); // Dynamic earning based on rate (rate per hour * 24 hours)
+d.balance += (d.rate * 24); // Dynamic earning based on rate (rate per hour * 24 hours)
             d.miningDays++;
             dailyRewardAvailable = true;
             
