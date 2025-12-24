@@ -1937,17 +1937,6 @@ window.addEventListener('load', () => {
   setTimeout(() => requestNotificationPermission(), 2000);
 });
 
-// Token refresh handler
-messaging.onTokenRefresh(async () => {
-  try {
-    const token = await messaging.getToken();
-    console.log('Token refreshed:', token);
-    fcmToken = token;
-    await updateFcmToken(token);
-  } catch (error) {
-    console.error('Token refresh error:', error);
-  }
-});
 </script>
 
 <style>
