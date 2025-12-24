@@ -1765,6 +1765,204 @@
         .footer { text-align: center; padding: 24px 0; }
         .footer-text { color: #c4b5fd; font-size: 13px; }
     </style>
+	<!-- 
+Bu kodu index.html dosyanızın <head> bölümüne ekleyin 
+</head> taginden ÖNCE
+-->
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
+
+<script>
+// ============================================
+// Firebase Configuration
+// ============================================
+// TODO: Buraya kendi Firebase config'inizi yapıştırın
+const firebaseConfig = {
+  apiKey: "AIzaSyDe_cjESaihQoGiabRoLOZTmj6JrZVB9NY",
+  authDomain: "arcastra-eba62.firebaseapp.com",
+  projectId: "arcastra-eba62",
+  storageBucket: "arcastra-eba62.firebasestorage.app",
+  messagingSenderId: "547925747222",
+  appId: "1:547925747222:web:01a6b875fe14624d777737"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const messaging = firebase.messaging();
+
+// ============================================
+// Firebase Cloud Functions URL'leri
+// ============================================
+// TODO: firebase functions:list komutundan aldığınız URL'leri buraya yapıştırın
+const FUNCTIONS_BASE_URL = 'https://us-central1-arcastra-eba62.cloudfunctions.net';
+
+const API_ENDPOINTS = {
+  registerUser: `${FUNCTIONS_BASE_URL}/registerUser`,
+  loginUser: `${FUNCTIONS_BASE_URL}/loginUser`,
+  updateFcmToken: `${FUNCTIONS_BASE_URL}/updateFcmToken`,
+  startMining: `${FUNCTIONS_BASE_URL}/startMining`,
+  applyAdBoost: `${FUNCTIONS_BASE_URL}/applyAdBoost`,
+  claimReward: `${FUNCTIONS_BASE_URL}/claimReward`,
+  getUserData: `${FUNCTIONS_BASE_URL}/getUserData`,
+  getMiningSessions: `${FUNCTIONS_BASE_URL}/getMiningSessions`,
+  sendMiningNotification: `${FUNCTIONS_BASE_URL}/sendMiningNotification`
+};
+
+// ============================================
+// FCM (Firebase Cloud Messaging) Functions
+// ============================================
+let fcmToken = null;
+
+// Request notification permission and get FCM token
+async function requestNotificationPermission() {
+  try {
+    if (!('Notification' in window)) {
+      console.log('Browser does not support notifications');
+      return null;
+    }
+
+    if (!('serviceWorker' in navigator)) {
+      console.log('Service workers not supported');
+      return null;
+    }
+
+    // Register service worker
+    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    console.log('Service Worker registered');
+
+    // Request permission
+    const permission = await Notification.requestPermission();
+    
+    if (permission === 'granted') {
+      console.log('Notification permission granted');
+      
+      // Get FCM token
+      // TODO: VAPID Key'inizi buraya ekleyin (Firebase Console > Cloud Messaging > Web Push certificates)
+      const token = await messaging.getToken({
+        vapidKey: 'BDvw3djSgLBuH4zlK80RoTCQLdek4Lv0PGjicCLwiU_gZZxq5fJcBrFgAOJPovzkL_g-dR8J_mL2IaZyKX5csy4',
+        serviceWorkerRegistration: registration
+      });
+      
+      if (token) {
+        console.log('FCM Token:', token);
+        fcmToken = token;
+        await saveFcmToken(token);
+        return token;
+      }
+    } else {
+      console.log('Notification permission denied');
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting notification permission:', error);
+    return null;
+  }
+}
+
+// Save FCM token to backend
+async function saveFcmToken(token) {
+  try {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return;
+
+    const response = await fetch(API_ENDPOINTS.updateFcmToken, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({userId, fcmToken: token})
+    });
+
+    const data = await response.json();
+    console.log('FCM token saved:', data);
+  } catch (error) {
+    console.error('Error saving FCM token:', error);
+  }
+}
+
+// Handle foreground messages
+messaging.onMessage((payload) => {
+  console.log('Foreground message:', payload);
+  showCustomNotification(
+    payload.notification.title,
+    payload.notification.body,
+    payload.data
+  );
+});
+
+// Show custom notification
+function showCustomNotification(title, body, data) {
+  const notificationHtml = `
+    <div class="custom-notification" style="
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      z-index: 10000;
+      min-width: 300px;
+      animation: slideIn 0.3s ease-out;
+    ">
+      <div style="display: flex; align-items: center; margin-bottom: 10px;">
+        <div style="font-size: 24px; margin-right: 10px;">⛏️</div>
+        <div style="font-weight: bold; font-size: 16px;">${title}</div>
+      </div>
+      <div style="margin-bottom: 15px; font-size: 14px;">${body}</div>
+      <button onclick="this.parentElement.remove()" style="
+        background: #00d4ff;
+        border: none;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        width: 100%;
+      ">OK</button>
+    </div>
+  `;
+  
+  const div = document.createElement('div');
+  div.innerHTML = notificationHtml;
+  document.body.appendChild(div);
+  
+  setTimeout(() => div.remove(), 10000);
+}
+
+// Initialize FCM on page load
+window.addEventListener('load', () => {
+  setTimeout(() => requestNotificationPermission(), 2000);
+});
+
+// Token refresh handler
+messaging.onTokenRefresh(async () => {
+  try {
+    const token = await messaging.getToken();
+    console.log('Token refreshed:', token);
+    fcmToken = token;
+    await saveFcmToken(token);
+  } catch (error) {
+    console.error('Token refresh error:', error);
+  }
+});
+</script>
+
+<style>
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+</style>
+
 </head>
 <body>
     <!-- Splash Screen -->
