@@ -1849,7 +1849,7 @@ async function requestNotificationPermission() {
       if (token) {
         console.log('FCM Token:', token);
         fcmToken = token;
-        await saveFcmToken(token);
+        await updateFcmToken(token);
         return token;
       }
     } else {
@@ -1863,7 +1863,7 @@ async function requestNotificationPermission() {
 }
 
 // Save FCM token to backend
-async function saveFcmToken(token) {
+async function updateFcmToken(token) {
   try {
     const userId = localStorage.getItem('userId');
     if (!userId) return;
@@ -1943,7 +1943,7 @@ messaging.onTokenRefresh(async () => {
     const token = await messaging.getToken();
     console.log('Token refreshed:', token);
     fcmToken = token;
-    await saveFcmToken(token);
+    await updateFcmToken(token);
   } catch (error) {
     console.error('Token refresh error:', error);
   }
