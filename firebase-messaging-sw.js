@@ -2597,7 +2597,6 @@ window.addEventListener('load', () => {
             }, 2000);
         }
         
-        function googleLogin() {
             async function googleLogin() {
     try {
         const provider = new firebase.auth.GoogleAuthProvider();
