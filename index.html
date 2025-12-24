@@ -1789,8 +1789,9 @@ const firebaseConfig = {
   appId: "1:547925747222:web:01a6b875fe14624d777737"
 };
 
-// Initialize Firebase
+console.log('Initializing Firebase...');
 firebase.initializeApp(firebaseConfig);
+console.log('Firebase initialized:', firebase.apps.length);
 const messaging = firebase.messaging();
 
 // ============================================
