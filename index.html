@@ -2438,7 +2438,7 @@ window.addEventListener('load', () => {
 async function signup() {
     const email = document.getElementById('signupEmail').value;
     const password = document.getElementById('signupPassword').value;
-    const confirmPassword = document.getElementById('signupConfirmPassword').value;
+    const confirmPassword = document.getElementById('signupPasswordConfirm').value;
 
     if (!email || !password || !confirmPassword) {
         showError('Please fill in all fields');
