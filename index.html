@@ -2597,9 +2597,31 @@ window.addEventListener('load', () => {
             }, 2000);
         }
         
-        function googleLogin() {
-            showError('Google login is not available in this demo version. Please use email signup.');
-        }
+        async function googleLogin() {
+    try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        const result = await firebase.auth().signInWithPopup(provider);
+        const user = result.user;
+        
+        await fetch(API_ENDPOINTS.registerUser, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                userId: user.uid,
+                email: user.email,
+                username: user.displayName || user.email.split('@')[0]
+            })
+        });
+        
+        localStorage.setItem('userId', user.uid);
+        localStorage.setItem('userEmail', user.email);
+        showSuccess('Login successful!');
+        setTimeout(() => showMining(), 1000);
+    } catch (error) {
+        console.error('Google login error:', error);
+        showError('Login failed: ' + error.message);
+    }
+}
         
         function logout() {
             // Check if menu sidebar is open
