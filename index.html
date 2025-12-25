@@ -2435,7 +2435,7 @@ window.addEventListener('load', () => {
             input.value = formattedValue;
         }
         
-        async function signup() {
+async function signup() {
     const email = document.getElementById('signupEmail').value;
     const password = document.getElementById('signupPassword').value;
     const confirmPassword = document.getElementById('signupConfirmPassword').value;
@@ -2456,11 +2456,9 @@ window.addEventListener('load', () => {
     }
 
     try {
-        // Firebase Authentication ile kayıt
         const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
         const user = userCredential.user;
 
-        // Backend'e kullanıcıyı kaydet
         const response = await fetch(API_ENDPOINTS.registerUser, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -2491,8 +2489,7 @@ window.addEventListener('load', () => {
         console.error('Signup error:', error);
         showError(error.message);
     }
-}
-            
+}            
             
             // Validate username: 3-12 characters, English only
             if (username.length < 3 || username.length > 12) {
