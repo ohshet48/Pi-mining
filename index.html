@@ -2616,7 +2616,8 @@ window.addEventListener('load', () => {
         localStorage.setItem('userId', user.uid);
         localStorage.setItem('userEmail', user.email);
         showSuccess('Login successful!');
-        setTimeout(() => showMining(), 1000);
+        window.location.href = '#mine';
+setTimeout(() => location.reload(), 100);
     } catch (error) {
         console.error('Google login error:', error);
         showError('Login failed: ' + error.message);
