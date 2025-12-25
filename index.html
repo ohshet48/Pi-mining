@@ -2522,7 +2522,6 @@ window.addEventListener('load', () => {
             const isValidCountry = countries.some(c => c.name.toLowerCase() === country.toLowerCase());
             if (!isValidCountry) {
                 showError('Please select a valid country from the list');
-                return;
             }
             
             // Validate birth date format (DD/MM/YYYY)
@@ -2531,7 +2530,6 @@ window.addEventListener('load', () => {
             
             if (!match) {
                 showError('Birth date must be in DD/MM/YYYY format');
-                return;
             }
             
             const day = parseInt(match[1]);
@@ -2540,27 +2538,22 @@ window.addEventListener('load', () => {
             
             if (year < 1923 || year > 2007) {
                 showError('Birth year must be between 1923 and 2007');
-                return;
             }
             
             if (month < 1 || month > 12) {
                 showError('Month must be between 1 and 12');
-                return;
             }
             
             if (day < 1 || day > 31) {
                 showError('Day must be between 1 and 31');
-                return;
             }
             
             if (password.length < 6) {
                 showError('Password must be at least 6 characters');
-                return;
             }
             
             if (password !== passwordConfirm) {
                 showError('Passwords do not match');
-                return;
             }
             
             const users = JSON.parse(localStorage.getItem('users') || '{}');
