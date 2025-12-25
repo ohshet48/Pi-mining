@@ -2617,7 +2617,6 @@ window.addEventListener('load', () => {
         localStorage.setItem('userEmail', user.email);
         showSuccess('Login successful!');
         window.location.href = '#mine';
-setTimeout(() => location.reload(), 100);
     } catch (error) {
         console.error('Google login error:', error);
         showError('Login failed: ' + error.message);
