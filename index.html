@@ -2435,20 +2435,64 @@ window.addEventListener('load', () => {
             input.value = formattedValue;
         }
         
-        function signup() {
-            const username = document.getElementById('signupUsername').value.trim();
-            const fullName = document.getElementById('signupFullName').value.trim();
-            const birthDate = document.getElementById('signupBirthDate').value.trim();
-            const email = document.getElementById('signupEmail').value.trim();
-            const password = document.getElementById('signupPassword').value;
-            const passwordConfirm = document.getElementById('signupPasswordConfirm').value;
-            const country = document.getElementById('signupCountry').value.trim();
-            const referralCode = document.getElementById('signupReferral').value.trim();
+        async function signup() {
+    const email = document.getElementById('signupEmail').value;
+    const password = document.getElementById('signupPassword').value;
+    const confirmPassword = document.getElementById('signupConfirmPassword').value;
+
+    if (!email || !password || !confirmPassword) {
+        showError('Please fill in all fields');
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        showError('Passwords do not match');
+        return;
+    }
+
+    if (password.length < 6) {
+        showError('Password must be at least 6 characters');
+        return;
+    }
+
+    try {
+        // Firebase Authentication ile kayıt
+        const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+
+        // Backend'e kullanıcıyı kaydet
+        const response = await fetch(API_ENDPOINTS.registerUser, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                userId: user.uid,
+                email: user.email,
+                username: email.split('@')[0]
+            })
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+            localStorage.setItem('userId', user.uid);
+            localStorage.setItem('userEmail', user.email);
+            localStorage.setItem('isLoggedIn', 'true');
+            showSuccess('Account created successfully!');
             
-            if (!username || !fullName || !birthDate || !email || !password || !passwordConfirm || !country) {
-                showError('Please fill in all required fields');
-                return;
-            }
+            setTimeout(() => {
+                document.getElementById('signupModal').classList.remove('show');
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('mineSection').style.display = 'block';
+            }, 1000);
+        } else {
+            showError(data.error || 'Registration failed');
+        }
+    } catch (error) {
+        console.error('Signup error:', error);
+        showError(error.message);
+    }
+}
+            
             
             // Validate username: 3-12 characters, English only
             if (username.length < 3 || username.length > 12) {
