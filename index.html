@@ -2516,7 +2516,6 @@ window.addEventListener('load', () => {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
                 showError('Please enter a valid email address');
-                return;
             }
             
             // Validate country is from the list
