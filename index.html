@@ -2497,23 +2497,19 @@ window.addEventListener('load', () => {
             // Validate username: 3-12 characters, English only
             if (username.length < 3 || username.length > 12) {
                 showError('Username must be 3-12 characters');
-                return;
             }
             const usernameRegex = /^[a-zA-Z0-9_-]+$/;
             if (!usernameRegex.test(username)) {
                 showError('Username: Only English letters, numbers, _ and - allowed');
-                return;
             }
             
             // Validate full name: English letters and spaces only
             const fullNameRegex = /^[a-zA-Z\s]+$/;
             if (!fullNameRegex.test(fullName)) {
                 showError('Full Name: Only English letters allowed');
-                return;
             }
             if (fullName.length < 3) {
                 showError('Full Name must be at least 3 characters');
-                return;
             }
             
             // Validate email format
