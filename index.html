@@ -2895,7 +2895,8 @@ window.addEventListener('load', () => {
             // Update menu username
             const menuUsername = document.getElementById('menuUsername');
             if (menuUsername) {
-                menuUsername.textContent = currentUser.username;
+			 if (!currentUser) return;
+                 menuUsername.textContent = currentUser.username;
             }
             
             document.getElementById('app').innerHTML = `
