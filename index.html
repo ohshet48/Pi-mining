@@ -2483,8 +2483,8 @@ window.addEventListener('load', () => {
             localStorage.setItem('isLoggedIn', 'true');
             localStorage.setItem('currentUser', JSON.stringify(data.user));
             showSuccess('Account created successfully!');
-            
-            document.getElementById('signupModal').classList.remove('show');
+            const modal = document.getElementById('signupModal');
+            if (modal) modal.classList.remove('show');
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('app').style.display = 'block';
             setTimeout(() => initApp(), 100);
