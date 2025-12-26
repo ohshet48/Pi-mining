@@ -5281,11 +5281,14 @@ d.balance += (d.rate * 24); // Dynamic earning based on rate (rate per hour * 24
         // Splash screen - 2.5 saniye sonra kaybol
         window.addEventListener('load', function() {
             setTimeout(function() {
-                document.getElementById('splashScreen').classList.add('fade-out');
-                setTimeout(function() {
-                    document.getElementById('splashScreen').style.display = 'none';
-            }, 2500);
-        });
+    document.getElementById('splashScreen').classList.add('fade-out');
+    setTimeout(function() {
+        document.getElementById('splashScreen').style.display = 'none';
+        setTimeout(() => {
+            checkAuth();
+        }, 800);
+    }, 2500);
+});
         
         // Exit handling - double back press
         let lastBackPress = 0;
