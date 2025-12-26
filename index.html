@@ -1794,9 +1794,15 @@ console.log('Initializing Firebase...');
 window.addEventListener('DOMContentLoaded', function() {
     const isLoggedIn = localStorage.getItem('isLoggedIn');
     const userId = localStorage.getItem('userId');
-    const currentUser = localStorage.getItem('currentUser');
+    const storedUser = localStorage.getItem('currentUser');
     
-    if (isLoggedIn === 'true' && userId && currentUser) {
+    if (isLoggedIn === 'true' && userId && storedUser) {
+        // currentUser'ı global değişkene yükle
+        currentUser = JSON.parse(storedUser);
+        if (!currentUser.username && currentUser.email) {
+            currentUser.username = currentUser.email.split('@')[0];
+        }
+        
         document.getElementById('authScreen').style.display = 'none';
         document.getElementById('app').style.display = 'block';
         setTimeout(() => initApp(), 100);
