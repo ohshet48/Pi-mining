@@ -2685,8 +2685,12 @@ window.addEventListener('load', () => {
         function initApp() {
     // localStorage'dan currentUser'ı oku
     const storedUser = localStorage.getItem('currentUser');
-    if (storedUser) {
+		if (storedUser) {
         currentUser = JSON.parse(storedUser);
+        // Username yoksa email'den oluştur
+        if (!currentUser.username && currentUser.email) {
+            currentUser.username = currentUser.email.split('@')[0];
+        }
     }
     
             d = {
