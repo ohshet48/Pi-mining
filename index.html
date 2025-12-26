@@ -2402,7 +2402,7 @@ async function login() {
             localStorage.setItem('isLoggedIn', 'true');
             showSuccess('Login successful!');
             
-document.getElementById('loginSection').style.display = 'none';
+document.getElementById('authScreen').style.display = 'none';
 document.getElementById('mineSection').style.display = 'block';
         } else {
             showError(data.error || 'Login failed');
@@ -2487,7 +2487,7 @@ async function signup() {
             
             setTimeout(() => {
                 document.getElementById('signupModal').classList.remove('show');
-                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('authScreen').style.display = 'none';
                 document.getElementById('mineSection').style.display = 'block';
             }, 1000);
         } else {
