@@ -1791,7 +1791,6 @@ const firebaseConfig = {
 
 console.log('Initializing Firebase...');
 // Auto-login check on page load
-window.addEventListener('DOMContentLoaded', function() {
     const isLoggedIn = localStorage.getItem('isLoggedIn');
     const userId = localStorage.getItem('userId');
     const storedUser = localStorage.getItem('currentUser');
@@ -1807,7 +1806,6 @@ window.addEventListener('DOMContentLoaded', function() {
         document.getElementById('app').style.display = 'block';
         setTimeout(() => initApp(), 100);
     }
-});
 firebase.initializeApp(firebaseConfig);
 console.log('Firebase initialized:', firebase.apps.length);
 const messaging = firebase.messaging();
