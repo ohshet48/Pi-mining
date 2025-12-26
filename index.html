@@ -2401,10 +2401,14 @@ window.addEventListener('load', () => {
             localStorage.setItem('userEmail', user.email);
             localStorage.setItem('isLoggedIn', 'true');
             localStorage.setItem('currentUser', JSON.stringify(data.user));
+            showSuccess('Login successful! Please Wait');
             
-            document.getElementById('authScreen').style.display = 'none';
-            document.getElementById('app').style.display = 'block';
-            setTimeout(() => initApp(), 100);
+            setTimeout(() => {
+                document.getElementById('authScreen').style.display = 'none';
+                document.getElementById('app').style.display = 'block';
+                setTimeout(() => initApp(), 100);
+            }, 500);
+        }
         }
     } catch (error) {
         console.error('Login error:', error);
