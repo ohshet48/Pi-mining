@@ -2400,6 +2400,7 @@ window.addEventListener('load', () => {
             localStorage.setItem('userId', user.uid);
             localStorage.setItem('userEmail', user.email);
             localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('currentUser', JSON.stringify(data.user));
             
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('app').style.display = 'block';
@@ -2480,6 +2481,7 @@ window.addEventListener('load', () => {
             localStorage.setItem('userId', user.uid);
             localStorage.setItem('userEmail', user.email);
             localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('currentUser', JSON.stringify(data.user));
             showSuccess('Account created successfully!');
             
             document.getElementById('signupModal').classList.remove('show');
