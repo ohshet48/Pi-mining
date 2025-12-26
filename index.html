@@ -1796,9 +1796,15 @@ console.log('Firebase initialized:', firebase.apps.length);
 const messaging = firebase.messaging();
 // Auto-login when DOM is ready  
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== AUTO-LOGIN BAŞLADI ===');
+    
     const isLoggedIn = localStorage.getItem('isLoggedIn');
     const userId = localStorage.getItem('userId');
     const storedUser = localStorage.getItem('currentUser');
+    
+    console.log('isLoggedIn:', isLoggedIn);
+    console.log('userId:', userId);
+    console.log('storedUser:', storedUser ? 'VAR' : 'YOK');
     
     if (isLoggedIn === 'true' && userId && storedUser) {
         currentUser = JSON.parse(storedUser);
@@ -1806,9 +1812,18 @@ document.addEventListener('DOMContentLoaded', function() {
             currentUser.username = currentUser.email.split('@')[0];
         }
         
-        document.getElementById('authScreen').style.display = 'none';
-        document.getElementById('app').style.display = 'block';
-        setTimeout(() => initApp(), 100);
+        console.log('currentUser loaded:', currentUser);
+        
+        setTimeout(() => {
+            console.log('Showing app...');
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
+            console.log('Calling initApp...');
+            initApp();
+            console.log('initApp completed');
+        }, 500);
+    } else {
+        console.log('Auto-login FAILED - missing data');
     }
 });
 // ============================================
