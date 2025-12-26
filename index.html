@@ -2490,9 +2490,8 @@ window.addEventListener('load', () => {
     document.getElementById('authScreen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     setTimeout(() => initApp(), 100);
-            }, 700);
-            showError(data.error || 'Registration failed');
-        }
+            }, 1500);
+
     } catch (error) {
         console.error('Signup error:', error);
         showError(error.message);
