@@ -1818,7 +1818,7 @@ const API_ENDPOINTS = {
 let fcmToken = null;
 
 // Request notification permission and get FCM token
-async function requestNotificationPermission() {
+    async function requestNotificationPermission() {
   try {
     if (!('Notification' in window)) {
       console.log('Browser does not support notifications');
@@ -1864,7 +1864,7 @@ async function requestNotificationPermission() {
 }
 
 // Save FCM token to backend
-async function updateFcmToken(token) {
+    async function updateFcmToken(token) {
   try {
     const userId = localStorage.getItem('userId');
     if (!userId) return;
@@ -2378,7 +2378,7 @@ window.addEventListener('load', () => {
             }, 2000);
         }
         
-async function login() {
+    async function login() {
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
 
@@ -2401,15 +2401,15 @@ async function login() {
             localStorage.setItem('userEmail', user.email);
             localStorage.setItem('isLoggedIn', 'true');
             
-document.getElementById('authScreen').style.display = 'none';
-document.getElementById('app').style.display = 'block';
-initApp();
-            showError(data.error || 'Login failed');
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
+            setTimeout(() => initApp(), 100);
         }
     } catch (error) {
         console.error('Login error:', error);
         showError('Invalid email or password');
     }
+}
 }
         
         function formatBirthDateInput(input) {
@@ -2442,7 +2442,7 @@ initApp();
             input.value = formattedValue;
         }
         
-async function signup() {
+    async function signup() {
     const email = document.getElementById('signupEmail').value;
     const password = document.getElementById('signupPassword').value;
     const confirmPassword = document.getElementById('signupPasswordConfirm').value;
@@ -2477,7 +2477,7 @@ async function signup() {
         });
 
         const data = await response.json();
-if (response.ok) {
+        if (response.ok) {
             localStorage.setItem('userId', user.uid);
             localStorage.setItem('userEmail', user.email);
             localStorage.setItem('isLoggedIn', 'true');
@@ -2486,7 +2486,7 @@ if (response.ok) {
             document.getElementById('signupModal').classList.remove('show');
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('app').style.display = 'block';
-            initApp();
+            setTimeout(() => initApp(), 100);
         } else {
             showError(data.error || 'Registration failed');
         }
