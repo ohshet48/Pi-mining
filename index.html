@@ -1790,6 +1790,10 @@ const firebaseConfig = {
 };
 
 console.log('Initializing Firebase...');
+
+firebase.initializeApp(firebaseConfig);
+console.log('Firebase initialized:', firebase.apps.length);
+const messaging = firebase.messaging();
 // Auto-login check on page load
     const isLoggedIn = localStorage.getItem('isLoggedIn');
     const userId = localStorage.getItem('userId');
@@ -1805,11 +1809,6 @@ console.log('Initializing Firebase...');
         document.getElementById('authScreen').style.display = 'none';
         document.getElementById('app').style.display = 'block';
         setTimeout(() => initApp(), 100);
-    }
-firebase.initializeApp(firebaseConfig);
-console.log('Firebase initialized:', firebase.apps.length);
-const messaging = firebase.messaging();
-
 // ============================================
 // Firebase Cloud Functions URL'leri
 // ============================================
