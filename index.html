@@ -2616,18 +2616,20 @@ window.addEventListener('load', () => {
             document.body.removeChild(textarea);
         }
         
-function checkAuth() {
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-        currentUser = JSON.parse(savedUser);
-        document.getElementById('authScreen').style.display = 'none';
-        document.getElementById('app').style.display = 'block';
-        initApp();
-        return;
-    }
-    
-    document.getElementById('authScreen').style.display = 'flex';
-}
+        function checkAuth() {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                const users = JSON.parse(localStorage.getItem('users') || '{}');
+                currentUser = users[savedUser];
+                if (currentUser) {
+                    document.getElementById('authScreen').style.display = 'none';
+                    document.getElementById('app').style.display = 'block';
+                    initApp();
+                    return;
+                }
+            }
+            
+            document.getElementById('authScreen').style.display = 'flex';
             document.getElementById('app').style.display = 'none';
         }
         
