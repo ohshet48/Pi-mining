@@ -2666,8 +2666,13 @@ window.addEventListener('load', () => {
                 notification.close();
             };
         }
-        
         function initApp() {
+    // localStorage'dan currentUser'ı oku
+    const storedUser = localStorage.getItem('currentUser');
+    if (storedUser) {
+        currentUser = JSON.parse(storedUser);
+    }
+    
             d = {
                 balance: currentUser.balance || 0,
                 level: currentUser.level || 1,
