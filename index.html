@@ -2616,6 +2616,20 @@ window.addEventListener('load', () => {
             document.body.removeChild(textarea);
         }
         
+        function checkAuth() {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                if (currentUser) {
+                    document.getElementById('authScreen').style.display = 'none';
+                    document.getElementById('app').style.display = 'block';
+                    return;
+                }
+            }
+            
+            document.getElementById('authScreen').style.display = 'flex';
+            document.getElementById('app').style.display = 'none';
+        }
         
         let d = {};
         let balanceVisible = true;
