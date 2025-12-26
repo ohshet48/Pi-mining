@@ -2402,8 +2402,8 @@ async function login() {
             localStorage.setItem('isLoggedIn', 'true');
             
 document.getElementById('authScreen').style.display = 'none';
-document.getElementById('mineSection').style.display = 'block';
-        } else {
+document.getElementById('app').style.display = 'block';
+initApp();
             showError(data.error || 'Login failed');
         }
     } catch (error) {
@@ -2477,18 +2477,16 @@ async function signup() {
         });
 
         const data = await response.json();
-        
-        if (response.ok) {
+if (response.ok) {
             localStorage.setItem('userId', user.uid);
             localStorage.setItem('userEmail', user.email);
             localStorage.setItem('isLoggedIn', 'true');
             showSuccess('Account created successfully!');
             
-            setTimeout(() => {
-                document.getElementById('signupModal').classList.remove('show');
-                document.getElementById('authScreen').style.display = 'none';
-                document.getElementById('mineSection').style.display = 'block';
-            }, 1000);
+            document.getElementById('signupModal').classList.remove('show');
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
+            initApp();
         } else {
             showError(data.error || 'Registration failed');
         }
