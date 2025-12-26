@@ -1794,13 +1794,13 @@ console.log('Initializing Firebase...');
 firebase.initializeApp(firebaseConfig);
 console.log('Firebase initialized:', firebase.apps.length);
 const messaging = firebase.messaging();
-// Auto-login check on page load
+// Auto-login when DOM is ready  
+document.addEventListener('DOMContentLoaded', function() {
     const isLoggedIn = localStorage.getItem('isLoggedIn');
     const userId = localStorage.getItem('userId');
     const storedUser = localStorage.getItem('currentUser');
     
     if (isLoggedIn === 'true' && userId && storedUser) {
-        // currentUser'ı global değişkene yükle
         currentUser = JSON.parse(storedUser);
         if (!currentUser.username && currentUser.email) {
             currentUser.username = currentUser.email.split('@')[0];
@@ -1809,6 +1809,8 @@ const messaging = firebase.messaging();
         document.getElementById('authScreen').style.display = 'none';
         document.getElementById('app').style.display = 'block';
         setTimeout(() => initApp(), 100);
+    }
+});
 // ============================================
 // Firebase Cloud Functions URL'leri
 // ============================================
