@@ -2755,7 +2755,8 @@ window.addEventListener('load', () => {
             
             // Request notification permission
             requestNotificationPermission();
-            
+          document.getElementById('authScreen').style.display = 'none';
+          document.getElementById('app').style.display = 'block';  
             checkMining();
             render();
             startTimer();
