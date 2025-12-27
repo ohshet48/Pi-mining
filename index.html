@@ -3258,7 +3258,7 @@ localStorage.setItem('users', JSON.stringify(users));
             // Call backend to start mining
         await startMiningOnBackend();
             d.mining = true;
-            d.timeLeft = 24 * 60 * 60;
+            d.timeLeft = 10; // 10 saniye test
 
             const today = new Date().toDateString();
             if (d.lastDate) {
@@ -3291,7 +3291,7 @@ async function startMiningOnBackend() {
 
                 if (response.ok) {
                     const data = await response.json();
-                    localStorage.setItem('currentSessionId', data.session.sessionId);
+                    localStorage.setItem('currentSessionId_' + currentUser.email, data.session.sessionId);
                     console.log('✓ Mining started on backend');
                 }
             } catch (error) {
@@ -3327,7 +3327,7 @@ const reward = d.rate * 24;
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         userId: currentUser.userId,
-                        sessionId: localStorage.getItem('currentSessionId'),
+                        sessionId: localStorage.getItem('currentSessionId_' + currentUser.email),
                         reward: reward
                     })
                 });
