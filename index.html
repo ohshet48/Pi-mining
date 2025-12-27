@@ -5135,6 +5135,7 @@ const reward = d.rate * 24;
                       if (data.earnings) {
                           d.balance += data.earnings;
                           d.pendingReferralEarnings = 0;
+                          currentUser.pendingReferralEarnings = 0;
                           save();
                           showToast(`✓ Claimed ${data.earnings} Coins from referrals!`);
                           render();
