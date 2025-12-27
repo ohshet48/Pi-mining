@@ -2478,12 +2478,14 @@ window.addEventListener('load', () => {
         }
         
     async function signup() {
-    const modal = document.getElementById('signupModal');
-if (modal) {
-    modal.scrollTop = 0;
+    // Scroll modal content to top
+setTimeout(() => {
+    const modalContent = document.querySelector('#signupModal .modal-content');
+    if (modalContent) modalContent.scrollTop = 0;
+    document.body.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+}, 10);
 }
-document.body.scrollTop = 0;
-document.documentElement.scrollTop = 0;
     
     const email = document.getElementById('signupEmail').value;
     const email = document.getElementById('signupEmail').value;
