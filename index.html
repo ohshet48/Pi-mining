@@ -4933,6 +4933,7 @@ const reward = d.rate * 24;
             const currentEmail = localStorage.getItem('currentUser');
             
             // Get referrals from backend
+    const now = Date.now();
     let activeRefs = [];
     let inactiveRefs = [];
     
