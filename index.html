@@ -1814,12 +1814,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log('currentUser loaded:', currentUser);
         
-        setTimeout(() => {
+        setTimeout(async () => {
             console.log('Showing app...');
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('app').style.display = 'block';
             console.log('Calling initApp...');
-            initApp();
+            await initApp();
             console.log('initApp completed');
         }, 500);
     } else {
