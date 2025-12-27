@@ -4157,7 +4157,7 @@ const reward = d.rate * 24;
                     break;
                 case 'referrals':
                     pageTitle.textContent = 'My Referrals';
-                    pageContent.innerHTML = getReferralsPageContent();
+                    getReferralsPageContent().then(html => pageContent.innerHTML = html);
                     break;
                 case 'menu2':
                     pageTitle.textContent = 'Menü 2';
@@ -4927,36 +4927,25 @@ const reward = d.rate * 24;
             return html;
         }
         
-        function getReferralsPageContent() {
+        async function getReferralsPageContent() {
             // Get current user from backend
             const users = JSON.parse(localStorage.getItem('users') || '{}');
             const currentEmail = localStorage.getItem('currentUser');
             
-            // Get all referrals
-            let activeRefs = [];
-            let inactiveRefs = [];
-            const now = Date.now();
-            
-            for (let email in users) {
-                const user = users[email];
-                if (user.referredBy === currentUser.refCode) {
-                    const miningEndTime = localStorage.getItem('miningEndTime_' + email);
-                    const isMining = miningEndTime && now < parseInt(miningEndTime);
-                    
-                    const refData = {
-                        username: user.username,
-                        email: email,
-                        level: user.level || 1,
-                        isMining: isMining
-                    };
-                    
-                    if (isMining) {
-                        activeRefs.push(refData);
-                    } else {
-                        inactiveRefs.push(refData);
-                    }
-                }
-            }
+            // Get referrals from backend
+    let activeRefs = [];
+    let inactiveRefs = [];
+    
+    try {
+        const response = await fetch(API_ENDPOINTS.getReferrals + '?userId=' + currentUser.userId);
+        const data = await response.json();
+        
+        if (response.ok && data.referrals) {
+            inactiveRefs = data.referrals;
+        }
+    } catch (err) {
+        console.error('Failed to fetch referrals:', err);
+    }
             
             // Check notification cooldown (5 minutes)
             const lastNotifTime = parseInt(localStorage.getItem('lastReferralNotif_' + currentEmail) || '0');
@@ -5092,7 +5081,7 @@ const reward = d.rate * 24;
             const pageContent = document.getElementById('fullPageContent');
             
             pageTitle.textContent = 'My Referrals';
-            pageContent.innerHTML = getReferralsPageContent();
+            getReferralsPageContent().then(html => pageContent.innerHTML = html);
             fullPage.classList.add('active');
             fullPage.dataset.currentPage = 'referrals';
             
