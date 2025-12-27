@@ -2880,6 +2880,19 @@ window.addEventListener('load', () => {
                 
                 save();
                 
+                // Update backend asynchronously
+                fetch(API_ENDPOINTS.updateLevel, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        userId: currentUser.userId,
+                        newLevel: claimedLevel,
+                        coinsReward: reward.coins,
+                        newRate: currentUser.rate
+                    })
+                }).catch(err => console.error('Backend update failed:', err));
+
+                
                 showToast(`✓ Claimed Level ${claimedLevel} reward: +${reward.coins} Coins!`);
                 
                 if (d.level < 20) {
