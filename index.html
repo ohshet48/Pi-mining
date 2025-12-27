@@ -2444,7 +2444,7 @@ window.addEventListener('load', () => {
             setTimeout(() => {
                 document.getElementById('authScreen').style.display = 'none';
                 document.getElementById('app').style.display = 'block';
-                setTimeout(() => initApp(), 100);
+                setTimeout(async () => await initApp(), 100);
             }, 500);
         }
     } catch (error) {
@@ -2542,7 +2542,7 @@ window.addEventListener('load', () => {
     if (modal) modal.classList.remove('show');
     document.getElementById('authScreen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
-    setTimeout(() => initApp(), 100);
+    setTimeout(async () => await initApp(), 100);
             }, 1500);
 }
     } catch (error) {
@@ -3311,7 +3311,7 @@ localStorage.setItem('users', JSON.stringify(users));
             }
             d.lastDate = today;
             save();
-            initApp();
+            await initApp();
             render();
         }
 async function startMiningOnBackend() {
@@ -3500,7 +3500,7 @@ const reward = d.rate * 24;
                 localStorage.setItem(adCooldownKey, cooldownEnd.toString());
                 
                 // Update display
-                initApp();
+                await initApp();
                 
                 // Release lock
                 isWatchingAd = false;
