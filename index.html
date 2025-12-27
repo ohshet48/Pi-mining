@@ -2479,12 +2479,10 @@ window.addEventListener('load', () => {
         
     async function signup() {
     // Scroll immediately when button clicked
-    const signupModalElement = document.getElementById('signupModal');
-    if (signupModalElement) {
-        const modalBody = signupModalElement.querySelector('.modal-body');
-        if (modalBody) modalBody.scrollTop = 0;
-    }
-    
+    try {
+        const signupModalElement = document.getElementById('signupModal');
+        if (signupModalElement) signupModalElement.scrollTop = 0;
+    } catch (e) {}
     const email = document.getElementById('signupEmail').value;
     const email = document.getElementById('signupEmail').value;
     const password = document.getElementById('signupPassword').value;
