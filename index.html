@@ -2838,7 +2838,7 @@ window.addEventListener('load', () => {
             }
         }
         
-        function claimLevelReward() {
+        async function claimLevelReward() {
             // Prevent double-claiming
             if (isClaimingLevel) return;
             if (!d.pendingLevelUp) return;
