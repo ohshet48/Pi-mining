@@ -4928,7 +4928,8 @@ const reward = d.rate * 24;
         
         function getReferralsPageContent() {
             // Get current user from backend
-            const userData = currentUser;
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            const currentEmail = localStorage.getItem('currentUser');
             
             // Get all referrals
             let activeRefs = [];
