@@ -2511,7 +2511,21 @@ window.addEventListener('load', () => {
         showError('Password must be at least 6 characters');
         return;
     }
-
+// Validate referral code if provided
+    const referralCode = document.getElementById('signupReferral').value;
+    if (referralCode) {
+        try {
+            const checkResponse = await fetch(API_ENDPOINTS.getUserData + '?referralCode=' + referralCode);
+            const checkData = await checkResponse.json();
+            if (!checkData.user) {
+                showError('Invalid referral code');
+                return;
+            }
+        } catch (err) {
+            showError('Could not validate referral code');
+            return;
+        }
+    }
     try {
         const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
         const user = userCredential.user;
@@ -5114,10 +5128,7 @@ const reward = d.rate * 24;
             // Prevent double-claiming
             if (isClaimingReferral) return;
             
-            const userEmail = localStorage.getItem('currentUser');
-            let users = JSON.parse(localStorage.getItem('users')) || {};
-            
-            if (!users[userEmail] || !users[userEmail].pendingReferralEarnings || users[userEmail].pendingReferralEarnings === 0) {
+            if (!currentUser.pendingReferralEarnings || currentUser.pendingReferralEarnings === 0) {
                 showToast('❌ No earnings to claim', true);
                 return;
             }
