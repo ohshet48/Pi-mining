@@ -2888,10 +2888,9 @@ window.addEventListener('load', () => {
                         userId: currentUser.userId,
                         newLevel: claimedLevel,
                         coinsReward: reward.coins,
-                        newRate: users[userEmail].rate
+                        newRate: newBaseRate
                     })
                 }).catch(err => console.error('Backend update failed:', err));
-                currentUser = users[userEmail];
                 
                 showToast(`✓ Claimed Level ${claimedLevel} reward: +${reward.coins} Coins!`);
                 
