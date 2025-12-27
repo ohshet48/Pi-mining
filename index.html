@@ -2482,7 +2482,7 @@ window.addEventListener('load', () => {
     const password = document.getElementById('signupPassword').value;
     const confirmPassword = document.getElementById('signupPasswordConfirm').value;
 // Username validation
-    const username = document.getElementById('inputFullNamePage').value;
+    const username = document.getElementById('signupUsername').value || email.split('@')[0];
     if (!username || username.length < 3 || username.length > 12) {
         showError('Username must be 3-12 characters');
         return;
