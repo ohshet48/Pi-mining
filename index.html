@@ -1846,7 +1846,6 @@ const API_ENDPOINTS = {
   claimDailyReward: `${FUNCTIONS_BASE_URL}/claimDailyReward`,
   claimReferralEarnings: `${FUNCTIONS_BASE_URL}/claimReferralEarnings`,
   getReferrals: `${FUNCTIONS_BASE_URL}/getReferrals`,
-  getActiveReferrals: `${FUNCTIONS_BASE_URL}/getActiveReferrals`,
 };
   
 
@@ -2778,19 +2777,24 @@ window.addEventListener('load', () => {
             startTimer();
         }
         
-        async function calculateActiveRefs() {
-            try {
-                const response = await fetch(API_ENDPOINTS.getActiveReferrals + '?userId=' + currentUser.userId);
-                const data = await response.json();
-                
-                if (response.ok) {
-                    return data.activeCount || 0;
+        function calculateActiveRefs() {
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            let activeCount = 0;
+            const now = Date.now();
+            
+            // Check all users who were referred by current user's refCode
+            for (let email in users) {
+                const user = users[email];
+                if (user.referredBy === currentUser.refCode) {
+                    // Check if they are currently mining
+                    const miningEndTime = localStorage.getItem('miningEndTime_' + email);
+                    if (miningEndTime && now < parseInt(miningEndTime)) {
+                        activeCount++;
+                    }
                 }
-                return 0;
-            } catch (err) {
-                console.error('Failed to get active refs:', err);
-                return 0;
             }
+            
+            return activeCount;
         }
 
         function save() {
