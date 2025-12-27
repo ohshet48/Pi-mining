@@ -2478,6 +2478,10 @@ window.addEventListener('load', () => {
         }
         
     async function signup() {
+    document.body.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+    
+    const email = document.getElementById('signupEmail').value;
     const email = document.getElementById('signupEmail').value;
     const password = document.getElementById('signupPassword').value;
     const confirmPassword = document.getElementById('signupPasswordConfirm').value;
@@ -2527,9 +2531,8 @@ window.addEventListener('load', () => {
             localStorage.setItem('userEmail', user.email);
             localStorage.setItem('isLoggedIn', 'true');
             localStorage.setItem('currentUser', JSON.stringify(data.user));
-            document.body.scrollTop = 0;
-            document.documentElement.scrollTop = 0;
             showSuccess('Account created successfully! Please Wait');
+            
             setTimeout(() => {
     const modal = document.getElementById('signupModal');
     if (modal) modal.classList.remove('show');
