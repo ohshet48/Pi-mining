@@ -2528,7 +2528,7 @@ window.addEventListener('load', () => {
             localStorage.setItem('isLoggedIn', 'true');
             localStorage.setItem('currentUser', JSON.stringify(data.user));
             showSuccess('Account created successfully! Please Wait');
-
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             setTimeout(() => {
     const modal = document.getElementById('signupModal');
     if (modal) modal.classList.remove('show');
