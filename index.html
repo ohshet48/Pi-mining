@@ -2854,14 +2854,14 @@ window.addEventListener('load', () => {
                 const claimedLevel = d.pendingLevelUp;
                 d.level = d.pendingLevelUp;
                 d.pendingLevelUp = null;
-                
+                // Calculate new rate
+            const baseRate = 0.25;
+            const levelBonus = (claimedLevel - 1) * 0.05;
+            const newBaseRate = baseRate + levelBonus;
                 // Update user's base rate with level bonus, but ensure MAX 5.0
                 const users = JSON.parse(localStorage.getItem('users') || '{}');
                 const userEmail = localStorage.getItem('currentUser');
                 if (users[userEmail]) {
-                    const baseRate = 0.25;
-                    const levelBonus = (claimedLevel - 1) * 0.05;
-                    const newBaseRate = baseRate + levelBonus;
                     
                     // Check if current total rate would exceed 5.0
                     const activeRefs = calculateActiveRefs();
