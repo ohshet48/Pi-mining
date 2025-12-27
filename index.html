@@ -3258,7 +3258,7 @@ localStorage.setItem('users', JSON.stringify(users));
             // Call backend to start mining
         await startMiningOnBackend();
             d.mining = true;
-            d.timeLeft = 10; // 10 saniye test
+            d.timeLeft = 24 * 60 * 60;
 
             const today = new Date().toDateString();
             if (d.lastDate) {
