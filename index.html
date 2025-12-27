@@ -2836,7 +2836,7 @@ window.addEventListener('load', () => {
             }
         }
         
-        async function claimLevelReward() {
+        function claimLevelReward() {
             // Prevent double-claiming
             if (isClaimingLevel) return;
             if (!d.pendingLevelUp) return;
@@ -2848,46 +2848,38 @@ window.addEventListener('load', () => {
             // Set lock
             isClaimingLevel = true;
             
-            const claimedLevel = d.pendingLevelUp;
-                const coinsReward = reward.coins;
+            try {
+                d.balance += reward.coins;
+                const claimedLevel = d.pendingLevelUp;
+                d.level = d.pendingLevelUp;
+                d.pendingLevelUp = null;
                 
-                // Calculate new rate
-                const baseRate = 0.25;
-                const levelBonus = (claimedLevel - 1) * 0.05;
-                const newRate = baseRate + levelBonus;
-                
-                // Call backend
-                const response = await fetch(API_ENDPOINTS.updateLevel, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        userId: currentUser.userId,
-                        newLevel: claimedLevel,
-                        coinsReward: coinsReward,
-                        newRate: newRate
-                    })
-                });
-                
-                if (response.ok) {
-                    // Update frontend
-                    d.balance += coinsReward;
-                    d.level = claimedLevel;
-                    d.pendingLevelUp = null;
-                    currentUser.rate = newRate;
+                // Update user's base rate with level bonus, but ensure MAX 5.0
+                const users = JSON.parse(localStorage.getItem('users') || '{}');
+                const userEmail = localStorage.getItem('currentUser');
+                if (users[userEmail]) {
+                    const baseRate = 0.25;
+                    const levelBonus = (claimedLevel - 1) * 0.05;
+                    const newBaseRate = baseRate + levelBonus;
                     
-                    save();
-                    showToast(`✓ Claimed Level ${claimedLevel} reward: +${coinsReward} Coins!`);
+                    // Check if current total rate would exceed 5.0
+                    const activeRefs = calculateActiveRefs();
+                    const totalRate = newBaseRate + (activeRefs * 0.05);
                     
-                    if (d.level < 20) {
-                        checkLevelUp();
+                    if (totalRate > 5.0) {
+                        // Cap at 5.0
+                        users[userEmail].rate = Math.min(newBaseRate, 5.0 - (activeRefs * 0.05));
+                    } else {
+                        users[userEmail].rate = newBaseRate;
                     }
                     
-                    render();
-                } else {
-                    showToast('❌ Failed to claim level reward');
+                    localStorage.setItem('users', JSON.stringify(users));
+                    currentUser = users[userEmail];
                 }
                 
+                save();
                 
+                showToast(`✓ Claimed Level ${claimedLevel} reward: +${reward.coins} Coins!`);
                 
                 if (d.level < 20) {
                     checkLevelUp();
