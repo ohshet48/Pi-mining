@@ -1846,6 +1846,7 @@ const API_ENDPOINTS = {
   claimDailyReward: `${FUNCTIONS_BASE_URL}/claimDailyReward`,
   claimReferralEarnings: `${FUNCTIONS_BASE_URL}/claimReferralEarnings`,
   getReferrals: `${FUNCTIONS_BASE_URL}/getReferrals`,
+  getActiveReferrals: `${FUNCTIONS_BASE_URL}/getActiveReferrals`,
 };
   
 
@@ -2717,7 +2718,7 @@ window.addEventListener('load', () => {
                 notification.close();
             };
         }
-        function initApp() {
+        async function initApp() {
     // localStorage'dan currentUser'ı oku
     const storedUser = localStorage.getItem('currentUser');
 		if (storedUser) {
@@ -2747,7 +2748,7 @@ window.addEventListener('load', () => {
             };
             
             // Calculate active mining referrals
-            d.activeRefs = calculateActiveRefs();
+            d.activeRefs = await calculateActiveRefs();
             
             // Calculate dynamic rate: base rate + referral bonus + ad boost
             // Base rate includes level bonuses only (permanent)
@@ -2777,24 +2778,19 @@ window.addEventListener('load', () => {
             startTimer();
         }
         
-        function calculateActiveRefs() {
-            const users = JSON.parse(localStorage.getItem('users') || '{}');
-            let activeCount = 0;
-            const now = Date.now();
-            
-            // Check all users who were referred by current user's refCode
-            for (let email in users) {
-                const user = users[email];
-                if (user.referredBy === currentUser.refCode) {
-                    // Check if they are currently mining
-                    const miningEndTime = localStorage.getItem('miningEndTime_' + email);
-                    if (miningEndTime && now < parseInt(miningEndTime)) {
-                        activeCount++;
-                    }
+        async function calculateActiveRefs() {
+            try {
+                const response = await fetch(API_ENDPOINTS.getActiveReferrals + '?userId=' + currentUser.userId);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    return data.activeCount || 0;
                 }
+                return 0;
+            } catch (err) {
+                console.error('Failed to get active refs:', err);
+                return 0;
             }
-            
-            return activeCount;
         }
 
         function save() {
@@ -2869,7 +2865,7 @@ window.addEventListener('load', () => {
                 if (users[userEmail]) {
                     
                     // Check if current total rate would exceed 5.0
-                    const activeRefs = calculateActiveRefs();
+                    const activeRefs = await calculateActiveRefs();
                     const totalRate = newBaseRate + (activeRefs * 0.05);
                     
                     if (totalRate > 5.0) {
@@ -3354,7 +3350,7 @@ async function startMiningOnBackend() {
             } catch(e) {}
 
             // Update displayed rate after clearing ad boost (referral bonus stays dynamic)
-            d.activeRefs = calculateActiveRefs();
+            d.activeRefs = await calculateActiveRefs();
             d.rate = (currentUser.rate || 0.25) + (d.activeRefs * 0.05);
 
 const reward = d.rate * 24;
@@ -3478,7 +3474,7 @@ const reward = d.rate * 24;
                 
                 // Calculate current total rate (base + referral + existing ad boost)
                 const baseRate = user.rate || 0.25; // permanent (level) base rate
-                const activeRefs = calculateActiveRefs();
+                const activeRefs = await calculateActiveRefs();
                 const refBonus = activeRefs * 0.05;
                 const currentAdBoost = user.adBoostAmount || 0;
                 const currentTotalRate = baseRate + refBonus + currentAdBoost;
@@ -3543,7 +3539,7 @@ const reward = d.rate * 24;
                 
                 // Update active referrals count every 10 seconds
                 if (Date.now() % 10000 < 1000) {
-                    d.activeRefs = calculateActiveRefs();
+                    d.activeRefs = await calculateActiveRefs();
                 }
             }, 1000);
         }
@@ -4484,7 +4480,7 @@ const reward = d.rate * 24;
                 users[userEmail].balance = (users[userEmail].balance || 0) + airdrop.amount;
                 
                 // Ensure user's rate doesn't exceed 5.0 (safety check)
-                const activeRefs = calculateActiveRefs();
+                const activeRefs = await calculateActiveRefs();
                 const currentTotalRate = (users[userEmail].rate || 0.25) + (activeRefs * 0.05);
                 if (currentTotalRate > 5.0) {
                     users[userEmail].rate = Math.max(0.25, 5.0 - (activeRefs * 0.05));
