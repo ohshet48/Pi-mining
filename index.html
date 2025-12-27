@@ -3235,8 +3235,8 @@ window.addEventListener('load', () => {
                 });
             }, 50);
         }
-
-        function startMine() {
+	
+        async function startMine() {
             const now = Date.now();
             const end = now + (24 * 60 * 60 * 1000);
             localStorage.setItem('miningEndTime_' + currentUser.email, end);
@@ -3255,7 +3255,8 @@ localStorage.setItem('users', JSON.stringify(users));
             
             // Clear ad cooldown
             localStorage.removeItem('adCooldown_' + currentUser.email);
-            
+            // Call backend to start mining
+        await startMiningOnBackend();
             d.mining = true;
             d.timeLeft = 24 * 60 * 60;
 
@@ -3277,7 +3278,26 @@ localStorage.setItem('users', JSON.stringify(users));
             initApp();
             render();
         }
+async function startMiningOnBackend() {
+            try {
+                const response = await fetch(API_ENDPOINTS.startMining, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        userId: currentUser.userId,
+                        level: d.level
+                    })
+                });
 
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('currentSessionId', data.session.sessionId);
+                    console.log('✓ Mining started on backend');
+                }
+            } catch (error) {
+                console.error('Backend error:', error);
+            }
+        }
         function completeMine() {
             d.mining = false;
             d.timeLeft = 0;
@@ -3297,18 +3317,34 @@ localStorage.setItem('users', JSON.stringify(users));
             d.activeRefs = calculateActiveRefs();
             d.rate = (currentUser.rate || 0.25) + (d.activeRefs * 0.05);
 
-d.balance += (d.rate * 24); // Dynamic earning based on rate (rate per hour * 24 hours)
-            d.miningDays++;
-            dailyRewardAvailable = true;
-            
-            save();
-            checkLevelUp();
-            render();
-            
-            // Send notification
-            sendMiningCompleteNotification();
+const reward = d.rate * 24;
+            claimRewardFromBackend(reward);
         }
-        
+        async function claimRewardFromBackend(reward) {
+            try {
+                const response = await fetch(API_ENDPOINTS.claimReward, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        userId: currentUser.userId,
+                        sessionId: localStorage.getItem('currentSessionId'),
+                        reward: reward
+                    })
+                });
+
+                if (response.ok) {
+                    d.balance += reward;
+                    d.miningDays++;
+                    dailyRewardAvailable = true;
+                    save();
+                    checkLevelUp();
+                    render();
+                    sendMiningCompleteNotification();
+                }
+            } catch (error) {
+                console.error('Backend error:', error);
+            }
+        }
         function claimDailyReward() {
             // Prevent double-claiming
             if (isClaimingDaily) return;
