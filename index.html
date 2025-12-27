@@ -2730,7 +2730,7 @@ window.addEventListener('load', () => {
             d = {
                 balance: currentUser.balance || 0,
                 level: currentUser.level || 1,
-                refs: currentUser.refs || 0,
+                refs: currentUser.referrals?.length || 0,
                 activeRefs: 0,
                 streak: currentUser.streak || 0,
                 lastDate: currentUser.lastDate || null,
@@ -4927,8 +4927,8 @@ const reward = d.rate * 24;
         }
         
         function getReferralsPageContent() {
-            const users = JSON.parse(localStorage.getItem('users') || '{}');
-            const currentEmail = localStorage.getItem('currentUser');
+            // Get current user from backend
+            const userData = currentUser;
             
             // Get all referrals
             let activeRefs = [];
