@@ -1843,7 +1843,10 @@ const API_ENDPOINTS = {
   getMiningSessions: `${FUNCTIONS_BASE_URL}/getMiningSessions`,
   sendMiningNotification: `${FUNCTIONS_BASE_URL}/sendMiningNotification`,
   updateLevel: `${FUNCTIONS_BASE_URL}/updateLevel`,
-  claimDailyReward: `${FUNCTIONS_BASE_URL}/claimDailyReward`
+  claimDailyReward: `${FUNCTIONS_BASE_URL}/claimDailyReward`,
+  claimReferralEarnings: `${FUNCTIONS_BASE_URL}/claimReferralEarnings`,
+};
+  
 };
 
 // ============================================
@@ -2520,7 +2523,8 @@ window.addEventListener('load', () => {
             body: JSON.stringify({
                 userId: user.uid,
                 email: user.email,
-                username: username
+                username: username,
+				referralCode: document.getElementById('signupReferral').value || null
             })
         });
 
@@ -5123,39 +5127,27 @@ const reward = d.rate * 24;
             isClaimingReferral = true;
             
             try {
-                const earnings = users[userEmail].pendingReferralEarnings;
-                const mrReward = users[userEmail].pendingReferralMR || 0;
-                
-                // Add coins to balance ONLY (not MR)
-                users[userEmail].balance = (users[userEmail].balance || 0) + earnings;
-                
-                // DO NOT add MR to rate - it will be dynamic based on active refs
-                
-                // Ensure user's rate doesn't exceed 5.0 (safety check)
-                const activeRefs = calculateActiveRefs();
-                const currentTotalRate = (users[userEmail].rate || 0.25) + (activeRefs * 0.05);
-                if (currentTotalRate > 5.0) {
-                    users[userEmail].rate = Math.max(0.25, 5.0 - (activeRefs * 0.05));
-                }
-                
-                // Reset pending earnings and MR
-                users[userEmail].pendingReferralEarnings = 0;
-                users[userEmail].pendingReferralMR = 0;
-                
-                // Save to localStorage
-                localStorage.setItem('users', JSON.stringify(users));
-                
-                // Update current user and d object
-                currentUser = users[userEmail];
-                d.balance = currentUser.balance;
-                d.pendingReferralEarnings = 0;
-                d.pendingReferralMR = 0;
-                
-                // Show success message
-                showToast(`✓ Claimed ${earnings} Coins from referrals!`);
-                
-                // Refresh main screen
-                render();
+                // Call backend
+                fetch(API_ENDPOINTS.claimReferralEarnings, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        userId: currentUser.userId
+                    })
+                }).then(res => res.json())
+                  .then(data => {
+                      if (data.earnings) {
+                          d.balance += data.earnings;
+                          d.pendingReferralEarnings = 0;
+                          save();
+                          showToast(`✓ Claimed ${data.earnings} Coins from referrals!`);
+                          render();
+                      }
+                  })
+                  .catch(err => {
+                      console.error('Referral claim failed:', err);
+                      showToast('❌ Failed to claim referral earnings');
+                  });
             } finally {
                 // Release lock after delay
                 setTimeout(() => {
