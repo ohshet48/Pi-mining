@@ -1843,6 +1843,7 @@ const API_ENDPOINTS = {
   getMiningSessions: `${FUNCTIONS_BASE_URL}/getMiningSessions`,
   sendMiningNotification: `${FUNCTIONS_BASE_URL}/sendMiningNotification`,
   updateLevel: `${FUNCTIONS_BASE_URL}/updateLevel`,
+  claimDailyReward: `${FUNCTIONS_BASE_URL}/claimDailyReward`
 };
 
 // ============================================
@@ -3389,12 +3390,27 @@ const reward = d.rate * 24;
             isClaimingDaily = true;
             
             try {
-                d.balance += 5;
-                dailyRewardAvailable = false;
-                
-                save();
-                showToast('✓ Claimed +5 Coins daily reward!');
-                render();
+                // Call backend
+                fetch(API_ENDPOINTS.claimDailyReward, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        userId: currentUser.userId
+                    })
+                }).then(res => res.json())
+                  .then(data => {
+                      if (data.reward) {
+                          d.balance += data.reward;
+                          dailyRewardAvailable = false;
+                          save();
+                          showToast('✓ Claimed +5 Coins daily reward!');
+                          render();
+                      }
+                  })
+                  .catch(err => {
+                      console.error('Daily reward failed:', err);
+                      showToast('❌ Failed to claim daily reward');
+                  });
             } finally {
                 // Release lock after delay
                 setTimeout(() => {
