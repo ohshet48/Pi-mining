@@ -2892,6 +2892,17 @@ window.addEventListener('load', () => {
                     })
                 }).catch(err => console.error('Backend update failed:', err));
                 
+                // Refresh currentUser from backend
+                fetch(API_ENDPOINTS.getUserData + '?userId=' + currentUser.userId)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.user) {
+                            currentUser = data.user;
+                            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                        }
+                    })
+                    .catch(err => console.error('Failed to refresh user:', err));
+
                 showToast(`✓ Claimed Level ${claimedLevel} reward: +${reward.coins} Coins!`);
                 
                 if (d.level < 20) {
