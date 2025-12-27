@@ -1814,12 +1814,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log('currentUser loaded:', currentUser);
         
-        setTimeout(async () => {
+        setTimeout(() => {
             console.log('Showing app...');
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('app').style.display = 'block';
             console.log('Calling initApp...');
-            await initApp();
+            initApp();
             console.log('initApp completed');
         }, 500);
     } else {
@@ -2444,7 +2444,7 @@ window.addEventListener('load', () => {
             setTimeout(() => {
                 document.getElementById('authScreen').style.display = 'none';
                 document.getElementById('app').style.display = 'block';
-                setTimeout(async () => await initApp(), 100);
+                setTimeout(() => initApp(), 100);
             }, 500);
         }
     } catch (error) {
@@ -2542,7 +2542,7 @@ window.addEventListener('load', () => {
     if (modal) modal.classList.remove('show');
     document.getElementById('authScreen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
-    setTimeout(async () => await initApp(), 100);
+    setTimeout(() => initApp(), 100);
             }, 1500);
 }
     } catch (error) {
@@ -2718,7 +2718,7 @@ window.addEventListener('load', () => {
                 notification.close();
             };
         }
-        async function initApp() {
+        function initApp() {
     // localStorage'dan currentUser'ı oku
     const storedUser = localStorage.getItem('currentUser');
 		if (storedUser) {
@@ -2748,7 +2748,7 @@ window.addEventListener('load', () => {
             };
             
             // Calculate active mining referrals
-            d.activeRefs = await calculateActiveRefs();
+            d.activeRefs = calculateActiveRefs();
             
             // Calculate dynamic rate: base rate + referral bonus + ad boost
             // Base rate includes level bonuses only (permanent)
@@ -2838,7 +2838,7 @@ window.addEventListener('load', () => {
             }
         }
         
-        async function claimLevelReward() {
+        function claimLevelReward() {
             // Prevent double-claiming
             if (isClaimingLevel) return;
             if (!d.pendingLevelUp) return;
@@ -2865,7 +2865,7 @@ window.addEventListener('load', () => {
                 if (users[userEmail]) {
                     
                     // Check if current total rate would exceed 5.0
-                    const activeRefs = await calculateActiveRefs();
+                    const activeRefs = calculateActiveRefs();
                     const totalRate = newBaseRate + (activeRefs * 0.05);
                     
                     if (totalRate > 5.0) {
@@ -3311,7 +3311,7 @@ localStorage.setItem('users', JSON.stringify(users));
             }
             d.lastDate = today;
             save();
-            await initApp();
+            initApp();
             render();
         }
 async function startMiningOnBackend() {
@@ -3350,7 +3350,7 @@ async function startMiningOnBackend() {
             } catch(e) {}
 
             // Update displayed rate after clearing ad boost (referral bonus stays dynamic)
-            d.activeRefs = await calculateActiveRefs();
+            d.activeRefs = calculateActiveRefs();
             d.rate = (currentUser.rate || 0.25) + (d.activeRefs * 0.05);
 
 const reward = d.rate * 24;
@@ -3474,7 +3474,7 @@ const reward = d.rate * 24;
                 
                 // Calculate current total rate (base + referral + existing ad boost)
                 const baseRate = user.rate || 0.25; // permanent (level) base rate
-                const activeRefs = await calculateActiveRefs();
+                const activeRefs = calculateActiveRefs();
                 const refBonus = activeRefs * 0.05;
                 const currentAdBoost = user.adBoostAmount || 0;
                 const currentTotalRate = baseRate + refBonus + currentAdBoost;
@@ -3500,7 +3500,7 @@ const reward = d.rate * 24;
                 localStorage.setItem(adCooldownKey, cooldownEnd.toString());
                 
                 // Update display
-                await initApp();
+                initApp();
                 
                 // Release lock
                 isWatchingAd = false;
@@ -3539,7 +3539,7 @@ const reward = d.rate * 24;
                 
                 // Update active referrals count every 10 seconds
                 if (Date.now() % 10000 < 1000) {
-                    d.activeRefs = await calculateActiveRefs();
+                    d.activeRefs = calculateActiveRefs();
                 }
             }, 1000);
         }
@@ -4480,7 +4480,7 @@ const reward = d.rate * 24;
                 users[userEmail].balance = (users[userEmail].balance || 0) + airdrop.amount;
                 
                 // Ensure user's rate doesn't exceed 5.0 (safety check)
-                const activeRefs = await calculateActiveRefs();
+                const activeRefs = calculateActiveRefs();
                 const currentTotalRate = (users[userEmail].rate || 0.25) + (activeRefs * 0.05);
                 if (currentTotalRate > 5.0) {
                     users[userEmail].rate = Math.max(0.25, 5.0 - (activeRefs * 0.05));
