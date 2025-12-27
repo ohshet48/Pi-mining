@@ -2478,6 +2478,14 @@ window.addEventListener('load', () => {
         }
         
     async function signup() {
+    // Scroll immediately when button clicked
+    const signupModalElement = document.getElementById('signupModal');
+    if (signupModalElement) {
+        const modalBody = signupModalElement.querySelector('.modal-body');
+        if (modalBody) modalBody.scrollTop = 0;
+    }
+    
+    const email = document.getElementById('signupEmail').value;
     const email = document.getElementById('signupEmail').value;
     const password = document.getElementById('signupPassword').value;
     const confirmPassword = document.getElementById('signupPasswordConfirm').value;
