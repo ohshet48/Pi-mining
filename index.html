@@ -1848,6 +1848,7 @@ const API_ENDPOINTS = {
   getReferrals: `${FUNCTIONS_BASE_URL}/getReferrals`,
   getActiveReferrals: `${FUNCTIONS_BASE_URL}/getActiveReferrals`,
   getTransactions: `${FUNCTIONS_BASE_URL}/getTransactions`,
+  getLeaderboard: `${FUNCTIONS_BASE_URL}/getLeaderboard`,
 };
   
 
@@ -4220,7 +4221,7 @@ const reward = d.rate * 24;
                     break;
                 case 'leaderboard':
                     pageTitle.textContent = 'Leaderboard';
-                    pageContent.innerHTML = getLeaderboardPageContent();
+                    getLeaderboardPageContent().then(html => pageContent.innerHTML = html);
                     break;
                 case 'referrals':
                     pageTitle.textContent = 'My Referrals';
@@ -4585,50 +4586,19 @@ const reward = d.rate * 24;
             }
         }
         
-        function getLeaderboardPageContent() {
-            // Check cache first (updates at 00:00 UTC daily)
-            const cacheKey = 'leaderboard_cache';
-            const cacheTimeKey = 'leaderboard_cache_time';
-            const cacheData = localStorage.getItem(cacheKey);
-            const cacheTime = localStorage.getItem(cacheTimeKey);
-            
-            const now = new Date();
-            const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-            const todayUTCTimestamp = todayUTC.getTime();
-            
-            // Cache is valid if it was created today (UTC)
-            const cacheValid = cacheTime && parseInt(cacheTime) >= todayUTCTimestamp;
-            
+        async function getLeaderboardPageContent() {
             let leaderboardData = [];
             
-            if (cacheValid && cacheData) {
-                // Use cached data
-                leaderboardData = JSON.parse(cacheData);
-            } else {
-                // Generate new leaderboard from localStorage
-                const users = JSON.parse(localStorage.getItem('users') || '{}');
-                leaderboardData = Object.entries(users)
-                    .map(([email, user]) => ({
-                        email: email,
-                        username: user.username || 'Anonymous',
-                        balance: user.balance || 0,
-                        level: user.level || 1,
-                        rate: user.rate || 0.25,
-                        miningDays: user.miningDays || 0
-                    }))
-                    .sort((a, b) => {
-                        // First sort by level (descending)
-                        if (b.level !== a.level) {
-                            return b.level - a.level;
-                        }
-                        // If levels are equal, sort by miningDays (descending)
-                        return b.miningDays - a.miningDays;
-                    })
-                    .slice(0, 100); // Top 100
+            try {
+                // Fetch from backend
+                const response = await fetch(API_ENDPOINTS.getLeaderboard);
+                const data = await response.json();
                 
-                // Save to cache with today's UTC date
-                localStorage.setItem(cacheKey, JSON.stringify(leaderboardData));
-                localStorage.setItem(cacheTimeKey, todayUTCTimestamp.toString());
+                if (response.ok && data.leaderboard) {
+                    leaderboardData = data.leaderboard;
+                }
+            } catch (err) {
+                console.error('Failed to fetch leaderboard:', err);
             }
             
             // Find current user's rank
@@ -5005,11 +4975,22 @@ const reward = d.rate * 24;
     let inactiveRefs = [];
     
     try {
-        const response = await fetch(API_ENDPOINTS.getReferrals + '?userId=' + currentUser.userId);
-        const data = await response.json();
+        // Get all referrals
+        const refResponse = await fetch(API_ENDPOINTS.getReferrals + '?userId=' + currentUser.userId);
+        const refData = await refResponse.json();
         
-        if (response.ok && data.referrals) {
-            inactiveRefs = data.referrals;
+        // Get active count
+        const activeResponse = await fetch(API_ENDPOINTS.getActiveReferrals + '?userId=' + currentUser.userId);
+        const activeData = await activeResponse.json();
+        
+        if (refResponse.ok && refData.referrals) {
+            const allReferrals = refData.referrals;
+            const activeCount = activeData.activeCount || 0;
+            
+            // Split into active and inactive based on activeCount
+            // Assume first N are active (this is a simplification - ideally backend should return active status)
+            activeRefs = allReferrals.slice(0, activeCount);
+            inactiveRefs = allReferrals.slice(activeCount);
         }
     } catch (err) {
         console.error('Failed to fetch referrals:', err);
