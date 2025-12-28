@@ -2430,10 +2430,15 @@ window.addEventListener('load', () => {
         const user = userCredential.user;
 
         // Backend'den kullanıcı bilgilerini al
-        const response = await fetch(API_ENDPOINTS.getUserData + '?userId=' + user.uid);
+        const response = await fetch(API_ENDPOINTS.getUserData, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ userId: user.uid })
+        });
         const data = await response.json();
 
         if (response.ok) {
+            currentUser = data.user;
             localStorage.setItem('userId', user.uid);
             localStorage.setItem('userEmail', user.email);
             localStorage.setItem('isLoggedIn', 'true');
@@ -2717,10 +2722,12 @@ window.addEventListener('load', () => {
                 notification.close();
             };
         }
-        function initApp() {
+        async function initApp() {
     // localStorage'dan currentUser'ı oku
     const storedUser = localStorage.getItem('currentUser');
-		if (storedUser) {
+    const userId = localStorage.getItem('userId');
+    
+    if (storedUser) {
         currentUser = JSON.parse(storedUser);
         // Username yoksa email'den oluştur
         if (!currentUser.username && currentUser.email) {
@@ -2728,14 +2735,86 @@ window.addEventListener('load', () => {
         }
     }
     
+    // Backend'den TÜM verileri çek
+    if (userId) {
+        try {
+            console.log('🔄 Backend veriler çekiliyor...');
+            
+            // 1. User Data
+            const userResponse = await fetch(API_ENDPOINTS.getUserData, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ userId: userId })
+            });
+            
+            if (userResponse.ok) {
+                const userData = await userResponse.json();
+                currentUser = userData.user;
+                localStorage.setItem('currentUser', JSON.stringify(userData.user));
+                
+                // Aktif mining session varsa yükle
+                if (userData.activeMiningSession) {
+                    const session = userData.activeMiningSession;
+                    const endTime = session.endTime.toMillis ? session.endTime.toMillis() : session.endTime;
+                    localStorage.setItem('miningEndTime_' + currentUser.email, endTime);
+                    localStorage.setItem('miningStartTime_' + currentUser.email, session.startTime.toMillis ? session.startTime.toMillis() : session.startTime);
+                    localStorage.setItem('currentSessionId_' + currentUser.email, session.sessionId);
+                }
+                
+                console.log('✅ User data yüklendi');
+            }
+            
+            // 2. Transactions
+            try {
+                const txResponse = await fetch(API_ENDPOINTS.getTransactions + '?userId=' + userId + '&limit=50');
+                if (txResponse.ok) {
+                    const txData = await txResponse.json();
+                    localStorage.setItem('transactions_' + currentUser.email, JSON.stringify(txData.transactions || []));
+                    console.log('✅ Transactions yüklendi');
+                }
+            } catch (e) {
+                console.log('⚠️ Transactions yüklenemedi:', e);
+            }
+            
+            // 3. Referrals
+            try {
+                const refResponse = await fetch(API_ENDPOINTS.getReferrals + '?userId=' + userId);
+                if (refResponse.ok) {
+                    const refData = await refResponse.json();
+                    localStorage.setItem('referrals_' + currentUser.email, JSON.stringify(refData.referrals || []));
+                    console.log('✅ Referrals yüklendi');
+                }
+            } catch (e) {
+                console.log('⚠️ Referrals yüklenemedi:', e);
+            }
+            
+            // 4. Active Referrals Count
+            try {
+                const activeRefResponse = await fetch(API_ENDPOINTS.getActiveReferrals + '?userId=' + userId);
+                if (activeRefResponse.ok) {
+                    const activeRefData = await activeRefResponse.json();
+                    localStorage.setItem('activeReferralsCount_' + currentUser.email, activeRefData.activeCount || 0);
+                    console.log('✅ Active referrals yüklendi');
+                }
+            } catch (e) {
+                console.log('⚠️ Active referrals yüklenemedi:', e);
+            }
+            
+            console.log('✅ TÜM BACKEND VERİLER YÜKLENDİ!');
+            
+        } catch (error) {
+            console.error('❌ Backend veri çekme hatası:', error);
+        }
+    }
+    
             d = {
                 balance: currentUser.balance || 0,
                 level: currentUser.level || 1,
                 refs: currentUser.referrals?.length || 0,
-                activeRefs: 0,
+                activeRefs: parseInt(localStorage.getItem('activeReferralsCount_' + currentUser.email)) || 0,
                 streak: currentUser.streak || 0,
                 lastDate: currentUser.lastDate || null,
-                refCode: currentUser.refCode,
+                refCode: currentUser.referralCode || currentUser.refCode,
                 fullName: currentUser.fullName || '',
                 country: currentUser.country || '',
                 birthDate: currentUser.birthDate || '',
@@ -5347,7 +5426,7 @@ const reward = d.rate * 24;
         
         createParticles();
         
-        // Splash screen - 2.5 saniye sonra kaybol
+        // Splash screen - Firebase yüklendikten sonra kaybol
         window.addEventListener('load', function() {
             setTimeout(function() {
                 document.getElementById('splashScreen').classList.add('fade-out');
@@ -5355,7 +5434,7 @@ const reward = d.rate * 24;
                     document.getElementById('splashScreen').style.display = 'none';
                     checkAuth();
                 }, 800);
-            }, 2500);
+            }, 2000);
         });
         
         // Exit handling - double back press
