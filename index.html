@@ -2755,9 +2755,10 @@ window.addEventListener('load', () => {
                 // Aktif mining session varsa yükle
                 if (userData.activeMiningSession) {
                     const session = userData.activeMiningSession;
-                    const endTime = session.endTime.toMillis ? session.endTime.toMillis() : session.endTime;
+                    const endTime = session.endTime._seconds ? session.endTime._seconds * 1000 : session.endTime;
+                    const startTime = session.startTime._seconds ? session.startTime._seconds * 1000 : session.startTime;
                     localStorage.setItem('miningEndTime_' + currentUser.email, endTime);
-                    localStorage.setItem('miningStartTime_' + currentUser.email, session.startTime.toMillis ? session.startTime.toMillis() : session.startTime);
+                    localStorage.setItem('miningStartTime_' + currentUser.email, startTime);
                     localStorage.setItem('currentSessionId_' + currentUser.email, session.sessionId);
                 }
                 
