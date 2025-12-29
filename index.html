@@ -2490,6 +2490,12 @@ window.addEventListener('load', () => {
         }
         
     async function login() {
+        // Scroll to top immediately
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        // Show loading message immediately
+        showToast('⏳ Waiting for server response...');
+        
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
 
