@@ -2761,6 +2761,7 @@ window.addEventListener('load', () => {
         let balanceVisible = true;
         let dailyRewardAvailable = false;
         let hasPendingAirdrops = false;
+        let activeMiningSession = null; // Store active session for ad boost check
         
         // Claiming locks to prevent double-claims
         let isClaimingLevel = false;
@@ -2854,6 +2855,7 @@ window.addEventListener('load', () => {
             if (userResponse.ok) {
                 const userData = await userResponse.json();
                 currentUser = userData.user;
+                activeMiningSession = userData.activeMiningSession || null; // Store for rate calculation
                 localStorage.setItem('currentUser', JSON.stringify(userData.user));
                 
                 // Aktif mining session varsa yükle
