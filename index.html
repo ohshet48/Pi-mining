@@ -3620,20 +3620,33 @@ const reward = d.rate * 24;
             const cooldownEnd = Date.now() + 45000; // 45 seconds
             localStorage.setItem('adCooldown_' + currentUser.email, cooldownEnd.toString());
             
-            // Initial UI update
-            await initApp();
-            
-            // Update UI every second to show countdown
-            const countdownInterval = setInterval(async () => {
-                await initApp();
-                
-                // Stop when cooldown ends
-                if (Date.now() >= cooldownEnd) {
-                    clearInterval(countdownInterval);
-                }
-            }, 1000);
-            
             const adStartTime = Date.now();
+            
+            // Find the button and update it every second
+            const updateButton = () => {
+                const now = Date.now();
+                const remaining = Math.max(0, Math.ceil((cooldownEnd - now) / 1000));
+                
+                // Find all buttons with Watch Ad text
+                const buttons = document.querySelectorAll('button');
+                buttons.forEach(btn => {
+                    if (btn.textContent.includes('Watch Ad') || btn.textContent.includes('Wait')) {
+                        btn.disabled = true;
+                        btn.style.opacity = '0.6';
+                        btn.style.cursor = 'not-allowed';
+                        btn.style.background = 'rgba(0, 255, 255, 0.1)';
+                        btn.style.border = '1px solid rgba(0, 255, 255, 0.3)';
+                        btn.style.color = 'rgba(255, 255, 255, 0.4)';
+                        btn.innerHTML = remaining > 0 ? `⏳ Wait ${remaining}s` : '📺 Watch Ad +0.25 MR';
+                    }
+                });
+            };
+            
+            // Initial update
+            updateButton();
+            
+            // Update every second
+            const countdownInterval = setInterval(updateButton, 1000);
             
             // Wait 45 seconds
             setTimeout(async () => {
