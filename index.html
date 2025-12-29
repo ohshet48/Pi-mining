@@ -3146,7 +3146,7 @@ window.addEventListener('load', () => {
                     ${isMaxRate ? 
                         '🔒 Max Rate Reached (5.0 MR)' : 
                         (isOnCooldown ? 
-                            `⏳ Wait ${cooldownRemaining}s` : 
+                            `⏳ Wait for reward ${cooldownRemaining}s` : 
                             '📺 Watch Ad +0.25 MR'
                         )
                     }
@@ -3675,7 +3675,7 @@ const reward = d.rate * 24;
                     btn.style.background = 'rgba(0, 255, 255, 0.1)';
                     btn.style.border = '1px solid rgba(0, 255, 255, 0.3)';
                     btn.style.color = 'rgba(255, 255, 255, 0.4)';
-                    btn.textContent = `⏳ Wait ${remaining}s`;
+                    btn.textContent = `⏳ Wait for reward ${remaining}s`;
                 }
             };
             
@@ -3704,15 +3704,27 @@ const reward = d.rate * 24;
                     const data = await response.json();
                     
                     if (response.ok) {
-                        // Unlock button before reload
+                        // Update activeMiningSession with new adBoostCount (instant update)
+                        if (activeMiningSession) {
+                            activeMiningSession.adBoostCount = data.adBoostCount;
+                            activeMiningSession.adBoostActive = true;
+                        }
+                        
+                        // Force immediate rate recalculation
+                        const baseRate = currentUser.rate || 0.25;
+                        const refBonus = d.activeRefs * 0.05;
+                        const adBonus = data.adBoostCount * 0.25;
+                        d.rate = baseRate + refBonus + adBonus;
+                        
+                        // Unlock button and re-render
                         const btn = document.getElementById('watchAdButton');
                         if (btn) btn.setAttribute('data-locked', 'false');
                         
                         // Release lock
                         isWatchingAd = false;
                         
-                        // Reload user data (no toast)
-                        await initApp();
+                        // Re-render UI with updated rate (no API call needed)
+                        render();
                     } else {
                         showToast(`❌ ${data.error || 'Failed to apply boost'}`, true);
                         // Unlock on error
