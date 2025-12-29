@@ -3098,7 +3098,7 @@ window.addEventListener('load', () => {
             }
             
             // Only show if mining
-            if (!d.mining) {
+            if (!d || !d.mining) {
                 container.innerHTML = '';
                 return;
             }
