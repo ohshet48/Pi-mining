@@ -3546,7 +3546,11 @@ async function startMiningOnBackend() {
 
             // Update displayed rate after clearing ad boost (referral bonus stays dynamic)
             d.activeRefs = calculateActiveRefs();
-            d.rate = (currentUser.rate || 0.25) + (d.activeRefs * 0.05);
+            let adBonus = 0;
+            if (activeMiningSession && activeMiningSession.adBoostActive) {
+                adBonus = 0.25;
+            }
+            d.rate = (currentUser.rate || 0.25) + (d.activeRefs * 0.05) + adBonus;
 
 const reward = d.rate * 24;
             claimRewardFromBackend(reward);
