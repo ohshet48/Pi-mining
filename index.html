@@ -2253,7 +2253,7 @@ window.addEventListener('load', () => {
                 </div>
                 
                 <div class="profile-section">
-                    <div class="profile-section-title">Share Profile</div>
+                    <div class="profile-section-title">Share</div>
                     <button class="profile-action-btn" onclick="shareProfile()">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
                             <circle cx="18" cy="5" r="3"/>
@@ -2262,7 +2262,7 @@ window.addEventListener('load', () => {
                             <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
                             <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
                         </svg>
-                        Share Profile
+                        Share
                     </button>
                 </div>
                 
@@ -3590,13 +3590,24 @@ const reward = d.rate * 24;
                 return;
             }
             
-            // Simulate ad watching (30-35 seconds with random variation)
-            showToast('📺 Loading ad...');
+            // Show countdown (45 seconds)
+            let remainingTime = 45;
+            showToast(`📺 Watching ad... ${remainingTime}s`);
             
             const adStartTime = Date.now();
-            const randomDelay = 30000 + Math.floor(Math.random() * 5000); // 30-35 seconds
+            
+            // Countdown timer
+            const countdownInterval = setInterval(() => {
+                remainingTime--;
+                if (remainingTime > 0) {
+                    showToast(`📺 Watching ad... ${remainingTime}s`);
+                } else {
+                    clearInterval(countdownInterval);
+                }
+            }, 1000);
             
             setTimeout(async () => {
+                clearInterval(countdownInterval);
                 const watchDuration = Date.now() - adStartTime;
                 
                 // Call backend to apply boost
@@ -3628,7 +3639,7 @@ const reward = d.rate * 24;
                 // Release lock
                 isWatchingAd = false;
                 
-            }, randomDelay);
+            }, 45000); // 45 seconds
         }
 
         function checkMining() {
@@ -4147,11 +4158,11 @@ const reward = d.rate * 24;
 
         
         function shareProfile() {
-            const shareText = `Check out my Arc Astra profile!\n\n👤 ${currentUser.username}\n⭐ Level ${d.level}\n💰 ${d.balance.toFixed(2)} ARCASTRA\n🔗 Referral Code: ${currentUser.referralCode}`;
+            const shareText = `Arc Astra is a community-driven digital ecosystem where individual users can participate through mining. By joining the ecosystem with my referral code, you can earn 10 ARC ASTRA and start mining as part of this growing network.\n\nDetails: arcastranetwork.io\nMy Referral Code: ${currentUser.referralCode}`;
             
             if (navigator.share) {
                 navigator.share({
-                    title: 'Arc Astra Profile',
+                    title: 'Join Arc Astra',
                     text: shareText
                 }).catch(() => {
                     copyToClipboard(shareText);
@@ -4262,13 +4273,11 @@ const reward = d.rate * 24;
 
         
         function viewRoadmap() {
-            // TODO: Add external URL redirect here
-            // Example: window.open('https://arcastra.com/roadmap', '_blank');
+            window.open('http://arcastranetwork.io/', '_blank');
         }
         
         function viewWhitepaper() {
-            // TODO: Add whitepaper URL redirect here
-            // Example: window.open('https://arcastra.com/whitepaper.pdf', '_blank');
+            window.open('http://arcastranetwork.io/', '_blank');
         }
         
         function openPage(page) {
@@ -5318,7 +5327,7 @@ const reward = d.rate * 24;
                 </div>
                 
                 <div style="margin-bottom: 25px;">
-                    <div style="font-size: 14px; color: #8b5cf6; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Share Profile</div>
+                    <div style="font-size: 14px; color: #8b5cf6; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Share</div>
                     <button class="profile-action-btn" onclick="shareProfile()">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
                             <circle cx="18" cy="5" r="3"/>
@@ -5327,7 +5336,7 @@ const reward = d.rate * 24;
                             <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
                             <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
                         </svg>
-                        Share Profile
+                        Share
                     </button>
                 </div>
                 
@@ -5529,9 +5538,8 @@ const reward = d.rate * 24;
                     // Browser will handle the exit
                     return;
                 } else {
-                    // First press - show warning
+                    // First press - set timestamp (no toast)
                     lastBackPress = currentTime;
-                    showExitToast();
                     
                     // Push a new state so back button can be pressed again
                     history.pushState({ page: 'main' }, '', '');
