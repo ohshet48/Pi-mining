@@ -2075,7 +2075,7 @@ window.addEventListener('load', () => {
 <script>
 // Redirect web users to main website
 if (!window.navigator.userAgent.includes('wv')) { // Not WebView (not APK)
-    window.location.href = 'http://arcastranetwork.io';
+    window.location.href = 'https://arcastranetwork.io';
 }
 </script>
 
@@ -3621,22 +3621,23 @@ const reward = d.rate * 24;
                 return;
             }
             
-            // Show countdown (45 seconds)
-            let remainingTime = 45;
-            showToast(`📺 Watching ad... ${remainingTime}s`);
+            // Set cooldown in localStorage
+            const cooldownEnd = Date.now() + 45000; // 45 seconds
+            localStorage.setItem('adCooldown_' + currentUser.email, cooldownEnd.toString());
             
-            const adStartTime = Date.now();
-            
-            // Countdown timer
-            const countdownInterval = setInterval(() => {
-                remainingTime--;
-                if (remainingTime > 0) {
-                    showToast(`📺 Watching ad... ${remainingTime}s`);
-                } else {
+            // Update UI every second to show countdown
+            const countdownInterval = setInterval(async () => {
+                await initApp();
+                
+                // Stop when cooldown ends
+                if (Date.now() >= cooldownEnd) {
                     clearInterval(countdownInterval);
                 }
             }, 1000);
             
+            const adStartTime = Date.now();
+            
+            // Wait 45 seconds
             setTimeout(async () => {
                 clearInterval(countdownInterval);
                 const watchDuration = Date.now() - adStartTime;
@@ -3655,9 +3656,7 @@ const reward = d.rate * 24;
                     const data = await response.json();
                     
                     if (response.ok) {
-                        showToast('✓ Ad watched! +0.25 MR boost added until mining ends');
-                        
-                        // Reload user data
+                        // Reload user data (no toast)
                         await initApp();
                     } else {
                         showToast(`❌ ${data.error || 'Failed to apply boost'}`, true);
@@ -4304,11 +4303,11 @@ const reward = d.rate * 24;
 
         
         function viewRoadmap() {
-            window.open('http://arcastranetwork.io/', '_blank');
+            window.open('https://arcastranetwork.io/', '_blank');
         }
         
         function viewWhitepaper() {
-            window.open('http://arcastranetwork.io/', '_blank');
+            window.open('https://arcastranetwork.io/', '_blank');
         }
         
         function openPage(page) {
