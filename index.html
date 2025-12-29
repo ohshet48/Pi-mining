@@ -1849,6 +1849,10 @@ const API_ENDPOINTS = {
   getActiveReferrals: `${FUNCTIONS_BASE_URL}/getActiveReferrals`,
   getTransactions: `${FUNCTIONS_BASE_URL}/getTransactions`,
   getLeaderboard: `${FUNCTIONS_BASE_URL}/getLeaderboard`,
+  updateProfile: `${FUNCTIONS_BASE_URL}/updateProfile`,
+  updateEmail: `${FUNCTIONS_BASE_URL}/updateEmail`,
+  updatePassword: `${FUNCTIONS_BASE_URL}/updatePassword`,
+  deleteAccount: `${FUNCTIONS_BASE_URL}/deleteAccount`,
 };
   
 
@@ -3508,14 +3512,6 @@ const reward = d.rate * 24;
                 return;
             }
             
-            // Ad blocker detection (simple check)
-            const adBlockerDetected = await detectAdBlocker();
-            if (adBlockerDetected) {
-                showToast('❌ Please disable ad blocker to watch ads', true);
-                isWatchingAd = false;
-                return;
-            }
-            
             // Simulate ad watching (30-35 seconds with random variation)
             showToast('📺 Loading ad...');
             
@@ -3555,29 +3551,6 @@ const reward = d.rate * 24;
                 isWatchingAd = false;
                 
             }, randomDelay);
-        }
-        
-        // Simple ad blocker detection
-        async function detectAdBlocker() {
-            try {
-                // Try to fetch a known ad-related resource
-                const testAd = document.createElement('div');
-                testAd.className = 'adsbox';
-                testAd.style.position = 'absolute';
-                testAd.style.left = '-9999px';
-                document.body.appendChild(testAd);
-                
-                // Wait a bit
-                await new Promise(resolve => setTimeout(resolve, 100));
-                
-                // Check if ad blocker removed it or made it invisible
-                const blocked = testAd.offsetHeight === 0;
-                document.body.removeChild(testAd);
-                
-                return blocked;
-            } catch (e) {
-                return false; // If detection fails, allow the ad
-            }
         }
 
         function checkMining() {
@@ -4050,19 +4023,13 @@ const reward = d.rate * 24;
             }
         }
         
-        function changePassword() {
+        async function changePassword() {
             const currentPwd = document.getElementById('currentPassword').value;
             const newPwd = document.getElementById('newPassword').value;
             const confirmPwd = document.getElementById('confirmPassword').value;
             
             if (!currentPwd || !newPwd || !confirmPwd) {
                 showToast('❌ Fill all fields', true);
-                return;
-            }
-            
-            const users = JSON.parse(localStorage.getItem('users') || '{}');
-            if (users[currentUser.email].password !== currentPwd) {
-                showToast('❌ Wrong password', true);
                 return;
             }
             
@@ -4076,12 +4043,30 @@ const reward = d.rate * 24;
                 return;
             }
             
-            users[currentUser.email].password = newPwd;
-            localStorage.setItem('users', JSON.stringify(users));
-            
-            closeChangePassword();
-            showToast('✓ Password changed successfully!');
+            try {
+                const response = await fetch(API_ENDPOINTS.updatePassword, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        userId: currentUser.userId,
+                        newPassword: newPwd
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    closeChangePassword();
+                    showToast('✓ Password changed!');
+                } else {
+                    showToast(`❌ ${data.error || 'Failed'}`, true);
+                }
+            } catch (error) {
+                console.error('Change password error:', error);
+                showToast('❌ Failed to change password', true);
+            }
         }
+
         
         function shareProfile() {
             const shareText = `Check out my Arc Astra profile!\n\n👤 ${currentUser.username}\n⭐ Level ${d.level}\n💰 ${d.balance.toFixed(2)} ARCASTRA\n🔗 Referral Code: ${currentUser.referralCode}`;
@@ -4166,20 +4151,37 @@ const reward = d.rate * 24;
             deleteAccount();
         }
         
-        function deleteAccount() {
-            const users = JSON.parse(localStorage.getItem('users') || '{}');
-            delete users[currentUser.email];
-            localStorage.setItem('users', JSON.stringify(users));
-            localStorage.removeItem('currentUser');
-            localStorage.removeItem('userData_' + currentUser.email);
-            localStorage.removeItem('miningEndTime_' + currentUser.email);
-            
-            // Close delete modal
-            document.getElementById('deleteAccountModal').classList.remove('show');
-            
-            // Show goodbye modal
-            document.getElementById('goodbyeModal').classList.add('show');
+        async function deleteAccount() {
+            try {
+                const response = await fetch(API_ENDPOINTS.deleteAccount, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        userId: currentUser.userId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Clear local data
+                    localStorage.removeItem('currentUser');
+                    localStorage.removeItem('currentSessionId_' + currentUser.email);
+                    
+                    // Close delete modal
+                    document.getElementById('deleteAccountModal').classList.remove('show');
+                    
+                    // Show goodbye modal
+                    document.getElementById('goodbyeModal').classList.add('show');
+                } else {
+                    showToast(`❌ ${data.error || 'Failed to delete account'}`, true);
+                }
+            } catch (error) {
+                console.error('Delete account error:', error);
+                showToast('❌ Failed to delete account', true);
+            }
         }
+
         
         function viewRoadmap() {
             // TODO: Add external URL redirect here
@@ -5275,117 +5277,96 @@ const reward = d.rate * 24;
             document.getElementById('editInfoBtnPage').style.display = isDisabled ? 'none' : 'block';
         }
         
-        function savePersonalInfoPage() {
+        async function savePersonalInfoPage() {
             const newEmail = document.getElementById('inputEmailPage').value.trim().toLowerCase();
-            d.fullName = document.getElementById('inputFullNamePage').value.trim();
-            d.birthDate = document.getElementById('inputBirthDatePage').value.trim();
-            d.country = document.getElementById('inputCountryPage').value.trim();
+            const fullName = document.getElementById('inputFullNamePage').value.trim();
+            const birthDate = document.getElementById('inputBirthDatePage').value.trim();
+            const country = document.getElementById('inputCountryPage').value.trim();
             
-            // Validate full name: English letters and spaces only
+            // Validate full name
             const fullNameRegex = /^[a-zA-Z\s]+$/;
-            if (!fullNameRegex.test(d.fullName)) {
+            if (!fullNameRegex.test(fullName)) {
                 showToast('❌ Full Name: Only English letters allowed');
                 return;
             }
-            if (d.fullName.length < 3) {
+            if (fullName.length < 3) {
                 showToast('❌ Full Name must be at least 3 characters');
                 return;
             }
             
-            // Validate email format
+            // Validate email
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(newEmail)) {
-                showToast('❌ Please enter a valid email address');
+                showToast('❌ Invalid email');
                 return;
             }
             
-            // Check if email changed and if new email already exists
-            if (newEmail !== currentUser.email) {
-                const users = JSON.parse(localStorage.getItem('users') || '{}');
-                if (users[newEmail]) {
-                    showToast('❌ Email registered');
-                    return;
-                }
-            }
-            
-            // Validate birth date format if provided
-            if (d.birthDate) {
+            // Validate birth date
+            if (birthDate) {
                 const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
-                const match = d.birthDate.match(dateRegex);
-                
+                const match = birthDate.match(dateRegex);
                 if (!match) {
                     showToast('❌ Format: DD/MM/YYYY');
                     return;
                 }
-                
                 const day = parseInt(match[1]);
                 const month = parseInt(match[2]);
                 const year = parseInt(match[3]);
-                
-                if (year < 1923 || year > 2007) {
-                    showToast('❌ Year: 1923-2007');
-                    return;
-                }
-                
-                if (month < 1 || month > 12) {
-                    showToast('❌ Month: 1-12');
-                    return;
-                }
-                
-                if (day < 1 || day > 31) {
-                    showToast('❌ Day: 1-31');
+                if (year < 1923 || year > 2007 || month < 1 || month > 12 || day < 1 || day > 31) {
+                    showToast('❌ Invalid date');
                     return;
                 }
             }
             
-            save();
-            
-            // Handle email change in users object
-            const users = JSON.parse(localStorage.getItem('users') || '{}');
-            const oldEmail = currentUser.email;
-            
-            if (newEmail !== oldEmail) {
-                // Create new entry with new email
-                users[newEmail] = {
-                    ...users[oldEmail],
-                    email: newEmail,
-                    fullName: d.fullName,
-                    birthDate: d.birthDate,
-                    country: d.country
-                };
+            try {
+                // Update profile
+                const profileRes = await fetch(API_ENDPOINTS.updateProfile, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({userId: currentUser.userId, fullName, birthDate, country})
+                });
                 
-                // Delete old entry
-                delete users[oldEmail];
+                if (!profileRes.ok) {
+                    const data = await profileRes.json();
+                    showToast(`❌ ${data.error || 'Failed'}`);
+                    return;
+                }
                 
-                // Update currentUser
-                currentUser.email = newEmail;
-                localStorage.setItem('currentUser', newEmail);
-            } else {
-                // Just update existing user
-                users[currentUser.email].fullName = d.fullName;
-                users[currentUser.email].birthDate = d.birthDate;
-                users[currentUser.email].country = d.country;
-            }
-            
-            localStorage.setItem('users', JSON.stringify(users));
-            
-            // Disable inputs and hide save button
-            document.getElementById('inputFullNamePage').disabled = true;
-            document.getElementById('inputEmailPage').disabled = true;
-            document.getElementById('inputBirthDatePage').disabled = true;
-            document.getElementById('inputCountryPage').disabled = true;
-            document.getElementById('saveInfoBtnPage').style.display = 'none';
-            document.getElementById('editInfoBtnPage').style.display = 'block';
-            
-            showToast('✓ Personal information saved successfully!');
-            
-            // Refresh profile if email changed
-            if (newEmail !== oldEmail) {
-                setTimeout(() => {
-                    openPage('profile');
-                }, 1000);
+                // Update email if changed
+                if (newEmail !== currentUser.email) {
+                    const emailRes = await fetch(API_ENDPOINTS.updateEmail, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({userId: currentUser.userId, newEmail})
+                    });
+                    
+                    if (!emailRes.ok) {
+                        const data = await emailRes.json();
+                        showToast(`❌ ${data.error || 'Email update failed'}`);
+                        return;
+                    }
+                    currentUser.email = newEmail;
+                }
+                
+                currentUser.fullName = fullName;
+                currentUser.birthDate = birthDate;
+                currentUser.country = country;
+                
+                showToast('✓ Profile updated');
+                document.getElementById('inputFullNamePage').disabled = true;
+                document.getElementById('inputEmailPage').disabled = true;
+                document.getElementById('inputBirthDatePage').disabled = true;
+                document.getElementById('inputCountryPage').disabled = true;
+                document.getElementById('saveInfoBtnPage').style.display = 'none';
+                document.getElementById('editInfoBtnPage').style.display = 'block';
+                
+                await initApp();
+            } catch (error) {
+                console.error('Save profile error:', error);
+                showToast('❌ Failed to update');
             }
         }
+
         
         function changeAvatarInPage(color) {
             d.avatarColor = color;
