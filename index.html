@@ -3182,6 +3182,7 @@ window.addEventListener('load', () => {
                             
                             return `
                                 <button 
+                                    id="watchAdButton"
                                     onclick="${isDisabled ? '' : 'watchAdBoost()'}" 
                                     style="
                                         width: 100%; 
@@ -3622,24 +3623,23 @@ const reward = d.rate * 24;
             
             const adStartTime = Date.now();
             
-            // Find the button and update it every second
+            // Update button countdown
             const updateButton = () => {
+                const btn = document.getElementById('watchAdButton');
+                if (!btn) return;
+                
                 const now = Date.now();
                 const remaining = Math.max(0, Math.ceil((cooldownEnd - now) / 1000));
                 
-                // Find all buttons with Watch Ad text
-                const buttons = document.querySelectorAll('button');
-                buttons.forEach(btn => {
-                    if (btn.textContent.includes('Watch Ad') || btn.textContent.includes('Wait')) {
-                        btn.disabled = true;
-                        btn.style.opacity = '0.6';
-                        btn.style.cursor = 'not-allowed';
-                        btn.style.background = 'rgba(0, 255, 255, 0.1)';
-                        btn.style.border = '1px solid rgba(0, 255, 255, 0.3)';
-                        btn.style.color = 'rgba(255, 255, 255, 0.4)';
-                        btn.innerHTML = remaining > 0 ? `⏳ Wait ${remaining}s` : '📺 Watch Ad +0.25 MR';
-                    }
-                });
+                if (remaining > 0) {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.6';
+                    btn.style.cursor = 'not-allowed';
+                    btn.style.background = 'rgba(0, 255, 255, 0.1)';
+                    btn.style.border = '1px solid rgba(0, 255, 255, 0.3)';
+                    btn.style.color = 'rgba(255, 255, 255, 0.4)';
+                    btn.innerHTML = `⏳ Wait ${remaining}s`;
+                }
             };
             
             // Initial update
