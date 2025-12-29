@@ -4316,10 +4316,16 @@ const reward = d.rate * 24;
                     break;
                 case 'leaderboard':
                     pageTitle.textContent = 'Leaderboard';
+                    // Show loading skeleton immediately
+                    pageContent.innerHTML = '<div style="padding: 20px; text-align: center;"><div style="color: #00ffff;">⏳ Loading leaderboard...</div></div>';
+                    // Load content asynchronously
                     getLeaderboardPageContent().then(html => pageContent.innerHTML = html);
                     break;
                 case 'referrals':
                     pageTitle.textContent = 'My Referrals';
+                    // Show loading skeleton immediately
+                    pageContent.innerHTML = '<div style="padding: 20px; text-align: center;"><div style="color: #00ffff;">⏳ Loading referrals...</div></div>';
+                    // Load content asynchronously
                     getReferralsPageContent().then(html => pageContent.innerHTML = html);
                     break;
                 case 'menu2':
