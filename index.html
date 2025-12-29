@@ -3060,7 +3060,11 @@ window.addEventListener('load', () => {
                             <p class="timer-time">${fmt(d.timeLeft)}</p>
                             <p class="timer-label">Time Remaining</p>
                             <div class="earning-box">
-                                <p class="earning-text">Earning: <span class="earning-amount">${(d.rate * 24).toFixed(2)} <span style="font-size: 14px;">ARCASTRA</span></span></p>
+                                <p class="earning-text">Earning: <span class="earning-amount">${(() => {
+                                    const miningDuration = localStorage.getItem('miningDuration_' + currentUser.email) || 86400000; // Default 24 hours
+                                    const hours = parseInt(miningDuration) / (1000 * 60 * 60);
+                                    return (d.rate * hours).toFixed(2);
+                                })()}<span style="font-size: 14px;">ARCASTRA</span></span></p>
                             </div>
                         </div>
                     `}
@@ -3121,7 +3125,7 @@ window.addEventListener('load', () => {
                             </div>
                             <span class="stat-label">Mining Rate</span>
                         </div>
-                        <div class="stat-value">${d.rate.toFixed(2)}${d.rate >= 5.0 ? '<span style="font-size: 9px; color: #00ffff; margin-left: 4px; font-weight: 600;">MAX</span>' : ''}</div>
+                        <div class="stat-value">${d.rate.toFixed(2)}</div>
                         <div class="stat-unit">ARCASTRA/hour</div>
                     </div>
 
@@ -3338,8 +3342,10 @@ window.addEventListener('load', () => {
 	
         async function startMine() {
             const now = Date.now();
-            const end = now + (24 * 60 * 60 * 1000);
+            const miningDuration = 24 * 60 * 60 * 1000; // 24 hours in ms
+            const end = now + miningDuration;
             localStorage.setItem('miningEndTime_' + currentUser.email, end);
+            localStorage.setItem('miningDuration_' + currentUser.email, miningDuration); // Store duration
             
             // Reset ad boost for new session
             const users = JSON.parse(localStorage.getItem('users') || '{}');
