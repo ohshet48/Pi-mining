@@ -2562,6 +2562,11 @@ window.addEventListener('load', () => {
         }
         
     async function signup() {
+        // Scroll to top immediately
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        // Show loading message immediately
+        showToast('⏳ Waiting for server response...');
 	
     const email = document.getElementById('signupEmail').value;
     const password = document.getElementById('signupPassword').value;
