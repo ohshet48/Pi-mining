@@ -3087,6 +3087,65 @@ window.addEventListener('load', () => {
             return h + ':' + m + ':' + sec;
         }
 
+        function updateWatchAdButton() {
+            const container = document.getElementById('adBoostContainer');
+            if (!container) return;
+            
+            // Don't update if locked (countdown in progress)
+            const existingBtn = document.getElementById('watchAdButton');
+            if (existingBtn && existingBtn.getAttribute('data-locked') === 'true') {
+                return; // Skip update
+            }
+            
+            // Only show if mining
+            if (!d.mining) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            const currentRate = d.rate;
+            const adCooldownKey = 'adCooldown_' + currentUser.email;
+            const adCooldownEnd = parseInt(localStorage.getItem(adCooldownKey) || '0');
+            const now = Date.now();
+            const cooldownRemaining = Math.max(0, Math.ceil((adCooldownEnd - now) / 1000));
+            const isOnCooldown = cooldownRemaining > 0;
+            const isMaxRate = currentRate >= 5.0;
+            const isDisabled = isOnCooldown || isMaxRate;
+            
+            container.innerHTML = `
+                <button 
+                    id="watchAdButton"
+                    data-locked="false"
+                    onclick="${isDisabled ? '' : 'watchAdBoost()'}" 
+                    style="
+                        width: 100%; 
+                        height: 45px; 
+                        background: ${isMaxRate ? 'rgba(100, 100, 100, 0.3)' : (isOnCooldown ? 'rgba(0, 255, 255, 0.1)' : 'rgba(0, 255, 255, 0.15)')}; 
+                        border: 1px solid ${isMaxRate ? 'rgba(150, 150, 150, 0.3)' : (isOnCooldown ? 'rgba(0, 255, 255, 0.3)' : 'rgba(0, 255, 255, 0.4)')}; 
+                        border-radius: 12px; 
+                        color: ${isDisabled ? 'rgba(255, 255, 255, 0.4)' : '#00ffff'}; 
+                        font-size: 13px; 
+                        font-weight: 700; 
+                        cursor: ${isDisabled ? 'not-allowed' : 'pointer'}; 
+                        display: flex; 
+                        align-items: center; 
+                        justify-content: center; 
+                        gap: 8px;
+                        opacity: ${isDisabled ? '0.6' : '1'};
+                    "
+                    ${isDisabled ? 'disabled' : ''}
+                >
+                    ${isMaxRate ? 
+                        '🔒 Max Rate Reached (5.0 MR)' : 
+                        (isOnCooldown ? 
+                            `⏳ Wait ${cooldownRemaining}s` : 
+                            '📺 Watch Ad +0.25 MR'
+                        )
+                    }
+                </button>
+            `;
+        }
+
         function render() {
             // Update menu username
             const menuUsername = document.getElementById('menuUsername');
@@ -3094,6 +3153,9 @@ window.addEventListener('load', () => {
 			 if (!currentUser) return;
                  menuUsername.textContent = currentUser.username;
             }
+            
+            // Update Watch Ad button separately (don't recreate it)
+            updateWatchAdButton();
             
             document.getElementById('app').innerHTML = `
                 <div class="header">
@@ -3167,54 +3229,8 @@ window.addEventListener('load', () => {
                     `}
                 </div>
 
-                ${d.mining ? `
-                    <!-- Ad Boost Button -->
-                    <div style="margin: 12px 0;">
-                        ${(() => {
-                            const currentRate = d.rate;
-                            const adCooldownKey = 'adCooldown_' + localStorage.getItem('currentUser');
-                            const adCooldownEnd = parseInt(localStorage.getItem(adCooldownKey) || '0');
-                            const now = Date.now();
-                            const cooldownRemaining = Math.max(0, Math.ceil((adCooldownEnd - now) / 1000));
-                            const isOnCooldown = cooldownRemaining > 0;
-                            const isMaxRate = currentRate >= 5.0;
-                            const isDisabled = isOnCooldown || isMaxRate;
-                            
-                            return `
-                                <button 
-                                    id="watchAdButton"
-                                    data-locked="${isWatchingAd ? 'true' : 'false'}"
-                                    onclick="${isDisabled ? '' : 'watchAdBoost()'}" 
-                                    style="
-                                        width: 100%; 
-                                        height: 45px; 
-                                        background: ${isMaxRate ? 'rgba(100, 100, 100, 0.3)' : (isOnCooldown ? 'rgba(0, 255, 255, 0.1)' : 'rgba(0, 255, 255, 0.15)')}; 
-                                        border: 1px solid ${isMaxRate ? 'rgba(150, 150, 150, 0.3)' : (isOnCooldown ? 'rgba(0, 255, 255, 0.3)' : 'rgba(0, 255, 255, 0.4)')}; 
-                                        border-radius: 12px; 
-                                        color: ${isDisabled ? 'rgba(255, 255, 255, 0.4)' : '#00ffff'}; 
-                                        font-size: 13px; 
-                                        font-weight: 700; 
-                                        cursor: ${isDisabled ? 'not-allowed' : 'pointer'}; 
-                                        display: flex; 
-                                        align-items: center; 
-                                        justify-content: center; 
-                                        gap: 8px;
-                                        opacity: ${isDisabled ? '0.6' : '1'};
-                                    "
-                                    ${isDisabled ? 'disabled' : ''}
-                                >
-                                    ${isMaxRate ? 
-                                        '🔒 Max Rate Reached (5.0 MR)' : 
-                                        (isOnCooldown ? 
-                                            `⏳ Wait ${cooldownRemaining}s` : 
-                                            '📺 Watch Ad +0.25 MR'
-                                        )
-                                    }
-                                </button>
-                            `;
-                        })()}
-                    </div>
-                ` : ''}
+                <!-- Ad Boost Button Container (updated separately) -->
+                <div id="adBoostContainer" style="margin: 12px 0;"></div>
 
                 <div class="stats">
                     <div class="stat">
