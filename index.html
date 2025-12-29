@@ -3183,6 +3183,7 @@ window.addEventListener('load', () => {
                             return `
                                 <button 
                                     id="watchAdButton"
+                                    data-locked="${isWatchingAd ? 'true' : 'false'}"
                                     onclick="${isDisabled ? '' : 'watchAdBoost()'}" 
                                     style="
                                         width: 100%; 
@@ -3617,6 +3618,10 @@ const reward = d.rate * 24;
             // Set watching flag
             isWatchingAd = true;
             
+            // Lock the button (prevent initApp from resetting it)
+            const btn = document.getElementById('watchAdButton');
+            if (btn) btn.setAttribute('data-locked', 'true');
+            
             // Set cooldown in localStorage
             const cooldownEnd = Date.now() + 45000; // 45 seconds
             localStorage.setItem('adCooldown_' + currentUser.email, cooldownEnd.toString());
@@ -3626,7 +3631,7 @@ const reward = d.rate * 24;
             // Update button countdown
             const updateButton = () => {
                 const btn = document.getElementById('watchAdButton');
-                if (!btn) return;
+                if (!btn || btn.getAttribute('data-locked') !== 'true') return;
                 
                 const now = Date.now();
                 const remaining = Math.max(0, Math.ceil((cooldownEnd - now) / 1000));
@@ -3638,7 +3643,7 @@ const reward = d.rate * 24;
                     btn.style.background = 'rgba(0, 255, 255, 0.1)';
                     btn.style.border = '1px solid rgba(0, 255, 255, 0.3)';
                     btn.style.color = 'rgba(255, 255, 255, 0.4)';
-                    btn.innerHTML = `⏳ Wait ${remaining}s`;
+                    btn.textContent = `⏳ Wait ${remaining}s`;
                 }
             };
             
@@ -3667,18 +3672,30 @@ const reward = d.rate * 24;
                     const data = await response.json();
                     
                     if (response.ok) {
+                        // Unlock button before reload
+                        const btn = document.getElementById('watchAdButton');
+                        if (btn) btn.setAttribute('data-locked', 'false');
+                        
+                        // Release lock
+                        isWatchingAd = false;
+                        
                         // Reload user data (no toast)
                         await initApp();
                     } else {
                         showToast(`❌ ${data.error || 'Failed to apply boost'}`, true);
+                        // Unlock on error
+                        const btn = document.getElementById('watchAdButton');
+                        if (btn) btn.setAttribute('data-locked', 'false');
+                        isWatchingAd = false;
                     }
                 } catch (error) {
                     console.error('Apply ad boost error:', error);
                     showToast('❌ Failed to apply boost', true);
+                    // Unlock on error
+                    const btn = document.getElementById('watchAdButton');
+                    if (btn) btn.setAttribute('data-locked', 'false');
+                    isWatchingAd = false;
                 }
-                
-                // Release lock
-                isWatchingAd = false;
                 
             }, 45000); // 45 seconds
         }
