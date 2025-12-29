@@ -2780,12 +2780,14 @@ window.addEventListener('load', () => {
             if (savedUser) {
                 currentUser = JSON.parse(savedUser);
                 if (currentUser) {
+                    // Don't show app yet, initApp will handle it
                     document.getElementById('authScreen').style.display = 'none';
-                    document.getElementById('app').style.display = 'block';
+                    initApp(); // Load fresh data
                     return;
                 }
             }
             
+            document.getElementById('loadingScreen').style.display = 'none'; // Hide loading if no user
             document.getElementById('authScreen').style.display = 'flex';
             document.getElementById('app').style.display = 'none';
         }
