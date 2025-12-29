@@ -3729,9 +3729,8 @@ const reward = d.rate * 24;
             // Update every second
             const countdownInterval = setInterval(updateButton, 1000);
             
-            // Wait 45 seconds
+            // Call backend after 35 seconds (so rate updates by 40th second)
             setTimeout(async () => {
-                clearInterval(countdownInterval);
                 const watchDuration = Date.now() - adStartTime;
                 
                 // Call backend to apply boost
@@ -3760,32 +3759,31 @@ const reward = d.rate * 24;
                         const adBonus = data.adBoostCount * 0.25;
                         d.rate = baseRate + refBonus + adBonus;
                         
-                        // Unlock button and re-render
-                        const btn = document.getElementById('watchAdButton');
-                        if (btn) btn.setAttribute('data-locked', 'false');
-                        
-                        // Release lock
-                        isWatchingAd = false;
-                        
                         // Re-render UI with updated rate (no API call needed)
                         render();
                     } else {
                         showToast(`❌ ${data.error || 'Failed to apply boost'}`, true);
-                        // Unlock on error
-                        const btn = document.getElementById('watchAdButton');
-                        if (btn) btn.setAttribute('data-locked', 'false');
-                        isWatchingAd = false;
                     }
                 } catch (error) {
                     console.error('Apply ad boost error:', error);
                     showToast('❌ Failed to apply boost', true);
-                    // Unlock on error
-                    const btn = document.getElementById('watchAdButton');
-                    if (btn) btn.setAttribute('data-locked', 'false');
-                    isWatchingAd = false;
                 }
+            }, 35000); // 35 seconds - backend called (rate updates by 40s)
+            
+            // Unlock button after 45 seconds
+            setTimeout(() => {
+                clearInterval(countdownInterval);
                 
-            }, 45000); // 45 seconds
+                // Unlock button
+                const btn = document.getElementById('watchAdButton');
+                if (btn) btn.setAttribute('data-locked', 'false');
+                
+                // Release lock
+                isWatchingAd = false;
+                
+                // Re-render to show unlocked button
+                updateWatchAdButton();
+            }, 45000); // 45 seconds - button unlocked
         }
 
         function checkMining() {
