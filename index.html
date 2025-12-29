@@ -2092,6 +2092,39 @@ window.addEventListener('load', () => {
     <!-- Tech Background -->
     <div class="tech-bg"></div>
     <div class="grid-lines"></div>
+    
+    <!-- Loading Mining Screen -->
+    <div id="loadingScreen" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #0a1428 0%, #1a2a4a 100%);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        z-index: 9998;
+        gap: 20px;
+    ">
+        <div style="
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(0, 255, 255, 0.2);
+            border-top-color: #00ffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        "></div>
+        <div style="
+            color: #00ffff;
+            font-size: 18px;
+            font-weight: 600;
+            font-family: 'Segoe UI', sans-serif;
+            text-align: center;
+        ">Loading Mining Screen<br><span style="font-size: 14px; color: rgba(255,255,255,0.6);">Please wait...</span></div>
+    </div>
+    
     <div id="particles"></div>
     
     <div id="authScreen" class="auth-screen" style="display:none;">
@@ -2840,18 +2873,36 @@ window.addEventListener('load', () => {
         }
     }
     
-    // Backend'den TÜM verileri çek
+    // Backend'den TÜM verileri çek - PARALEL (3x hızlı!)
     if (userId) {
         try {
-            console.log('🔄 Backend veriler çekiliyor...');
+            console.log('🔄 Backend veriler çekiliyor (paralel)...');
             
-            // 1. User Data
-            const userResponse = await fetch(API_ENDPOINTS.getUserData, {
-                method: 'POST',
-                headers: getApiHeaders(),
-                body: JSON.stringify({ userId: userId })
-            });
+            // PARALEL API ÇAĞRILARI - 3'ü aynı anda!
+            const [userResponse, refResponse, activeRefResponse] = await Promise.all([
+                // 1. User Data
+                fetch(API_ENDPOINTS.getUserData, {
+                    method: 'POST',
+                    headers: getApiHeaders(),
+                    body: JSON.stringify({ userId: userId })
+                }),
+                
+                // 2. Referrals
+                fetch(API_ENDPOINTS.getReferrals + '?userId=' + userId)
+                    .catch(e => {
+                        console.log('⚠️ Referrals yüklenemedi:', e);
+                        return null;
+                    }),
+                
+                // 3. Active Referrals Count
+                fetch(API_ENDPOINTS.getActiveReferrals + '?userId=' + userId)
+                    .catch(e => {
+                        console.log('⚠️ Active referrals yüklenemedi:', e);
+                        return null;
+                    })
+            ]);
             
+            // Process User Data
             if (userResponse.ok) {
                 const userData = await userResponse.json();
                 currentUser = userData.user;
@@ -2871,31 +2922,21 @@ window.addEventListener('load', () => {
                 console.log('✅ User data yüklendi');
             }
             
-            // 2. Referrals
-            try {
-                const refResponse = await fetch(API_ENDPOINTS.getReferrals + '?userId=' + userId);
-                if (refResponse.ok) {
-                    const refData = await refResponse.json();
-                    localStorage.setItem('referrals_' + currentUser.email, JSON.stringify(refData.referrals || []));
-                    console.log('✅ Referrals yüklendi');
-                }
-            } catch (e) {
-                console.log('⚠️ Referrals yüklenemedi:', e);
+            // Process Referrals
+            if (refResponse && refResponse.ok) {
+                const refData = await refResponse.json();
+                localStorage.setItem('referrals_' + currentUser.email, JSON.stringify(refData.referrals || []));
+                console.log('✅ Referrals yüklendi');
             }
             
-            // 3. Active Referrals Count
-            try {
-                const activeRefResponse = await fetch(API_ENDPOINTS.getActiveReferrals + '?userId=' + userId);
-                if (activeRefResponse.ok) {
-                    const activeRefData = await activeRefResponse.json();
-                    localStorage.setItem('activeReferralsCount_' + currentUser.email, activeRefData.activeCount || 0);
-                    console.log('✅ Active referrals yüklendi');
-                }
-            } catch (e) {
-                console.log('⚠️ Active referrals yüklenemedi:', e);
+            // Process Active Referrals
+            if (activeRefResponse && activeRefResponse.ok) {
+                const activeRefData = await activeRefResponse.json();
+                localStorage.setItem('activeReferralsCount_' + currentUser.email, activeRefData.activeCount || 0);
+                console.log('✅ Active referrals yüklendi');
             }
             
-            console.log('✅ TÜM BACKEND VERİLER YÜKLENDİ!');
+            console.log('✅ TÜM BACKEND VERİLER YÜKLENDİ (paralel)!');
             
         } catch (error) {
             console.error('❌ Backend veri çekme hatası:', error);
@@ -2951,6 +2992,7 @@ window.addEventListener('load', () => {
             // Request notification permission
             requestNotificationPermission();
           document.getElementById('authScreen').style.display = 'none';
+          document.getElementById('loadingScreen').style.display = 'none'; // Hide loading screen
           document.getElementById('app').style.display = 'block';  
             checkMining();
             render();
@@ -5603,6 +5645,8 @@ const reward = d.rate * 24;
                 document.getElementById('splashScreen').classList.add('fade-out');
                 setTimeout(function() {
                     document.getElementById('splashScreen').style.display = 'none';
+                    // Show loading screen
+                    document.getElementById('loadingScreen').style.display = 'flex';
                     checkAuth();
                 }, 800);
             }, 2000);
