@@ -2768,19 +2768,7 @@ window.addEventListener('load', () => {
                 console.log('✅ User data yüklendi');
             }
             
-            // 2. Transactions
-            try {
-                const txResponse = await fetch(API_ENDPOINTS.getTransactions + '?userId=' + userId + '&limit=50');
-                if (txResponse.ok) {
-                    const txData = await txResponse.json();
-                    localStorage.setItem('transactions_' + currentUser.email, JSON.stringify(txData.transactions || []));
-                    console.log('✅ Transactions yüklendi');
-                }
-            } catch (e) {
-                console.log('⚠️ Transactions yüklenemedi:', e);
-            }
-            
-            // 3. Referrals
+            // 2. Referrals
             try {
                 const refResponse = await fetch(API_ENDPOINTS.getReferrals + '?userId=' + userId);
                 if (refResponse.ok) {
@@ -2792,7 +2780,7 @@ window.addEventListener('load', () => {
                 console.log('⚠️ Referrals yüklenemedi:', e);
             }
             
-            // 4. Active Referrals Count
+            // 3. Active Referrals Count
             try {
                 const activeRefResponse = await fetch(API_ENDPOINTS.getActiveReferrals + '?userId=' + userId);
                 if (activeRefResponse.ok) {
@@ -3507,77 +3495,89 @@ const reward = d.rate * 24;
             render();
         }
         
-        function watchAdBoost() {
+        async function watchAdBoost() {
             // Prevent double-clicking
             if (isWatchingAd) return;
             isWatchingAd = true;
             
-            const userEmail = localStorage.getItem('currentUser');
-            const currentRate = d.rate;
+            const sessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
             
-            // Check if already at max
-            if (currentRate >= 5.0) {
-                showToast('❌ Already at maximum rate (5.0 MR)', true);
+            if (!sessionId) {
+                showToast('❌ No active mining session', true);
                 isWatchingAd = false;
                 return;
             }
             
-            // Check cooldown
-            const adCooldownKey = 'adCooldown_' + userEmail;
-            const adCooldownEnd = parseInt(localStorage.getItem(adCooldownKey) || '0');
-            const now = Date.now();
-            
-            if (now < adCooldownEnd) {
-                const remaining = Math.ceil((adCooldownEnd - now) / 1000);
-                showToast(`⏳ Please wait ${remaining} seconds`, true);
+            // Ad blocker detection (simple check)
+            const adBlockerDetected = await detectAdBlocker();
+            if (adBlockerDetected) {
+                showToast('❌ Please disable ad blocker to watch ads', true);
                 isWatchingAd = false;
                 return;
             }
             
-            // Simulate ad watching (5 seconds)
+            // Simulate ad watching (30-35 seconds with random variation)
             showToast('📺 Loading ad...');
             
-            setTimeout(() => {
-                // Check again if rate is still under 5.0
-                const users = JSON.parse(localStorage.getItem('users') || '{}');
-                const user = users[userEmail];
+            const adStartTime = Date.now();
+            const randomDelay = 30000 + Math.floor(Math.random() * 5000); // 30-35 seconds
+            
+            setTimeout(async () => {
+                const watchDuration = Date.now() - adStartTime;
                 
-                if (!user) return;
-                
-                // Calculate current total rate (base + referral + existing ad boost)
-                const baseRate = user.rate || 0.25; // permanent (level) base rate
-                const activeRefs = calculateActiveRefs();
-                const refBonus = activeRefs * 0.05;
-                const currentAdBoost = user.adBoostAmount || 0;
-                const currentTotalRate = baseRate + refBonus + currentAdBoost;
-
-                // Add boost if possible (session-only)
-                const remainingToMax = 5.0 - currentTotalRate;
-                const addedBoost = Math.min(0.25, Math.max(0, remainingToMax));
-
-                if (addedBoost <= 0) {
-                    showToast('❌ Already at maximum rate (5.0 MR)', true);
-                    return;
+                // Call backend to apply boost
+                try {
+                    const response = await fetch(API_ENDPOINTS.applyAdBoost, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ 
+                            sessionId: sessionId,
+                            watchDuration: watchDuration
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        showToast('✓ Ad watched! +0.25 MR boost added until mining ends');
+                        
+                        // Reload user data
+                        await initApp();
+                    } else {
+                        showToast(`❌ ${data.error || 'Failed to apply boost'}`, true);
+                    }
+                } catch (error) {
+                    console.error('Apply ad boost error:', error);
+                    showToast('❌ Failed to apply boost', true);
                 }
-
-                user.adBoostAmount = currentAdBoost + addedBoost;
-                showToast(`✓ Ad watched! +${addedBoost.toFixed(2)} MR boost added for this session`);
-
-                // Save
-                localStorage.setItem('users', JSON.stringify(users));
-                currentUser = user;
-                
-                // Set 15 second cooldown
-                const cooldownEnd = Date.now() + (15 * 1000);
-                localStorage.setItem(adCooldownKey, cooldownEnd.toString());
-                
-                // Update display
-                initApp();
                 
                 // Release lock
                 isWatchingAd = false;
                 
-            }, 5000); // 5 second ad simulation
+            }, randomDelay);
+        }
+        
+        // Simple ad blocker detection
+        async function detectAdBlocker() {
+            try {
+                // Try to fetch a known ad-related resource
+                const testAd = document.createElement('div');
+                testAd.className = 'adsbox';
+                testAd.style.position = 'absolute';
+                testAd.style.left = '-9999px';
+                document.body.appendChild(testAd);
+                
+                // Wait a bit
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // Check if ad blocker removed it or made it invisible
+                const blocked = testAd.offsetHeight === 0;
+                document.body.removeChild(testAd);
+                
+                return blocked;
+            } catch (e) {
+                return false; // If detection fails, allow the ad
+            }
         }
 
         function checkMining() {
