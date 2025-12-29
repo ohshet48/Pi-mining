@@ -1764,6 +1764,28 @@
         /* Footer */
         .footer { text-align: center; padding: 24px 0; }
         .footer-text { color: #c4b5fd; font-size: 13px; }
+
+        .password-wrapper {
+            position: relative;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 18px;
+            transition: color 0.2s;
+        }
+        
+        .password-toggle:hover {
+            color: #00ffff;
+        }
     </style>
 	<!-- 
 Bu kodu index.html dosyanızın <head> bölümüne ekleyin 
@@ -5672,6 +5694,17 @@ const reward = d.rate * 24;
             } catch (error) {
                 console.error('Password reset error:', error);
                 showToast('❌ Failed to send reset link', true);
+            }
+        }
+
+        function togglePassword(inputId, button) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                button.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                button.textContent = '👁️';
             }
         }
     </script>
