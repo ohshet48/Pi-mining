@@ -2072,6 +2072,13 @@ window.addEventListener('load', () => {
 
 </head>
 <body>
+<script>
+// Redirect web users to main website
+if (!window.navigator.userAgent.includes('wv')) { // Not WebView (not APK)
+    window.location.href = 'http://arcastranetwork.io';
+}
+</script>
+
     <!-- Splash Screen -->
     <div id="splashScreen" class="splash-screen">
         <div class="light-beam"></div>
@@ -4335,14 +4342,40 @@ const reward = d.rate * 24;
                 case 'leaderboard':
                     pageTitle.textContent = 'Leaderboard';
                     // Show loading skeleton immediately
-                    pageContent.innerHTML = '<div style="padding: 20px; text-align: center;"><div style="color: #00ffff;">⏳ Loading leaderboard...</div></div>';
+                    pageContent.innerHTML = `
+                        <div style="display: flex; align-items: center; justify-content: center; min-height: 400px; padding: 20px;">
+                            <div style="background: rgba(0, 0, 0, 0.5); border: 2px solid rgba(0, 255, 255, 0.4); border-radius: 20px; padding: 40px 30px; max-width: 340px; width: 100%; text-align: center; box-shadow: 0 8px 32px rgba(0, 255, 255, 0.2);">
+                                <div style="width: 60px; height: 60px; border: 3px solid rgba(0, 255, 255, 0.3); border-top-color: #00ffff; border-radius: 50%; margin: 0 auto 20px; animation: spin 1s linear infinite;"></div>
+                                <h3 style="color: #00ffff; font-size: 18px; font-weight: 700; margin-bottom: 8px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Loading Leaderboard</h3>
+                                <p style="color: rgba(255, 255, 255, 0.6); font-size: 13px; margin: 0;">Please wait...</p>
+                            </div>
+                        </div>
+                        <style>
+                            @keyframes spin {
+                                to { transform: rotate(360deg); }
+                            }
+                        </style>
+                    `;
                     // Load content asynchronously
                     getLeaderboardPageContent().then(html => pageContent.innerHTML = html);
                     break;
                 case 'referrals':
                     pageTitle.textContent = 'My Referrals';
                     // Show loading skeleton immediately
-                    pageContent.innerHTML = '<div style="padding: 20px; text-align: center;"><div style="color: #00ffff;">⏳ Loading referrals...</div></div>';
+                    pageContent.innerHTML = `
+                        <div style="display: flex; align-items: center; justify-content: center; min-height: 400px; padding: 20px;">
+                            <div style="background: rgba(0, 0, 0, 0.5); border: 2px solid rgba(0, 255, 255, 0.4); border-radius: 20px; padding: 40px 30px; max-width: 340px; width: 100%; text-align: center; box-shadow: 0 8px 32px rgba(0, 255, 255, 0.2);">
+                                <div style="width: 60px; height: 60px; border: 3px solid rgba(0, 255, 255, 0.3); border-top-color: #00ffff; border-radius: 50%; margin: 0 auto 20px; animation: spin 1s linear infinite;"></div>
+                                <h3 style="color: #00ffff; font-size: 18px; font-weight: 700; margin-bottom: 8px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Loading Referrals</h3>
+                                <p style="color: rgba(255, 255, 255, 0.6); font-size: 13px; margin: 0;">Please wait...</p>
+                            </div>
+                        </div>
+                        <style>
+                            @keyframes spin {
+                                to { transform: rotate(360deg); }
+                            }
+                        </style>
+                    `;
                     // Load content asynchronously
                     getReferralsPageContent().then(html => pageContent.innerHTML = html);
                     break;
