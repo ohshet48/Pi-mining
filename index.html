@@ -1915,6 +1915,18 @@ const API_ENDPOINTS = {
   sendPasswordReset: `${FUNCTIONS_BASE_URL}/sendPasswordReset`,
   sendEmailVerification: `${FUNCTIONS_BASE_URL}/sendEmailVerification`,
 };
+
+// API Key for mobile app security
+const API_KEY = 'arc_astra_mobile_2024_x7K9mP3qR8wL5nF2';
+
+// Helper function to add API key to headers
+function getApiHeaders(additionalHeaders = {}) {
+  return {
+    'Content-Type': 'application/json',
+    'X-API-Key': API_KEY,
+    ...additionalHeaders
+  };
+}
   
 
 // ============================================
@@ -1976,7 +1988,7 @@ let fcmToken = null;
 
     const response = await fetch(API_ENDPOINTS.updateFcmToken, {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: getApiHeaders(),
       body: JSON.stringify({userId, fcmToken: token})
     });
 
@@ -2518,7 +2530,7 @@ window.addEventListener('load', () => {
         // Backend'den kullanıcı bilgilerini al
         const response = await fetch(API_ENDPOINTS.getUserData, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: getApiHeaders(),
             body: JSON.stringify({ userId: user.uid })
         });
         const data = await response.json();
@@ -2615,7 +2627,7 @@ window.addEventListener('load', () => {
 
         const response = await fetch(API_ENDPOINTS.registerUser, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: getApiHeaders(),
             body: JSON.stringify({
                 userId: user.uid,
                 email: user.email,
@@ -2654,7 +2666,7 @@ window.addEventListener('load', () => {
         
         await fetch(API_ENDPOINTS.registerUser, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: getApiHeaders(),
             body: JSON.stringify({
                 userId: user.uid,
                 email: user.email,
@@ -2834,7 +2846,7 @@ window.addEventListener('load', () => {
             // 1. User Data
             const userResponse = await fetch(API_ENDPOINTS.getUserData, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: getApiHeaders(),
                 body: JSON.stringify({ userId: userId })
             });
             
@@ -3032,7 +3044,7 @@ window.addEventListener('load', () => {
                 // Update backend asynchronously
                 fetch(API_ENDPOINTS.updateLevel, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: getApiHeaders(),
                     body: JSON.stringify({
                         userId: currentUser.userId,
                         newLevel: claimedLevel,
@@ -3472,7 +3484,7 @@ async function startMiningOnBackend() {
             try {
                 const response = await fetch(API_ENDPOINTS.startMining, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: getApiHeaders(),
                     body: JSON.stringify({
                         userId: currentUser.userId,
                         level: d.level
@@ -3514,7 +3526,7 @@ const reward = d.rate * 24;
             try {
                 const response = await fetch(API_ENDPOINTS.claimReward, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: getApiHeaders(),
                     body: JSON.stringify({
                         userId: currentUser.userId,
                         sessionId: localStorage.getItem('currentSessionId_' + currentUser.email),
@@ -3547,7 +3559,7 @@ const reward = d.rate * 24;
                 // Call backend
                 fetch(API_ENDPOINTS.claimDailyReward, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: getApiHeaders(),
                     body: JSON.stringify({
                         userId: currentUser.userId
                     })
@@ -3626,7 +3638,7 @@ const reward = d.rate * 24;
                 try {
                     const response = await fetch(API_ENDPOINTS.applyAdBoost, {
                         method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
+                        headers: getApiHeaders(),
                         body: JSON.stringify({ 
                             sessionId: sessionId,
                             watchDuration: watchDuration
@@ -4147,7 +4159,7 @@ const reward = d.rate * 24;
             try {
                 const response = await fetch(API_ENDPOINTS.updatePassword, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: getApiHeaders(),
                     body: JSON.stringify({
                         userId: currentUser.userId,
                         newPassword: newPwd
@@ -4256,7 +4268,7 @@ const reward = d.rate * 24;
             try {
                 const response = await fetch(API_ENDPOINTS.deleteAccount, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: getApiHeaders(),
                     body: JSON.stringify({
                         userId: currentUser.userId
                     })
@@ -5273,7 +5285,7 @@ const reward = d.rate * 24;
                 // Call backend
                 fetch(API_ENDPOINTS.claimReferralEarnings, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: getApiHeaders(),
                     body: JSON.stringify({
                         userId: currentUser.userId
                     })
@@ -5427,7 +5439,7 @@ const reward = d.rate * 24;
                 // Update profile
                 const profileRes = await fetch(API_ENDPOINTS.updateProfile, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: getApiHeaders(),
                     body: JSON.stringify({userId: currentUser.userId, fullName, birthDate, country})
                 });
                 
@@ -5441,7 +5453,7 @@ const reward = d.rate * 24;
                 if (newEmail !== currentUser.email) {
                     const emailRes = await fetch(API_ENDPOINTS.updateEmail, {
                         method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
+                        headers: getApiHeaders(),
                         body: JSON.stringify({userId: currentUser.userId, newEmail})
                     });
                     
@@ -5750,7 +5762,7 @@ const reward = d.rate * 24;
             try {
                 const response = await fetch(API_ENDPOINTS.sendPasswordReset, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: getApiHeaders(),
                     body: JSON.stringify({ email: email })
                 });
                 
@@ -5792,6 +5804,52 @@ const reward = d.rate * 24;
         <button class="btn" onclick="closeForgotPassword()" style="width: 100%; background: rgba(100, 100, 100, 0.2); border: 1px solid rgba(150, 150, 150, 0.3);">Cancel</button>
     </div>
 </div>
+
+<!-- Offline Page -->
+<div id="offlinePage" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #0a1428 0%, #1a2a4a 100%); z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;">
+    <div style="text-align: center;">
+        <!-- Logo -->
+        <div style="width: 120px; height: 120px; margin: 0 auto 30px; background: linear-gradient(135deg, #00ffff, #0ea5e9); border-radius: 30px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 32px rgba(0, 255, 255, 0.3);">
+            <span style="font-size: 60px; font-weight: 900; color: #0a1428;">A</span>
+        </div>
+        
+        <!-- Title -->
+        <h1 style="color: white; font-size: 28px; font-weight: 900; margin-bottom: 12px;">No Internet Connection</h1>
+        
+        <!-- Message -->
+        <p style="color: rgba(255, 255, 255, 0.7); font-size: 16px; margin-bottom: 30px; line-height: 1.6;">Please check your internet connection<br>and try again</p>
+        
+        <!-- Retry Button -->
+        <button onclick="location.reload()" style="background: linear-gradient(135deg, #00ffff, #0ea5e9); color: #0a1428; border: none; padding: 14px 40px; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 16px rgba(0, 255, 255, 0.3); transition: all 0.3s;">
+            Retry Connection
+        </button>
+        
+        <!-- Icon -->
+        <div style="margin-top: 40px; opacity: 0.3;">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#00ffff" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+            </svg>
+        </div>
+    </div>
+</div>
+
+<script>
+// Show offline page when no connection
+function checkConnection() {
+    if (!navigator.onLine) {
+        document.getElementById('offlinePage').style.display = 'flex';
+    } else {
+        document.getElementById('offlinePage').style.display = 'none';
+    }
+}
+
+// Check on load and connection changes
+window.addEventListener('load', checkConnection);
+window.addEventListener('online', checkConnection);
+window.addEventListener('offline', checkConnection);
+</script>
 
 </body>
 </html>
