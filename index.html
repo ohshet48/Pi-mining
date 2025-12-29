@@ -2072,12 +2072,6 @@ window.addEventListener('load', () => {
 
 </head>
 <body>
-<script>
-// Redirect web users to main website
-if (!window.navigator.userAgent.includes('wv')) { // Not WebView (not APK)
-    window.location.href = 'https://arcastranetwork.io';
-}
-</script>
 
     <!-- Splash Screen -->
     <div id="splashScreen" class="splash-screen">
@@ -3611,19 +3605,23 @@ const reward = d.rate * 24;
         async function watchAdBoost() {
             // Prevent double-clicking
             if (isWatchingAd) return;
-            isWatchingAd = true;
             
             const sessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
             
             if (!sessionId) {
                 showToast('❌ No active mining session', true);
-                isWatchingAd = false;
                 return;
             }
+            
+            // Set watching flag
+            isWatchingAd = true;
             
             // Set cooldown in localStorage
             const cooldownEnd = Date.now() + 45000; // 45 seconds
             localStorage.setItem('adCooldown_' + currentUser.email, cooldownEnd.toString());
+            
+            // Initial UI update
+            await initApp();
             
             // Update UI every second to show countdown
             const countdownInterval = setInterval(async () => {
