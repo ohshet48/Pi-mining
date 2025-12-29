@@ -1849,6 +1849,12 @@ console.log('Firebase initialized:', firebase.apps.length);
 const messaging = firebase.messaging();
 // Auto-login when DOM is ready  
 document.addEventListener('DOMContentLoaded', function() {
+    // Auto-reload when internet connection restored
+    window.addEventListener('online', () => {
+        console.log('Internet connection restored - reloading...');
+        location.reload();
+    });
+    
     console.log('=== AUTO-LOGIN BAŞLADI ===');
     
     const isLoggedIn = localStorage.getItem('isLoggedIn');
