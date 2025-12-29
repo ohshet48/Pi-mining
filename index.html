@@ -2931,7 +2931,8 @@ window.addEventListener('load', () => {
             // Check if current session has ad boost active
             let adBonus = 0;
             if (activeMiningSession && activeMiningSession.adBoostActive) {
-                adBonus = 0.25;
+                const boostCount = activeMiningSession.adBoostCount || 1;
+                adBonus = boostCount * 0.25;  // Cumulative: each ad adds 0.25
             }
             
             d.rate = baseRate + refBonus + adBonus;
@@ -3548,7 +3549,8 @@ async function startMiningOnBackend() {
             d.activeRefs = calculateActiveRefs();
             let adBonus = 0;
             if (activeMiningSession && activeMiningSession.adBoostActive) {
-                adBonus = 0.25;
+                const boostCount = activeMiningSession.adBoostCount || 1;
+                adBonus = boostCount * 0.25;  // Cumulative
             }
             d.rate = (currentUser.rate || 0.25) + (d.activeRefs * 0.05) + adBonus;
 
