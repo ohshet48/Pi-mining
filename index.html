@@ -2925,7 +2925,12 @@ window.addEventListener('load', () => {
             // Base rate includes level bonuses only (permanent)
             const baseRate = currentUser.rate || 0.25;
             const refBonus = d.activeRefs * 0.05;
-            const adBonus = currentUser.adBoostAmount || 0;
+            
+            // Check if current session has ad boost active
+            let adBonus = 0;
+            if (activeMiningSession && activeMiningSession.adBoostActive) {
+                adBonus = 0.25;
+            }
             
             d.rate = baseRate + refBonus + adBonus;
             
