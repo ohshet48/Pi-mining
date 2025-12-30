@@ -6005,25 +6005,96 @@ window.addEventListener('offline', checkConnection);
 </html>
 
 
-<!-- ================= PASSWORD RESET WITH CODE (FINAL HARDFIX) ================= -->
+<!-- ================= STYLED RESET PASSWORD MODAL (FINAL) ================= -->
 <style>
-  #resetWithCodeBox{display:none; position:fixed; inset:0; background:rgba(0,0,0,.65); z-index:2147483647;}
-  #resetWithCodeBox .card{background:#0b1220; padding:24px; border-radius:12px; width:90%; max-width:420px; margin:auto; pointer-events:auto;}
-  #resetWithCodeBox *{pointer-events:auto;}
+  #resetWithCodeBox{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(5,10,25,.75);
+    backdrop-filter: blur(6px);
+    z-index:2147483647;
+    align-items:center;
+    justify-content:center;
+  }
+  .reset-card{
+    width:92%;
+    max-width:420px;
+    background:linear-gradient(180deg,#0e1630,#0a1024);
+    border:1px solid rgba(0,212,255,.25);
+    border-radius:18px;
+    padding:26px 24px 28px;
+    box-shadow:0 20px 60px rgba(0,0,0,.6);
+    color:#e5f6ff;
+    font-family:inherit;
+  }
+  .reset-card h3{
+    margin:0 0 6px;
+    font-size:22px;
+    text-align:center;
+    letter-spacing:.3px;
+  }
+  .reset-card p{
+    margin:0 0 18px;
+    text-align:center;
+    font-size:13px;
+    color:#9fdcff;
+  }
+  .reset-field{
+    width:100%;
+    background:#0b1228;
+    border:1px solid rgba(0,212,255,.25);
+    border-radius:12px;
+    padding:14px 14px;
+    margin-bottom:14px;
+    color:#eaffff;
+    outline:none;
+  }
+  .reset-field:focus{
+    border-color:#00d4ff;
+    box-shadow:0 0 0 2px rgba(0,212,255,.2);
+  }
+  .reset-btn{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:14px;
+    background:linear-gradient(90deg,#00d4ff,#4f9cff);
+    color:#001018;
+    font-weight:700;
+    letter-spacing:.4px;
+    cursor:pointer;
+    transition:transform .08s ease, box-shadow .08s ease, opacity .08s ease;
+  }
+  .reset-btn:hover{
+    transform:translateY(-1px);
+    box-shadow:0 8px 22px rgba(0,212,255,.35);
+  }
+  .reset-close{
+    position:absolute;
+    top:16px;
+    right:18px;
+    font-size:20px;
+    color:#7ddfff;
+    cursor:pointer;
+  }
 </style>
 
 <div id="resetWithCodeBox">
-  <div class="card">
-    <h3 style="margin-bottom:12px;">Reset Password</h3>
-    <input id="resetCode" placeholder="6-digit code" style="width:100%; padding:10px; margin-bottom:10px;" />
-    <input id="resetNewPassword" type="password" placeholder="New password" style="width:100%; padding:10px; margin-bottom:14px;" />
-    <button id="confirmResetBtn" type="button" style="width:100%; padding:12px;">Confirm Reset</button>
+  <div class="reset-card">
+    <div class="reset-close" onclick="document.getElementById('resetWithCodeBox').style.display='none'">✕</div>
+    <h3>Reset Password</h3>
+    <p>Enter the 6-digit code sent to your email</p>
+    <form id="resetForm">
+      <input id="resetCode" class="reset-field" placeholder="6-digit code" />
+      <input id="resetNewPassword" class="reset-field" type="password" placeholder="New password" />
+      <button class="reset-btn" type="submit">Confirm Reset</button>
+    </form>
   </div>
 </div>
 
 <script>
 (function(){
-  // Force-open after sendPasswordReset succeeds
   const orig = window.sendPasswordReset;
   if (typeof orig === 'function') {
     window.sendPasswordReset = async function(){
@@ -6034,38 +6105,35 @@ window.addEventListener('offline', checkConnection);
     }
   }
 
-  // Event delegation: cannot be blocked by CSP/overlays
-  document.addEventListener('click', async function(e){
-    const btn = e.target && e.target.closest && e.target.closest('#confirmResetBtn');
-    if (!btn) return;
+  document.addEventListener('submit', async function(e){
+    if (e.target && e.target.id === 'resetForm') {
+      e.preventDefault();
 
-    alert('Confirm Reset clicked'); // immediate feedback
+      const email = (document.getElementById('forgotEmail')||{}).value?.trim();
+      const code  = (document.getElementById('resetCode')||{}).value?.trim();
+      const newPassword = (document.getElementById('resetNewPassword')||{}).value;
 
-    const email = (document.getElementById('forgotEmail')||{}).value?.trim();
-    const code  = (document.getElementById('resetCode')||{}).value?.trim();
-    const newPassword = (document.getElementById('resetNewPassword')||{}).value;
-
-    if (!email || !code || !newPassword) {
-      alert('Fill all fields');
-      return;
-    }
-
-    try {
-      const res = await fetch(API_ENDPOINTS.resetPasswordWithCode, {
-        method: 'POST',
-        headers: getApiHeaders(),
-        body: JSON.stringify({ email, code, newPassword })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert('Password reset successful');
-        document.getElementById('resetWithCodeBox').style.display = 'none';
-      } else {
-        alert(data.error || 'Reset failed');
+      if (!email || !code || !newPassword) {
+        alert('Fill all fields');
+        return;
       }
-    } catch(err) {
-      alert('Reset failed');
-      console.error(err);
+
+      try {
+        const res = await fetch(API_ENDPOINTS.resetPasswordWithCode, {
+          method:'POST',
+          headers:getApiHeaders(),
+          body:JSON.stringify({ email, code, newPassword })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          alert('Password reset successful');
+          document.getElementById('resetWithCodeBox').style.display='none';
+        } else {
+          alert(data.error || 'Reset failed');
+        }
+      } catch(err) {
+        alert('Reset failed');
+      }
     }
   }, true);
 })();
