@@ -1913,7 +1913,6 @@ const API_ENDPOINTS = {
   updatePassword: `${FUNCTIONS_BASE_URL}/updatePassword`,
   deleteAccount: `${FUNCTIONS_BASE_URL}/deleteAccount`,
   sendPasswordReset: `${FUNCTIONS_BASE_URL}/sendPasswordReset`,
-  resetPasswordWithCode: `${FUNCTIONS_BASE_URL}/resetPasswordWithCode`,
   sendEmailVerification: `${FUNCTIONS_BASE_URL}/sendEmailVerification`,
 };
 
@@ -5888,100 +5887,21 @@ const reward = d.rate * 24;
 
 
         function showForgotPassword() {
-    // Step 1 UI
-    document.getElementById('forgotStep1').style.display = 'block';
-    document.getElementById('forgotStep2').style.display = 'none';
-    document.getElementById('forgotPasswordModal').classList.add('show');
-}
-
-function closeForgotPassword() {
-    document.getElementById('forgotPasswordModal').classList.remove('show');
-    document.getElementById('forgotEmail').value = '';
-    document.getElementById('forgotCode').value = '';
-    document.getElementById('forgotNewPassword').value = '';
-    document.getElementById('forgotStep1').style.display = 'block';
-    document.getElementById('forgotStep2').style.display = 'none';
-}
-
-async function sendPasswordReset() {
-    const email = document.getElementById('forgotEmail').value.trim().toLowerCase();
-
-    if (!email) {
-        showToast('❌ Please enter your email', true);
-        return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        showToast('❌ Invalid email format', true);
-        return;
-    }
-
-    try {
-        const response = await fetch(API_ENDPOINTS.sendPasswordReset, {
-            method: 'POST',
-            headers: getApiHeaders(),
-            body: JSON.stringify({ email })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            showToast('✓ Verification code sent to your email!');
-            // Move to step 2 UI
-            document.getElementById('forgotStep1').style.display = 'none';
-            document.getElementById('forgotStep2').style.display = 'block';
-            document.getElementById('forgotCode').focus();
-        } else {
-            showToast(`❌ ${data.error || 'Failed to send code'}`, true);
+            document.getElementById('forgotPasswordModal').classList.add('show');
         }
-    } catch (error) {
-        console.error('Password reset error:', error);
-        showToast('❌ Failed to send code', true);
-    }
-}
-
-async function confirmPasswordReset() {
-    const email = document.getElementById('forgotEmail').value.trim().toLowerCase();
-    const code = document.getElementById('forgotCode').value.trim();
-    const newPassword = document.getElementById('forgotNewPassword').value;
-
-    if (!email || !code || !newPassword) {
-        showToast('❌ Please fill all fields', true);
-        return;
-    }
-
-    if (!/^[0-9]{6}$/.test(code)) {
-        showToast('❌ Code must be 6 digits', true);
-        return;
-    }
-
-    if (newPassword.length < 6) {
-        showToast('❌ Password must be at least 6 characters', true);
-        return;
-    }
-
-    try {
-        const response = await fetch(API_ENDPOINTS.resetPasswordWithCode, {
-            method: 'POST',
-            headers: getApiHeaders(),
-            body: JSON.stringify({ email, code, newPassword })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            showToast('✓ Password updated successfully! You can login now.');
-            closeForgotPassword();
-        } else {
-            showToast(`❌ ${data.error || 'Failed to reset password'}`, true);
+        
+        function closeForgotPassword() {
+            document.getElementById('forgotPasswordModal').classList.remove('show');
+            document.getElementById('forgotEmail').value = '';
         }
-    } catch (error) {
-        console.error('Confirm reset error:', error);
-        showToast('❌ Failed to reset password', true);
-    }
-}
-
+        
+        async function sendPasswordReset() {
+            const email = document.getElementById('forgotEmail').value.trim().toLowerCase();
+            
+            if (!email) {
+                showToast('❌ Please enter your email', true);
+                return;
+            }
             
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
@@ -6024,33 +5944,43 @@ async function confirmPasswordReset() {
 
 <!-- Forgot Password Modal -->
 <div id="forgotPasswordModal" class="modal-overlay">
-    <div class="modal-content" style="max-width: 420px;">
-        <h2 style="color: white; font-size: 22px; font-weight: 900; margin-bottom: 10px; text-align: center;">Reset Password</h2>
-
-        <!-- Step 1 -->
-        <div id="forgotStep1">
-            <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-bottom: 18px; text-align: center;">
-                Enter your email address and we'll send you a 6-digit verification code.
-            </p>
-            <div class="form-group">
-                <input type="email" class="form-input" id="forgotEmail" placeholder="Enter your email" style="margin-bottom: 14px;">
-            </div>
-            <button class="btn btn-primary" onclick="sendPasswordReset()" style="width: 100%; margin-bottom: 10px;">Send Code</button>
-            <button class="btn" onclick="closeForgotPassword()" style="width: 100%; background: rgba(100, 100, 100, 0.2); border: 1px solid rgba(150, 150, 150, 0.3);">Cancel</button>
+    <div class="modal-content" style="max-width: 400px;">
+        <h2 style="color: white; font-size: 22px; font-weight: 900; margin-bottom: 20px; text-align: center;">Reset Password</h2>
+        <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-bottom: 20px; text-align: center;">Enter your email address and we'll send you a password reset link.</p>
+        <div class="form-group">
+            <input type="email" class="form-input" id="forgotEmail" placeholder="Enter your email" style="margin-bottom: 20px;">
         </div>
+        <button class="btn btn-primary" onclick="sendPasswordReset()" style="width: 100%; margin-bottom: 12px;">Send Reset Link</button>
+        <button class="btn" onclick="closeForgotPassword()" style="width: 100%; background: rgba(100, 100, 100, 0.2); border: 1px solid rgba(150, 150, 150, 0.3);">Cancel</button>
+    </div>
+</div>
 
-        <!-- Step 2 -->
-        <div id="forgotStep2" style="display:none;">
-            <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-bottom: 18px; text-align: center;">
-                Enter the code sent to your email and set a new password.
-            </p>
-            <div class="form-group">
-                <input type="text" class="form-input" id="forgotCode" placeholder="6-digit code" inputmode="numeric" maxlength="6" style="margin-bottom: 10px;">
-                <input type="password" class="form-input" id="forgotNewPassword" placeholder="New password (min 6 chars)" style="margin-bottom: 14px;">
-            </div>
-            <button class="btn btn-primary" onclick="confirmPasswordReset()" style="width: 100%; margin-bottom: 10px;">Reset Password</button>
-            <button class="btn" onclick="showForgotPassword()" style="width: 100%; margin-bottom: 10px; background: rgba(0, 255, 255, 0.08); border: 1px solid rgba(0, 255, 255, 0.25);">Back</button>
-            <button class="btn" onclick="closeForgotPassword()" style="width: 100%; background: rgba(100, 100, 100, 0.2); border: 1px solid rgba(150, 150, 150, 0.3);">Cancel</button>
+<!-- Offline Page -->
+<div id="offlinePage" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #0a1428 0%, #1a2a4a 100%); z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;">
+    <div style="text-align: center;">
+        <!-- Logo -->
+        <div style="width: 120px; height: 120px; margin: 0 auto 30px; background: linear-gradient(135deg, #00ffff, #0ea5e9); border-radius: 30px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 32px rgba(0, 255, 255, 0.3);">
+            <span style="font-size: 60px; font-weight: 900; color: #0a1428;">A</span>
+        </div>
+        
+        <!-- Title -->
+        <h1 style="color: white; font-size: 28px; font-weight: 900; margin-bottom: 12px;">No Internet Connection</h1>
+        
+        <!-- Message -->
+        <p style="color: rgba(255, 255, 255, 0.7); font-size: 16px; margin-bottom: 30px; line-height: 1.6;">Please check your internet connection<br>and try again</p>
+        
+        <!-- Retry Button -->
+        <button onclick="location.reload()" style="background: linear-gradient(135deg, #00ffff, #0ea5e9); color: #0a1428; border: none; padding: 14px 40px; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 16px rgba(0, 255, 255, 0.3); transition: all 0.3s;">
+            Retry Connection
+        </button>
+        
+        <!-- Icon -->
+        <div style="margin-top: 40px; opacity: 0.3;">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#00ffff" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+            </svg>
         </div>
     </div>
 </div>
@@ -6073,3 +6003,91 @@ window.addEventListener('offline', checkConnection);
 
 </body>
 </html>
+
+
+<!-- ================= SAFE OVERRIDES: FORGOT PASSWORD (NO BREAKING CHANGES) ================= -->
+<script>
+// Override only the forgot-password functions to ensure no illegal return outside functions
+
+(function(){
+  window.showForgotPassword = function() {
+    var s1 = document.getElementById('forgotStep1');
+    var s2 = document.getElementById('forgotStep2');
+    var m  = document.getElementById('forgotPasswordModal');
+    if (s1) s1.style.display = 'block';
+    if (s2) s2.style.display = 'none';
+    if (m)  m.classList.add('show');
+  };
+
+  window.closeForgotPassword = function() {
+    var m = document.getElementById('forgotPasswordModal');
+    if (m) m.classList.remove('show');
+    ['forgotEmail','forgotCode','forgotNewPassword'].forEach(function(id){
+      var el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    var s1 = document.getElementById('forgotStep1');
+    var s2 = document.getElementById('forgotStep2');
+    if (s1) s1.style.display = 'block';
+    if (s2) s2.style.display = 'none';
+  };
+
+  window.sendPasswordReset = async function() {
+    try {
+      var emailEl = document.getElementById('forgotEmail');
+      var email = emailEl ? emailEl.value.trim().toLowerCase() : '';
+      if (!email) { showToast('❌ Please enter your email', true); return; }
+      var re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!re.test(email)) { showToast('❌ Invalid email format', true); return; }
+
+      var res = await fetch(API_ENDPOINTS.sendPasswordReset, {
+        method: 'POST',
+        headers: getApiHeaders(),
+        body: JSON.stringify({ email: email })
+      });
+      var data = await res.json();
+      if (res.ok) {
+        showToast('✓ Verification code sent to your email');
+        var s1 = document.getElementById('forgotStep1');
+        var s2 = document.getElementById('forgotStep2');
+        if (s1) s1.style.display = 'none';
+        if (s2) s2.style.display = 'block';
+        var c = document.getElementById('forgotCode'); if (c) c.focus();
+      } else {
+        showToast('❌ ' + (data.error || 'Failed to send code'), true);
+      }
+    } catch (e) {
+      console.error(e);
+      showToast('❌ Failed to send code', true);
+    }
+  };
+
+  window.confirmPasswordReset = async function() {
+    try {
+      var email = (document.getElementById('forgotEmail')||{}).value || '';
+      email = email.trim().toLowerCase();
+      var code = (document.getElementById('forgotCode')||{}).value || '';
+      var newPassword = (document.getElementById('forgotNewPassword')||{}).value || '';
+      if (!email || !code || !newPassword) { showToast('❌ Please fill all fields', true); return; }
+      if (!/^[0-9]{6}$/.test(code)) { showToast('❌ Code must be 6 digits', true); return; }
+      if (newPassword.length < 6) { showToast('❌ Password must be at least 6 characters', true); return; }
+
+      var res = await fetch(API_ENDPOINTS.resetPasswordWithCode, {
+        method: 'POST',
+        headers: getApiHeaders(),
+        body: JSON.stringify({ email: email, code: code, newPassword: newPassword })
+      });
+      var data = await res.json();
+      if (res.ok) {
+        showToast('✓ Password updated successfully. You can login now.');
+        window.closeForgotPassword();
+      } else {
+        showToast('❌ ' + (data.error || 'Failed to reset password'), true);
+      }
+    } catch (e) {
+      console.error(e);
+      showToast('❌ Failed to reset password', true);
+    }
+  };
+})();
+</script>
