@@ -1824,7 +1824,59 @@ Bu kodu index.html dosyanızın <head> bölümüne ekleyin
 -->
 
 <!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js">
+// === PASSWORD RESET FUNCTIONS ===
+let resetEmail = "";
+
+async function sendPasswordReset() {
+    showInlineModalError('forgotPasswordError', '');
+
+    const emailInput = document.getElementById('forgotEmail');
+    const email = (emailInput ? emailInput.value : '').trim().toLowerCase();
+
+    if (!email) {
+        showInlineModalError('forgotPasswordError', 'Please enter your email.');
+        return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        showInlineModalError('forgotPasswordError', 'Invalid email format.');
+        return;
+    }
+
+    try {
+        const response = await fetch(API_ENDPOINTS.sendPasswordReset, {
+            method: 'POST',
+            headers: getApiHeaders(),
+            body: JSON.stringify({ email })
+        });
+
+        let data = {};
+        try { data = await response.json(); } catch (_) {}
+
+        if (!response.ok) {
+            const code = data.code || data.error || '';
+            if (response.status === 404 || code === 'email_not_found') {
+                showInlineModalError('forgotPasswordError', 'This email is not registered.');
+                return;
+            }
+            showInlineModalError('forgotPasswordError', 'Failed to send reset code.');
+            return;
+        }
+
+        resetEmail = email;
+
+        const box = document.getElementById('resetWithCodeBox');
+        if (box) box.style.display = 'flex';
+
+        closeForgotPassword();
+
+    } catch (e) {
+        showInlineModalError('forgotPasswordError', 'Network error. Please try again.');
+    }
+}
+</script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
 
@@ -5906,62 +5958,7 @@ const reward = d.rate * 24;
             document.getElementById('forgotEmail').value = '';
         }
         
-        async function sendPasswordReset() {
-    // Keep error messaging inside the modal (no background alerts)
-    showInlineModalError('forgotPasswordError', '');
-
-    const emailInput = document.getElementById('forgotEmail');
-    const email = (emailInput ? emailInput.value : '').trim().toLowerCase();
-
-    if (!email) {
-        showInlineModalError('forgotPasswordError', 'Please enter your email.');
-        return false;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        showInlineModalError('forgotPasswordError', 'Invalid email format.');
-        return false;
-    }
-
-    try {
-        const response = await fetch(API_ENDPOINTS.sendPasswordReset, {
-            method: 'POST',
-            headers: getApiHeaders(),
-            body: JSON.stringify({ email })
-        });
-
-        let data = {};
-        try { data = await response.json(); } catch (_) {}
-
-        if (!response.ok) {
-            const code = (data && (data.code || data.error)) ? (data.code || data.error) : '';
-            if (response.status === 404 || code === 'email_not_found') {
-                showInlineModalError('forgotPasswordError', 'This email is not registered.');
-                return false;
-            }
-            showInlineModalError('forgotPasswordError',
-                (data && (data.message || data.error)) ? (data.message || data.error) : 'Failed to send reset code.'
-            );
-            return false;
-        }
-
-        resetEmail = email;
-        showInlineModalError('forgotPasswordError', '');
-
-        const box = document.getElementById('resetWithCodeBox');
-        if (box) box.style.display = 'flex';
-
-        closeForgotPassword();
-        return true;
-    } catch (error) {
-        console.error('Password reset error:', error);
-        showInlineModalError('forgotPasswordError', 'Network error. Please try again.');
-        return false;
-    }
-}
-
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
                 showInlineModalError('forgotPasswordError', 'Invalid email format.');
                 return false;
