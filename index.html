@@ -2578,8 +2578,10 @@ window.addEventListener('load', () => {
             showSuccess('Login successful! Please Wait');
             
             setTimeout(() => {
+                // After login: show Loading Mining Screen instead of blank background
                 document.getElementById('authScreen').style.display = 'none';
-                document.getElementById('app').style.display = 'block';
+                document.getElementById('app').style.display = 'none';
+                document.getElementById('loadingScreen').style.display = 'flex';
                 setTimeout(() => initApp(), 100);
             }, 500);
         }
