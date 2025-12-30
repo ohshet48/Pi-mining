@@ -2052,7 +2052,10 @@ function showCustomNotification(title, body, data) {
 
 // Initialize FCM on page load
 window.addEventListener('load', () => {
-  setTimeout(() => requestNotificationPermission(), 2000);
+  // Start data fetch immediately
+  if (typeof getUserData === 'function') { window.__initialDataPromise = getUserData(); }
+
+  setTimeout(() => requestNotificationPermission(), 2500);
 });
 
 </script>
@@ -2538,7 +2541,7 @@ window.addEventListener('load', () => {
             // Hide after 2 seconds
             setTimeout(() => {
                 toast.classList.remove('show');
-            }, 2000);
+            }, 2500);
         }
         
     async function login() {
@@ -5649,7 +5652,7 @@ const reward = d.rate * 24;
                     document.getElementById('loadingScreen').style.display = 'flex';
                     checkAuth();
                 }, 800);
-            }, 2000);
+            }, 2500);
         });
         
         // Exit handling - double back press
