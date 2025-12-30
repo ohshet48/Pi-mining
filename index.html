@@ -1829,6 +1829,9 @@ Bu kodu index.html dosyanızın <head> bölümüne ekleyin
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
 
 <script>
+let appReady = false;
+let __initialDataPromise = null;
+
 // ============================================
 // Firebase Configuration
 // ============================================
@@ -2051,11 +2054,27 @@ function showCustomNotification(title, body, data) {
 }
 
 // Initialize FCM on page load
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
+  const splashStart = Date.now();
+  if (typeof getUserData === 'function') {
+    __initialDataPromise = getUserData();
+  }
+
   // Start data fetch immediately
   if (typeof getUserData === 'function') { window.__initialDataPromise = getUserData(); }
 
-  setTimeout(() => requestNotificationPermission(), 2500);
+  const minSplashTime = 2500;
+  const data = __initialDataPromise ? await __initialDataPromise : null;
+  if (data) {
+    if (typeof initState === 'function') initState(data);
+    appReady = true;
+  }
+  const elapsed = Date.now() - splashStart;
+  const wait = Math.max(0, minSplashTime - elapsed);
+  setTimeout(() => {
+    if (typeof hideSplash === 'function') hideSplash();
+    if (typeof requestNotificationPermission === 'function') requestNotificationPermission();
+  }, wait);
 });
 
 </script>
@@ -2480,6 +2499,9 @@ window.addEventListener('load', () => {
     </div>
 
     <script>
+let appReady = false;
+let __initialDataPromise = null;
+
         // Auth Management
         let currentUser = null;
         
@@ -5987,6 +6009,9 @@ const reward = d.rate * 24;
 </div>
 
 <script>
+let appReady = false;
+let __initialDataPromise = null;
+
 // Show offline page when no connection
 function checkConnection() {
     if (!navigator.onLine) {
