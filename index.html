@@ -1920,6 +1920,10 @@ const API_ENDPOINTS = {
 // API Key for mobile app security
 const API_KEY = 'arc_astra_mobile_2024_x7K9mP3qR8wL5nF2';
 
+// Reset password flow state
+let resetEmail = '';
+
+
 // Helper function to add API key to headers
 function getApiHeaders(additionalHeaders = {}) {
   return {
@@ -5898,6 +5902,8 @@ const reward = d.rate * 24;
         
         async function sendPasswordReset() {
             const email = document.getElementById('forgotEmail').value.trim().toLowerCase();
+            resetEmail = email;
+            try { sessionStorage.setItem('resetEmail', email); } catch(e) {}
             
             if (!email) {
                 showToast('❌ Please enter your email', true);
@@ -6096,19 +6102,12 @@ window.addEventListener('offline', checkConnection);
 
 <script>
 (function(){
-  // Cache email used for reset, because closeForgotPassword() clears #forgotEmail
-  window.__pwResetEmail = window.__pwResetEmail || '';
-
   const orig = window.sendPasswordReset;
   if (typeof orig === 'function') {
     window.sendPasswordReset = async function(){
-      const emailEl = document.getElementById('forgotEmail');
-      const email = (emailEl && emailEl.value ? emailEl.value : '').trim().toLowerCase();
-      if (email) window.__pwResetEmail = email;
-
-      const r = await orig(); // original function shows toast + closes modal
+      const r = await orig();
       const box = document.getElementById('resetWithCodeBox');
-      if (box && window.__pwResetEmail) box.style.display = 'flex';
+      if (box) box.style.display = 'flex';
       return r;
     }
   }
@@ -6117,7 +6116,7 @@ window.addEventListener('offline', checkConnection);
     if (e.target && e.target.id === 'resetForm') {
       e.preventDefault();
 
-      const email = (window.__pwResetEmail || '').trim();
+      const email = (resetEmail || (function(){try{return sessionStorage.getItem('resetEmail')||''}catch(e){return ''}})() || (document.getElementById('forgotEmail')||{}).value || '').trim().toLowerCase();
       const code  = (document.getElementById('resetCode')||{}).value?.trim();
       const newPassword = (document.getElementById('resetNewPassword')||{}).value;
 
@@ -6127,18 +6126,12 @@ window.addEventListener('offline', checkConnection);
       }
 
       try {
-        if (!API_ENDPOINTS.resetPasswordWithCode) {
-          alert('Reset endpoint missing: API_ENDPOINTS.resetPasswordWithCode');
-          return;
-        }
-
         const res = await fetch(API_ENDPOINTS.resetPasswordWithCode, {
           method:'POST',
           headers:getApiHeaders(),
           body:JSON.stringify({ email, code, newPassword })
         });
-
-        const data = await res.json().catch(() => ({}));
+        const data = await res.json();
         if (res.ok) {
           alert('Password reset successful');
           document.getElementById('resetWithCodeBox').style.display='none';
