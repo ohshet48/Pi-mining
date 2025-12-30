@@ -1877,8 +1877,8 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Showing app...');
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('app').style.display = 'block';
-            console.log('');
-            ;
+            console.log('Calling initApp...');
+            initApp();
             console.log('initApp completed');
         }, 500);
     } else {
@@ -2052,8 +2052,7 @@ function showCustomNotification(title, body, data) {
 
 // Initialize FCM on page load
 window.addEventListener('load', () => {
-  try { if (typeof getUserData === 'function') getUserData(); } catch(e) {}
-  setTimeout(() => requestNotificationPermission(), 2500);
+  setTimeout(() => requestNotificationPermission(), 2000);
 });
 
 </script>
@@ -2539,7 +2538,7 @@ window.addEventListener('load', () => {
             // Hide after 2 seconds
             setTimeout(() => {
                 toast.classList.remove('show');
-            }, 2500);
+            }, 2000);
         }
         
     async function login() {
@@ -2581,7 +2580,7 @@ window.addEventListener('load', () => {
             setTimeout(() => {
                 document.getElementById('authScreen').style.display = 'none';
                 document.getElementById('app').style.display = 'block';
-                setTimeout(() => , 100);
+                setTimeout(() => initApp(), 100);
             }, 500);
         }
     } catch (error) {
@@ -2684,7 +2683,7 @@ window.addEventListener('load', () => {
     if (modal) modal.classList.remove('show');
     document.getElementById('authScreen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
-    setTimeout(() => , 100);
+    setTimeout(() => initApp(), 100);
             }, 1500);
 }
     } catch (error) {
@@ -2783,7 +2782,7 @@ window.addEventListener('load', () => {
                 if (currentUser) {
                     // Don't show app yet, initApp will handle it
                     document.getElementById('authScreen').style.display = 'none';
-                    ; // Load fresh data
+                    initApp(); // Load fresh data
                     return;
                 }
             }
@@ -2863,7 +2862,7 @@ window.addEventListener('load', () => {
                 notification.close();
             };
         }
-        async function  {
+        async function initApp() {
     // localStorage'dan currentUser'ı oku
     const storedUser = localStorage.getItem('currentUser');
     const userId = localStorage.getItem('userId');
@@ -3552,7 +3551,7 @@ localStorage.setItem('users', JSON.stringify(users));
             }
             d.lastDate = today;
             save();
-            ;
+            initApp();
             render();
         }
 async function startMiningOnBackend() {
@@ -5624,7 +5623,7 @@ const reward = d.rate * 24;
                 document.getElementById('saveInfoBtnPage').style.display = 'none';
                 document.getElementById('editInfoBtnPage').style.display = 'block';
                 
-                await ;
+                await initApp();
             } catch (error) {
                 console.error('Save profile error:', error);
                 showToast('❌ Failed to update');
@@ -5642,18 +5641,19 @@ const reward = d.rate * 24;
         
         // Splash screen - Firebase yüklendikten sonra kaybol
         window.addEventListener('load', function() {
+            // Splash arkasında hemen auth + veri çekimini başlat
+            document.getElementById('loadingScreen').style.display = 'flex';
+            checkAuth();
+
             setTimeout(function() {
                 document.getElementById('splashScreen').classList.add('fade-out');
                 setTimeout(function() {
                     document.getElementById('splashScreen').style.display = 'none';
-                    // Show loading screen
-                    document.getElementById('loadingScreen').style.display = 'flex';
-                    checkAuth();
                 }, 800);
             }, 2500);
         });
-        
-        // Exit handling - double back press
+
+// Exit handling - double back press
         let lastBackPress = 0;
         const backPressInterval = 2000; // 2 seconds
         let ignoreNextPopstate = false; // Flag to ignore popstate
