@@ -1920,10 +1920,6 @@ const API_ENDPOINTS = {
 // API Key for mobile app security
 const API_KEY = 'arc_astra_mobile_2024_x7K9mP3qR8wL5nF2';
 
-// Reset password flow state
-let resetEmail = '';
-
-
 // Helper function to add API key to headers
 function getApiHeaders(additionalHeaders = {}) {
   return {
@@ -5902,8 +5898,6 @@ const reward = d.rate * 24;
         
         async function sendPasswordReset() {
             const email = document.getElementById('forgotEmail').value.trim().toLowerCase();
-            resetEmail = email;
-            try { sessionStorage.setItem('resetEmail', email); } catch(e) {}
             
             if (!email) {
                 showToast('❌ Please enter your email', true);
@@ -6093,55 +6087,107 @@ window.addEventListener('offline', checkConnection);
     <h3>Reset Password</h3>
     <p>Enter the 6-digit code sent to your email</p>
     <form id="resetForm">
-      <input id="resetCode" class="reset-field" placeholder="6-digit code" />
+      <input id="resetCode" class="reset-field" placeholder="6-digit code" inputmode="numeric" autocomplete="one-time-code" />
       <input id="resetNewPassword" class="reset-field" type="password" placeholder="New password" />
-      <button class="reset-btn" type="submit">Confirm Reset</button>
+      <button class="reset-btn" id="confirmResetBtn" type="button">Confirm Reset</button>
     </form>
   </div>
 </div>
 
 <script>
 (function(){
+  // Keep reset email even if the "Forgot password" modal gets closed/cleared
+  window.__resetEmail = window.__resetEmail || "";
+
   const orig = window.sendPasswordReset;
   if (typeof orig === 'function') {
     window.sendPasswordReset = async function(){
+      const fe = document.getElementById('forgotEmail');
+      const email = (fe && fe.value ? fe.value.trim().toLowerCase() : "");
+      if (email) window.__resetEmail = email;
+
       const r = await orig();
+
       const box = document.getElementById('resetWithCodeBox');
       if (box) box.style.display = 'flex';
       return r;
     }
   }
 
-  document.addEventListener('submit', async function(e){
-    if (e.target && e.target.id === 'resetForm') {
-      e.preventDefault();
+  async function handleResetWithCode(){
+    const email = (window.__resetEmail || (document.getElementById('forgotEmail')||{}).value || "").trim().toLowerCase();
+    const code  = (document.getElementById('resetCode')||{}).value?.trim();
+    const newPassword = (document.getElementById('resetNewPassword')||{}).value || "";
 
-      const email = (resetEmail || (function(){try{return sessionStorage.getItem('resetEmail')||''}catch(e){return ''}})() || (document.getElementById('forgotEmail')||{}).value || '').trim().toLowerCase();
-      const code  = (document.getElementById('resetCode')||{}).value?.trim();
-      const newPassword = (document.getElementById('resetNewPassword')||{}).value;
-
-      if (!email || !code || !newPassword) {
-        alert('Fill all fields');
-        return;
-      }
-
-      try {
-        const res = await fetch(API_ENDPOINTS.resetPasswordWithCode, {
-          method:'POST',
-          headers:getApiHeaders(),
-          body:JSON.stringify({ email, code, newPassword })
-        });
-        const data = await res.json();
-        if (res.ok) {
-          alert('Password reset successful');
-          document.getElementById('resetWithCodeBox').style.display='none';
-        } else {
-          alert(data.error || 'Reset failed');
-        }
-      } catch(err) {
-        alert('Reset failed');
-      }
+    if (!email || !code || !newPassword) {
+      if (typeof showToast === 'function') showToast('❌ Fill all fields', true);
+      else alert('Fill all fields');
+      return;
     }
-  }, true);
+
+    const btn = document.getElementById('confirmResetBtn');
+    const origText = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; }
+
+    try {
+      const res = await fetch(API_ENDPOINTS.resetPasswordWithCode, {
+        method: 'POST',
+        headers: getApiHeaders(),
+        body: JSON.stringify({ email, code, newPassword })
+      });
+
+      let data = {};
+      try { data = await res.json(); } catch(_) {}
+
+      if (res.ok) {
+        if (typeof showToast === 'function') showToast('✓ Password reset successful');
+        else alert('Password reset successful');
+
+        const box = document.getElementById('resetWithCodeBox');
+        if (box) box.style.display = 'none';
+
+        const c = document.getElementById('resetCode');
+        const p = document.getElementById('resetNewPassword');
+        if (c) c.value = '';
+        if (p) p.value = '';
+      } else {
+        const msg = (data && data.error) ? data.error : 'Reset failed';
+        if (typeof showToast === 'function') showToast(`❌ ${msg}`, true);
+        else alert(msg);
+      }
+    } catch (err) {
+      if (typeof showToast === 'function') showToast('❌ Reset failed', true);
+      else alert('Reset failed');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = origText || 'Confirm Reset'; }
+    }
+  }
+
+  function bindResetHandlers(){
+    const btn = document.getElementById('confirmResetBtn');
+    if (btn && !btn.dataset.bound) {
+      btn.dataset.bound = '1';
+
+      const fire = (e) => {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        handleResetWithCode();
+      };
+
+      btn.addEventListener('click', fire, { passive: false });
+      btn.addEventListener('touchstart', fire, { passive: false });
+    }
+
+    const form = document.getElementById('resetForm');
+    if (form && !form.dataset.bound) {
+      form.dataset.bound = '1';
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        handleResetWithCode();
+      }, { passive: false });
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', bindResetHandlers);
+  bindResetHandlers();
 })();
 </script>
