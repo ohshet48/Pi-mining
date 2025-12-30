@@ -1891,6 +1891,16 @@ document.addEventListener('DOMContentLoaded', function() {
 // TODO: firebase functions:list komutundan aldığınız URL'leri buraya yapıştırın
 const FUNCTIONS_BASE_URL = 'https://europe-west1-arcastra-eba62.cloudfunctions.net';
 
+
+    // Reset password flow state (used by code-confirm step)
+    let resetEmail = "";
+
+    function showInlineModalError(containerId, message) {
+        const el = document.getElementById(containerId);
+        if (!el) return;
+        el.textContent = message || "";
+        el.style.display = message ? "block" : "none";
+    }
 const API_ENDPOINTS = {
   registerUser: `${FUNCTIONS_BASE_URL}/registerUser`,
   loginUser: `${FUNCTIONS_BASE_URL}/loginUser`,
@@ -5897,37 +5907,59 @@ const reward = d.rate * 24;
         }
         
         async function sendPasswordReset() {
-            const email = document.getElementById('forgotEmail').value.trim().toLowerCase();
-            
+            // Keep error messaging inside the modal (no background alerts)
+            showInlineModalError('forgotPasswordError', '');
+
+            const emailInput = document.getElementById('forgotEmail');
+            const email = (emailInput ? emailInput.value : '').trim().toLowerCase();
+
             if (!email) {
-                showToast('❌ Please enter your email', true);
-                return;
+                showInlineModalError('forgotPasswordError', 'Please enter your email.');
+                return false;
             }
-            
+
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
-                showToast('❌ Invalid email format', true);
-                return;
+                showInlineModalError('forgotPasswordError', 'Invalid email format.');
+                return false;
             }
-            
+
             try {
                 const response = await fetch(API_ENDPOINTS.sendPasswordReset, {
                     method: 'POST',
                     headers: getApiHeaders(),
-                    body: JSON.stringify({ email: email })
+                    body: JSON.stringify({ email })
                 });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    showToast('✓ Password reset link sent to your email!');
-                    closeForgotPassword();
-                } else {
-                    showToast(`❌ ${data.error || 'Failed to send reset link'}`, true);
+
+                let data = {};
+                try { data = await response.json(); } catch (_) {}
+
+                if (!response.ok) {
+                    const code = (data && (data.code || data.error)) ? (data.code || data.error) : '';
+                    if (response.status === 404 || code === 'email_not_found') {
+                        showInlineModalError('forgotPasswordError', 'This email is not registered.');
+                        return false;
+                    }
+                    showInlineModalError('forgotPasswordError', (data && (data.message || data.error)) ? (data.message || data.error) : 'Failed to send reset code.');
+                    return false;
                 }
+
+                // Success: keep the email for the code-confirm step and open the code box
+                resetEmail = email;
+                showInlineModalError('forgotPasswordError', '');
+
+                // Open code entry box
+                const box = document.getElementById('resetWithCodeBox');
+                if (box) box.style.display = 'flex';
+
+                // Close the email-entry modal
+                closeForgotPassword();
+
+                return true;
             } catch (error) {
                 console.error('Password reset error:', error);
-                showToast('❌ Failed to send reset link', true);
+                showInlineModalError('forgotPasswordError', 'Network error. Please try again.');
+                return false;
             }
         }
 
@@ -5948,6 +5980,8 @@ const reward = d.rate * 24;
     <div class="modal-content" style="max-width: 400px;">
         <h2 style="color: white; font-size: 22px; font-weight: 900; margin-bottom: 20px; text-align: center;">Reset Password</h2>
         <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-bottom: 20px; text-align: center;">Enter your email address and we'll send you a password reset link.</p>
+        <div id="forgotPasswordError" style="display:none; margin: 12px 0 16px; padding: 10px 12px; border-radius: 10px; background: rgba(255, 0, 0, 0.12); border: 1px solid rgba(255, 0, 0, 0.35); color: rgba(255,255,255,0.92); font-size: 13px; line-height: 1.3;"></div>
+
         <div class="form-group">
             <input type="email" class="form-input" id="forgotEmail" placeholder="Enter your email" style="margin-bottom: 20px;">
         </div>
@@ -6086,108 +6120,83 @@ window.addEventListener('offline', checkConnection);
     <div class="reset-close" onclick="document.getElementById('resetWithCodeBox').style.display='none'">✕</div>
     <h3>Reset Password</h3>
     <p>Enter the 6-digit code sent to your email</p>
+    <div id="resetWithCodeError" style="display:none; margin: 10px 0 14px; padding: 10px 12px; border-radius: 10px; background: rgba(255, 0, 0, 0.12); border: 1px solid rgba(255, 0, 0, 0.35); color: rgba(255,255,255,0.92); font-size: 13px; line-height: 1.3;"></div>
     <form id="resetForm">
-      <input id="resetCode" class="reset-field" placeholder="6-digit code" inputmode="numeric" autocomplete="one-time-code" />
-      <input id="resetNewPassword" class="reset-field" type="password" placeholder="New password" />
-      <button class="reset-btn" id="confirmResetBtn" type="button">Confirm Reset</button>
-    </form>
-  </div>
-</div>
+      <inpu<script>
+  // Reset-with-code UI logic (mobile-safe)
+  (function () {
+    const resetBox = document.getElementById('resetWithCodeBox');
+    const resetForm = document.getElementById('resetForm');
 
-<script>
-(function(){
-  // Keep reset email even if the "Forgot password" modal gets closed/cleared
-  window.__resetEmail = window.__resetEmail || "";
+    if (resetBox) resetBox.style.display = 'none';
 
-  const orig = window.sendPasswordReset;
-  if (typeof orig === 'function') {
-    window.sendPasswordReset = async function(){
-      const fe = document.getElementById('forgotEmail');
-      const email = (fe && fe.value ? fe.value.trim().toLowerCase() : "");
-      if (email) window.__resetEmail = email;
-
-      const r = await orig();
-
-      const box = document.getElementById('resetWithCodeBox');
-      if (box) box.style.display = 'flex';
-      return r;
-    }
-  }
-
-  async function handleResetWithCode(){
-    const email = (window.__resetEmail || (document.getElementById('forgotEmail')||{}).value || "").trim().toLowerCase();
-    const code  = (document.getElementById('resetCode')||{}).value?.trim();
-    const newPassword = (document.getElementById('resetNewPassword')||{}).value || "";
-
-    if (!email || !code || !newPassword) {
-      if (typeof showToast === 'function') showToast('❌ Fill all fields', true);
-      else alert('Fill all fields');
-      return;
-    }
-
-    const btn = document.getElementById('confirmResetBtn');
-    const origText = btn ? btn.textContent : '';
-    if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; }
-
-    try {
-      const res = await fetch(API_ENDPOINTS.resetPasswordWithCode, {
-        method: 'POST',
-        headers: getApiHeaders(),
-        body: JSON.stringify({ email, code, newPassword })
-      });
-
-      let data = {};
-      try { data = await res.json(); } catch(_) {}
-
-      if (res.ok) {
-        if (typeof showToast === 'function') showToast('✓ Password reset successful');
-        else alert('Password reset successful');
-
-        const box = document.getElementById('resetWithCodeBox');
-        if (box) box.style.display = 'none';
-
-        const c = document.getElementById('resetCode');
-        const p = document.getElementById('resetNewPassword');
-        if (c) c.value = '';
-        if (p) p.value = '';
-      } else {
-        const msg = (data && data.error) ? data.error : 'Reset failed';
-        if (typeof showToast === 'function') showToast(`❌ ${msg}`, true);
-        else alert(msg);
-      }
-    } catch (err) {
-      if (typeof showToast === 'function') showToast('❌ Reset failed', true);
-      else alert('Reset failed');
-    } finally {
-      if (btn) { btn.disabled = false; btn.textContent = origText || 'Confirm Reset'; }
-    }
-  }
-
-  function bindResetHandlers(){
-    const btn = document.getElementById('confirmResetBtn');
-    if (btn && !btn.dataset.bound) {
-      btn.dataset.bound = '1';
-
-      const fire = (e) => {
-        if (e) { e.preventDefault(); e.stopPropagation(); }
-        handleResetWithCode();
-      };
-
-      btn.addEventListener('click', fire, { passive: false });
-      btn.addEventListener('touchstart', fire, { passive: false });
-    }
-
-    const form = document.getElementById('resetForm');
-    if (form && !form.dataset.bound) {
-      form.dataset.bound = '1';
-      form.addEventListener('submit', (e) => {
+    if (resetForm) {
+      resetForm.addEventListener('submit', async function (e) {
         e.preventDefault();
-        handleResetWithCode();
+
+        showInlineModalError('resetWithCodeError', '');
+
+        const email = (resetEmail || '').trim().toLowerCase();
+        const code = (document.getElementById('resetCode') || {}).value?.trim() || '';
+        const newPassword = (document.getElementById('resetNewPassword') || {}).value || '';
+
+        if (!email) {
+          // Should not happen unless state was lost
+          showInlineModalError('resetWithCodeError', 'Please restart the reset process (email is missing).');
+          return;
+        }
+
+        if (!/^\d{6}$/.test(code)) {
+          showInlineModalError('resetWithCodeError', 'Invalid code. Enter the 6-digit code.');
+          return;
+        }
+
+        if (newPassword.length < 6) {
+          showInlineModalError('resetWithCodeError', 'Password must be at least 6 characters.');
+          return;
+        }
+
+        // English-only (ASCII printable, no spaces). Adjust if you want to allow spaces.
+        if (!/^[\x21-\x7E]+$/.test(newPassword)) {
+          showInlineModalError('resetWithCodeError', 'Password can only contain English characters (ASCII).');
+          return;
+        }
+
+        try {
+          const res = await fetch(API_ENDPOINTS.resetPasswordWithCode, {
+            method: 'POST',
+            headers: getApiHeaders(),
+            body: JSON.stringify({ email, code, newPassword })
+          });
+
+          let data = {};
+          try { data = await res.json(); } catch (_) {}
+
+          if (!res.ok) {
+            const codeVal = (data && (data.code || data.error)) ? (data.code || data.error) : '';
+            if (res.status === 404 || codeVal === 'email_not_found') {
+              // Keep user in the email modal (do not proceed)
+              showInlineModalError('resetWithCodeError', 'This email is not registered.');
+              return;
+            }
+            if (res.status === 400 || codeVal === 'invalid_code' || codeVal === 'code_invalid') {
+              showInlineModalError('resetWithCodeError', 'Incorrect code. Please try again.');
+              return;
+            }
+            showInlineModalError('resetWithCodeError', (data && (data.message || data.error)) ? (data.message || data.error) : 'Reset failed.');
+            return;
+          }
+
+          // Success
+          showInlineModalError('resetWithCodeError', '');
+          resetEmail = '';
+          if (resetBox) resetBox.style.display = 'none';
+          showToast('✓ Password reset successful');
+        } catch (err) {
+          console.error('Reset-with-code error:', err);
+          showInlineModalError('resetWithCodeError', 'Network error. Please try again.');
+        }
       }, { passive: false });
     }
-  }
-
-  document.addEventListener('DOMContentLoaded', bindResetHandlers);
-  bindResetHandlers();
-})();
+  })();
 </script>
