@@ -1913,6 +1913,7 @@ const API_ENDPOINTS = {
   updatePassword: `${FUNCTIONS_BASE_URL}/updatePassword`,
   deleteAccount: `${FUNCTIONS_BASE_URL}/deleteAccount`,
   sendPasswordReset: `${FUNCTIONS_BASE_URL}/sendPasswordReset`,
+  resetPasswordWithCode: `${FUNCTIONS_BASE_URL}/resetPasswordWithCode`,
   sendEmailVerification: `${FUNCTIONS_BASE_URL}/sendEmailVerification`,
 };
 
@@ -6095,12 +6096,19 @@ window.addEventListener('offline', checkConnection);
 
 <script>
 (function(){
+  // Cache email used for reset, because closeForgotPassword() clears #forgotEmail
+  window.__pwResetEmail = window.__pwResetEmail || '';
+
   const orig = window.sendPasswordReset;
   if (typeof orig === 'function') {
     window.sendPasswordReset = async function(){
-      const r = await orig();
+      const emailEl = document.getElementById('forgotEmail');
+      const email = (emailEl && emailEl.value ? emailEl.value : '').trim().toLowerCase();
+      if (email) window.__pwResetEmail = email;
+
+      const r = await orig(); // original function shows toast + closes modal
       const box = document.getElementById('resetWithCodeBox');
-      if (box) box.style.display = 'flex';
+      if (box && window.__pwResetEmail) box.style.display = 'flex';
       return r;
     }
   }
@@ -6109,7 +6117,7 @@ window.addEventListener('offline', checkConnection);
     if (e.target && e.target.id === 'resetForm') {
       e.preventDefault();
 
-      const email = (document.getElementById('forgotEmail')||{}).value?.trim();
+      const email = (window.__pwResetEmail || '').trim();
       const code  = (document.getElementById('resetCode')||{}).value?.trim();
       const newPassword = (document.getElementById('resetNewPassword')||{}).value;
 
@@ -6119,12 +6127,18 @@ window.addEventListener('offline', checkConnection);
       }
 
       try {
+        if (!API_ENDPOINTS.resetPasswordWithCode) {
+          alert('Reset endpoint missing: API_ENDPOINTS.resetPasswordWithCode');
+          return;
+        }
+
         const res = await fetch(API_ENDPOINTS.resetPasswordWithCode, {
           method:'POST',
           headers:getApiHeaders(),
           body:JSON.stringify({ email, code, newPassword })
         });
-        const data = await res.json();
+
+        const data = await res.json().catch(() => ({}));
         if (res.ok) {
           alert('Password reset successful');
           document.getElementById('resetWithCodeBox').style.display='none';
