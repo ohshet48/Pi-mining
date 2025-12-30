@@ -1913,6 +1913,7 @@ const API_ENDPOINTS = {
   updatePassword: `${FUNCTIONS_BASE_URL}/updatePassword`,
   deleteAccount: `${FUNCTIONS_BASE_URL}/deleteAccount`,
   sendPasswordReset: `${FUNCTIONS_BASE_URL}/sendPasswordReset`,
+  resetPasswordWithCode: `${FUNCTIONS_BASE_URL}/resetPasswordWithCode`,
   sendEmailVerification: `${FUNCTIONS_BASE_URL}/sendEmailVerification`,
 };
 
@@ -5887,21 +5888,100 @@ const reward = d.rate * 24;
 
 
         function showForgotPassword() {
-            document.getElementById('forgotPasswordModal').classList.add('show');
+    // Step 1 UI
+    document.getElementById('forgotStep1').style.display = 'block';
+    document.getElementById('forgotStep2').style.display = 'none';
+    document.getElementById('forgotPasswordModal').classList.add('show');
+}
+
+function closeForgotPassword() {
+    document.getElementById('forgotPasswordModal').classList.remove('show');
+    document.getElementById('forgotEmail').value = '';
+    document.getElementById('forgotCode').value = '';
+    document.getElementById('forgotNewPassword').value = '';
+    document.getElementById('forgotStep1').style.display = 'block';
+    document.getElementById('forgotStep2').style.display = 'none';
+}
+
+async function sendPasswordReset() {
+    const email = document.getElementById('forgotEmail').value.trim().toLowerCase();
+
+    if (!email) {
+        showToast('❌ Please enter your email', true);
+        return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        showToast('❌ Invalid email format', true);
+        return;
+    }
+
+    try {
+        const response = await fetch(API_ENDPOINTS.sendPasswordReset, {
+            method: 'POST',
+            headers: getApiHeaders(),
+            body: JSON.stringify({ email })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showToast('✓ Verification code sent to your email!');
+            // Move to step 2 UI
+            document.getElementById('forgotStep1').style.display = 'none';
+            document.getElementById('forgotStep2').style.display = 'block';
+            document.getElementById('forgotCode').focus();
+        } else {
+            showToast(`❌ ${data.error || 'Failed to send code'}`, true);
         }
-        
-        function closeForgotPassword() {
-            document.getElementById('forgotPasswordModal').classList.remove('show');
-            document.getElementById('forgotEmail').value = '';
+    } catch (error) {
+        console.error('Password reset error:', error);
+        showToast('❌ Failed to send code', true);
+    }
+}
+
+async function confirmPasswordReset() {
+    const email = document.getElementById('forgotEmail').value.trim().toLowerCase();
+    const code = document.getElementById('forgotCode').value.trim();
+    const newPassword = document.getElementById('forgotNewPassword').value;
+
+    if (!email || !code || !newPassword) {
+        showToast('❌ Please fill all fields', true);
+        return;
+    }
+
+    if (!/^[0-9]{6}$/.test(code)) {
+        showToast('❌ Code must be 6 digits', true);
+        return;
+    }
+
+    if (newPassword.length < 6) {
+        showToast('❌ Password must be at least 6 characters', true);
+        return;
+    }
+
+    try {
+        const response = await fetch(API_ENDPOINTS.resetPasswordWithCode, {
+            method: 'POST',
+            headers: getApiHeaders(),
+            body: JSON.stringify({ email, code, newPassword })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showToast('✓ Password updated successfully! You can login now.');
+            closeForgotPassword();
+        } else {
+            showToast(`❌ ${data.error || 'Failed to reset password'}`, true);
         }
-        
-        async function sendPasswordReset() {
-            const email = document.getElementById('forgotEmail').value.trim().toLowerCase();
-            
-            if (!email) {
-                showToast('❌ Please enter your email', true);
-                return;
-            }
+    } catch (error) {
+        console.error('Confirm reset error:', error);
+        showToast('❌ Failed to reset password', true);
+    }
+}
+
             
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
@@ -5944,43 +6024,33 @@ const reward = d.rate * 24;
 
 <!-- Forgot Password Modal -->
 <div id="forgotPasswordModal" class="modal-overlay">
-    <div class="modal-content" style="max-width: 400px;">
-        <h2 style="color: white; font-size: 22px; font-weight: 900; margin-bottom: 20px; text-align: center;">Reset Password</h2>
-        <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-bottom: 20px; text-align: center;">Enter your email address and we'll send you a password reset link.</p>
-        <div class="form-group">
-            <input type="email" class="form-input" id="forgotEmail" placeholder="Enter your email" style="margin-bottom: 20px;">
-        </div>
-        <button class="btn btn-primary" onclick="sendPasswordReset()" style="width: 100%; margin-bottom: 12px;">Send Reset Link</button>
-        <button class="btn" onclick="closeForgotPassword()" style="width: 100%; background: rgba(100, 100, 100, 0.2); border: 1px solid rgba(150, 150, 150, 0.3);">Cancel</button>
-    </div>
-</div>
+    <div class="modal-content" style="max-width: 420px;">
+        <h2 style="color: white; font-size: 22px; font-weight: 900; margin-bottom: 10px; text-align: center;">Reset Password</h2>
 
-<!-- Offline Page -->
-<div id="offlinePage" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #0a1428 0%, #1a2a4a 100%); z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;">
-    <div style="text-align: center;">
-        <!-- Logo -->
-        <div style="width: 120px; height: 120px; margin: 0 auto 30px; background: linear-gradient(135deg, #00ffff, #0ea5e9); border-radius: 30px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 32px rgba(0, 255, 255, 0.3);">
-            <span style="font-size: 60px; font-weight: 900; color: #0a1428;">A</span>
+        <!-- Step 1 -->
+        <div id="forgotStep1">
+            <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-bottom: 18px; text-align: center;">
+                Enter your email address and we'll send you a 6-digit verification code.
+            </p>
+            <div class="form-group">
+                <input type="email" class="form-input" id="forgotEmail" placeholder="Enter your email" style="margin-bottom: 14px;">
+            </div>
+            <button class="btn btn-primary" onclick="sendPasswordReset()" style="width: 100%; margin-bottom: 10px;">Send Code</button>
+            <button class="btn" onclick="closeForgotPassword()" style="width: 100%; background: rgba(100, 100, 100, 0.2); border: 1px solid rgba(150, 150, 150, 0.3);">Cancel</button>
         </div>
-        
-        <!-- Title -->
-        <h1 style="color: white; font-size: 28px; font-weight: 900; margin-bottom: 12px;">No Internet Connection</h1>
-        
-        <!-- Message -->
-        <p style="color: rgba(255, 255, 255, 0.7); font-size: 16px; margin-bottom: 30px; line-height: 1.6;">Please check your internet connection<br>and try again</p>
-        
-        <!-- Retry Button -->
-        <button onclick="location.reload()" style="background: linear-gradient(135deg, #00ffff, #0ea5e9); color: #0a1428; border: none; padding: 14px 40px; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 16px rgba(0, 255, 255, 0.3); transition: all 0.3s;">
-            Retry Connection
-        </button>
-        
-        <!-- Icon -->
-        <div style="margin-top: 40px; opacity: 0.3;">
-            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#00ffff" stroke-width="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle cx="12" cy="12" r="3"/>
-                <line x1="1" y1="1" x2="23" y2="23"/>
-            </svg>
+
+        <!-- Step 2 -->
+        <div id="forgotStep2" style="display:none;">
+            <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-bottom: 18px; text-align: center;">
+                Enter the code sent to your email and set a new password.
+            </p>
+            <div class="form-group">
+                <input type="text" class="form-input" id="forgotCode" placeholder="6-digit code" inputmode="numeric" maxlength="6" style="margin-bottom: 10px;">
+                <input type="password" class="form-input" id="forgotNewPassword" placeholder="New password (min 6 chars)" style="margin-bottom: 14px;">
+            </div>
+            <button class="btn btn-primary" onclick="confirmPasswordReset()" style="width: 100%; margin-bottom: 10px;">Reset Password</button>
+            <button class="btn" onclick="showForgotPassword()" style="width: 100%; margin-bottom: 10px; background: rgba(0, 255, 255, 0.08); border: 1px solid rgba(0, 255, 255, 0.25);">Back</button>
+            <button class="btn" onclick="closeForgotPassword()" style="width: 100%; background: rgba(100, 100, 100, 0.2); border: 1px solid rgba(150, 150, 150, 0.3);">Cancel</button>
         </div>
     </div>
 </div>
@@ -6005,91 +6075,57 @@ window.addEventListener('offline', checkConnection);
 </html>
 
 
-<!-- ================= STYLED RESET PASSWORD MODAL (FINAL) ================= -->
+<!-- ================= FINAL RESET PASSWORD – EMAIL STATE FIX ================= -->
 <style>
-  #resetWithCodeBox{
-    display:none;
-    position:fixed;
-    inset:0;
-    background:rgba(5,10,25,.75);
-    backdrop-filter: blur(6px);
-    z-index:2147483647;
-    align-items:center;
-    justify-content:center;
-  }
-  .reset-card{
-    width:92%;
-    max-width:420px;
-    background:linear-gradient(180deg,#0e1630,#0a1024);
-    border:1px solid rgba(0,212,255,.25);
-    border-radius:18px;
-    padding:26px 24px 28px;
-    box-shadow:0 20px 60px rgba(0,0,0,.6);
-    color:#e5f6ff;
-    font-family:inherit;
-  }
-  .reset-card h3{
-    margin:0 0 6px;
-    font-size:22px;
-    text-align:center;
-    letter-spacing:.3px;
-  }
-  .reset-card p{
-    margin:0 0 18px;
-    text-align:center;
-    font-size:13px;
-    color:#9fdcff;
-  }
-  .reset-field{
-    width:100%;
-    background:#0b1228;
-    border:1px solid rgba(0,212,255,.25);
-    border-radius:12px;
-    padding:14px 14px;
-    margin-bottom:14px;
-    color:#eaffff;
-    outline:none;
-  }
-  .reset-field:focus{
-    border-color:#00d4ff;
-    box-shadow:0 0 0 2px rgba(0,212,255,.2);
-  }
-  .reset-btn{
-    width:100%;
-    padding:14px;
-    border:none;
-    border-radius:14px;
-    background:linear-gradient(90deg,#00d4ff,#4f9cff);
-    color:#001018;
-    font-weight:700;
-    letter-spacing:.4px;
-    cursor:pointer;
-    transition:transform .08s ease, box-shadow .08s ease, opacity .08s ease;
-  }
-  .reset-btn:hover{
-    transform:translateY(-1px);
-    box-shadow:0 8px 22px rgba(0,212,255,.35);
-  }
-  .reset-close{
-    position:absolute;
-    top:16px;
-    right:18px;
-    font-size:20px;
-    color:#7ddfff;
-    cursor:pointer;
-  }
+#resetWithCodeBox{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(5,10,25,.75);
+  backdrop-filter: blur(6px);
+  z-index:2147483647;
+  align-items:center;
+  justify-content:center;
+}
+.reset-card{
+  width:92%;
+  max-width:420px;
+  background:linear-gradient(180deg,#0e1630,#0a1024);
+  border:1px solid rgba(0,212,255,.35);
+  border-radius:18px;
+  padding:26px 24px 28px;
+  box-shadow:0 20px 60px rgba(0,0,0,.6);
+  color:#e5f6ff;
+}
+.reset-field{
+  width:100%;
+  background:#0b1228;
+  border:1px solid rgba(0,212,255,.25);
+  border-radius:12px;
+  padding:14px;
+  margin-bottom:14px;
+  color:#eaffff;
+}
+.reset-btn{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:14px;
+  background:linear-gradient(90deg,#00d4ff,#4f9cff);
+  font-weight:700;
+  cursor:pointer;
+}
 </style>
 
 <div id="resetWithCodeBox">
   <div class="reset-card">
-    <div class="reset-close" onclick="document.getElementById('resetWithCodeBox').style.display='none'">✕</div>
-    <h3>Reset Password</h3>
-    <p>Enter the 6-digit code sent to your email</p>
-    <form id="resetForm">
-      <input id="resetCode" class="reset-field" placeholder="6-digit code" />
-      <input id="resetNewPassword" class="reset-field" type="password" placeholder="New password" />
-      <button class="reset-btn" type="submit">Confirm Reset</button>
-    </form>
+    <h3 style="text-align:center;margin-bottom:6px;">Reset Password</h3>
+    <p style="text-align:center;font-size:13px;color:#9fdcff;margin-bottom:18px;">
+      Enter the 6-digit code sent to your email
+    </p>
+    <input id="resetCode" class="reset-field" placeholder="6-digit code">
+    <input id="resetNewPassword" type="password" class="reset-field" placeholder="New password">
+    <button id="confirmResetBtn" type="button" class="reset-btn">Confirm Reset</button>
   </div>
 </div>
 
@@ -6098,6 +6134,10 @@ window.addEventListener('offline', checkConnection);
   const orig = window.sendPasswordReset;
   if (typeof orig === 'function') {
     window.sendPasswordReset = async function(){
+      const emailEl = document.getElementById('forgotEmail');
+      if (emailEl && emailEl.value) {
+        localStorage.setItem('resetEmail', emailEl.value.trim().toLowerCase());
+      }
       const r = await orig();
       const box = document.getElementById('resetWithCodeBox');
       if (box) box.style.display = 'flex';
@@ -6105,13 +6145,14 @@ window.addEventListener('offline', checkConnection);
     }
   }
 
-  document.addEventListener('submit', async function(e){
-    if (e.target && e.target.id === 'resetForm') {
-      e.preventDefault();
+  document.addEventListener('DOMContentLoaded', function(){
+    const btn = document.getElementById('confirmResetBtn');
+    if (!btn) return;
 
-      const email = (document.getElementById('forgotEmail')||{}).value?.trim();
-      const code  = (document.getElementById('resetCode')||{}).value?.trim();
-      const newPassword = (document.getElementById('resetNewPassword')||{}).value;
+    btn.addEventListener('click', async function(){
+      const email = localStorage.getItem('resetEmail');
+      const code  = document.getElementById('resetCode')?.value?.trim();
+      const newPassword = document.getElementById('resetNewPassword')?.value;
 
       if (!email || !code || !newPassword) {
         alert('Fill all fields');
@@ -6125,16 +6166,18 @@ window.addEventListener('offline', checkConnection);
           body:JSON.stringify({ email, code, newPassword })
         });
         const data = await res.json();
+
         if (res.ok) {
           alert('Password reset successful');
           document.getElementById('resetWithCodeBox').style.display='none';
+          localStorage.removeItem('resetEmail');
         } else {
           alert(data.error || 'Reset failed');
         }
-      } catch(err) {
+      } catch(e) {
         alert('Reset failed');
       }
-    }
-  }, true);
+    });
+  });
 })();
 </script>
