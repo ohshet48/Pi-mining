@@ -5641,19 +5641,18 @@ const reward = d.rate * 24;
         
         // Splash screen - Firebase yüklendikten sonra kaybol
         window.addEventListener('load', function() {
-            // Splash arkasında hemen auth + veri çekimini başlat
-            document.getElementById('loadingScreen').style.display = 'flex';
-            checkAuth();
-
             setTimeout(function() {
                 document.getElementById('splashScreen').classList.add('fade-out');
                 setTimeout(function() {
                     document.getElementById('splashScreen').style.display = 'none';
+                    // Show loading screen
+                    document.getElementById('loadingScreen').style.display = 'flex';
+                    checkAuth();
                 }, 800);
-            }, 2500);
+            }, 2000);
         });
-
-// Exit handling - double back press
+        
+        // Exit handling - double back press
         let lastBackPress = 0;
         const backPressInterval = 2000; // 2 seconds
         let ignoreNextPopstate = false; // Flag to ignore popstate
