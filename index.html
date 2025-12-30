@@ -6005,61 +6005,68 @@ window.addEventListener('offline', checkConnection);
 </html>
 
 
-<!-- ================= PASSWORD RESET WITH CODE (FINAL – WORKING) ================= -->
-<div id="resetWithCodeBox" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center;">
-  <div style="background:#0b1220; padding:24px; border-radius:12px; width:90%; max-width:420px;">
+<!-- ================= PASSWORD RESET WITH CODE (FINAL HARDFIX) ================= -->
+<style>
+  #resetWithCodeBox{display:none; position:fixed; inset:0; background:rgba(0,0,0,.65); z-index:2147483647;}
+  #resetWithCodeBox .card{background:#0b1220; padding:24px; border-radius:12px; width:90%; max-width:420px; margin:auto; pointer-events:auto;}
+  #resetWithCodeBox *{pointer-events:auto;}
+</style>
+
+<div id="resetWithCodeBox">
+  <div class="card">
     <h3 style="margin-bottom:12px;">Reset Password</h3>
     <input id="resetCode" placeholder="6-digit code" style="width:100%; padding:10px; margin-bottom:10px;" />
     <input id="resetNewPassword" type="password" placeholder="New password" style="width:100%; padding:10px; margin-bottom:14px;" />
-    <button id="confirmResetBtn" style="width:100%; padding:12px;">Confirm Reset</button>
+    <button id="confirmResetBtn" type="button" style="width:100%; padding:12px;">Confirm Reset</button>
   </div>
 </div>
 
 <script>
 (function(){
-  // Show reset box after successful sendPasswordReset
-  const originalSend = window.sendPasswordReset;
-  if (typeof originalSend === 'function') {
+  // Force-open after sendPasswordReset succeeds
+  const orig = window.sendPasswordReset;
+  if (typeof orig === 'function') {
     window.sendPasswordReset = async function(){
-      await originalSend();
+      const r = await orig();
       const box = document.getElementById('resetWithCodeBox');
       if (box) box.style.display = 'flex';
-    };
+      return r;
+    }
   }
 
-  // Bind confirm reset button safely
-  document.addEventListener("DOMContentLoaded", () => {
-    const btn = document.getElementById("confirmResetBtn");
+  // Event delegation: cannot be blocked by CSP/overlays
+  document.addEventListener('click', async function(e){
+    const btn = e.target && e.target.closest && e.target.closest('#confirmResetBtn');
     if (!btn) return;
 
-    btn.addEventListener("click", async () => {
-      const email = document.getElementById("forgotEmail")?.value.trim();
-      const code = document.getElementById("resetCode")?.value.trim();
-      const newPassword = document.getElementById("resetNewPassword")?.value;
+    alert('Confirm Reset clicked'); // immediate feedback
 
-      if (!email || !code || !newPassword) {
-        alert("Fill all fields");
-        return;
+    const email = (document.getElementById('forgotEmail')||{}).value?.trim();
+    const code  = (document.getElementById('resetCode')||{}).value?.trim();
+    const newPassword = (document.getElementById('resetNewPassword')||{}).value;
+
+    if (!email || !code || !newPassword) {
+      alert('Fill all fields');
+      return;
+    }
+
+    try {
+      const res = await fetch(API_ENDPOINTS.resetPasswordWithCode, {
+        method: 'POST',
+        headers: getApiHeaders(),
+        body: JSON.stringify({ email, code, newPassword })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert('Password reset successful');
+        document.getElementById('resetWithCodeBox').style.display = 'none';
+      } else {
+        alert(data.error || 'Reset failed');
       }
-
-      try {
-        const res = await fetch(API_ENDPOINTS.resetPasswordWithCode, {
-          method: "POST",
-          headers: getApiHeaders(),
-          body: JSON.stringify({ email, code, newPassword })
-        });
-        const data = await res.json();
-
-        if (res.ok) {
-          alert("Password reset successful");
-          document.getElementById("resetWithCodeBox").style.display = "none";
-        } else {
-          alert(data.error || "Reset failed");
-        }
-      } catch (e) {
-        alert("Reset failed");
-      }
-    });
-  });
+    } catch(err) {
+      alert('Reset failed');
+      console.error(err);
+    }
+  }, true);
 })();
 </script>
