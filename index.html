@@ -6005,89 +6005,59 @@ window.addEventListener('offline', checkConnection);
 </html>
 
 
-<!-- ================= SAFE OVERRIDES: FORGOT PASSWORD (NO BREAKING CHANGES) ================= -->
+<!-- ================= PASSWORD RESET WITH CODE (ADDED) ================= -->
+<div id="resetWithCodeBox" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center;">
+  <div style="background:#0b1220; padding:24px; border-radius:12px; width:90%; max-width:420px;">
+    <h3 style="margin-bottom:12px;">Reset Password</h3>
+    <input id="resetCode" placeholder="6-digit code" style="width:100%; padding:10px; margin-bottom:10px;" />
+    <input id="resetNewPassword" type="password" placeholder="New password" style="width:100%; padding:10px; margin-bottom:14px;" />
+    <button onclick="resetPasswordWithCode()" style="width:100%; padding:12px;">Confirm Reset</button>
+  </div>
+</div>
+
 <script>
-// Override only the forgot-password functions to ensure no illegal return outside functions
-
+// Show code box after sending reset email
 (function(){
-  window.showForgotPassword = function() {
-    var s1 = document.getElementById('forgotStep1');
-    var s2 = document.getElementById('forgotStep2');
-    var m  = document.getElementById('forgotPasswordModal');
-    if (s1) s1.style.display = 'block';
-    if (s2) s2.style.display = 'none';
-    if (m)  m.classList.add('show');
-  };
-
-  window.closeForgotPassword = function() {
-    var m = document.getElementById('forgotPasswordModal');
-    if (m) m.classList.remove('show');
-    ['forgotEmail','forgotCode','forgotNewPassword'].forEach(function(id){
-      var el = document.getElementById(id);
-      if (el) el.value = '';
-    });
-    var s1 = document.getElementById('forgotStep1');
-    var s2 = document.getElementById('forgotStep2');
-    if (s1) s1.style.display = 'block';
-    if (s2) s2.style.display = 'none';
-  };
-
-  window.sendPasswordReset = async function() {
-    try {
-      var emailEl = document.getElementById('forgotEmail');
-      var email = emailEl ? emailEl.value.trim().toLowerCase() : '';
-      if (!email) { showToast('❌ Please enter your email', true); return; }
-      var re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!re.test(email)) { showToast('❌ Invalid email format', true); return; }
-
-      var res = await fetch(API_ENDPOINTS.sendPasswordReset, {
-        method: 'POST',
-        headers: getApiHeaders(),
-        body: JSON.stringify({ email: email })
-      });
-      var data = await res.json();
-      if (res.ok) {
-        showToast('✓ Verification code sent to your email');
-        var s1 = document.getElementById('forgotStep1');
-        var s2 = document.getElementById('forgotStep2');
-        if (s1) s1.style.display = 'none';
-        if (s2) s2.style.display = 'block';
-        var c = document.getElementById('forgotCode'); if (c) c.focus();
-      } else {
-        showToast('❌ ' + (data.error || 'Failed to send code'), true);
-      }
-    } catch (e) {
-      console.error(e);
-      showToast('❌ Failed to send code', true);
+  const _origSend = window.sendPasswordReset;
+  if (typeof _origSend === 'function') {
+    window.sendPasswordReset = async function(){
+      await _origSend();
+      const box = document.getElementById('resetWithCodeBox');
+      if (box) box.style.display = 'flex';
     }
-  };
-
-  window.confirmPasswordReset = async function() {
-    try {
-      var email = (document.getElementById('forgotEmail')||{}).value || '';
-      email = email.trim().toLowerCase();
-      var code = (document.getElementById('forgotCode')||{}).value || '';
-      var newPassword = (document.getElementById('forgotNewPassword')||{}).value || '';
-      if (!email || !code || !newPassword) { showToast('❌ Please fill all fields', true); return; }
-      if (!/^[0-9]{6}$/.test(code)) { showToast('❌ Code must be 6 digits', true); return; }
-      if (newPassword.length < 6) { showToast('❌ Password must be at least 6 characters', true); return; }
-
-      var res = await fetch(API_ENDPOINTS.resetPasswordWithCode, {
-        method: 'POST',
-        headers: getApiHeaders(),
-        body: JSON.stringify({ email: email, code: code, newPassword: newPassword })
-      });
-      var data = await res.json();
-      if (res.ok) {
-        showToast('✓ Password updated successfully. You can login now.');
-        window.closeForgotPassword();
-      } else {
-        showToast('❌ ' + (data.error || 'Failed to reset password'), true);
-      }
-    } catch (e) {
-      console.error(e);
-      showToast('❌ Failed to reset password', true);
-    }
-  };
+  }
 })();
+
+async function resetPasswordWithCode() {
+  const emailEl = document.getElementById("forgotEmail");
+  const codeEl = document.getElementById("resetCode");
+  const passEl = document.getElementById("resetNewPassword");
+
+  const email = emailEl ? emailEl.value.trim() : "";
+  const code = codeEl ? codeEl.value.trim() : "";
+  const newPassword = passEl ? passEl.value : "";
+
+  if (!email || !code || !newPassword) {
+    alert("Fill all fields");
+    return;
+  }
+
+  try {
+    const res = await fetch(API_ENDPOINTS.resetPasswordWithCode, {
+      method: "POST",
+      headers: getApiHeaders(),
+      body: JSON.stringify({ email, code, newPassword })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      alert("Password reset successful");
+      document.getElementById("resetWithCodeBox").style.display = "none";
+    } else {
+      alert(data.error || "Reset failed");
+    }
+  } catch (e) {
+    console.error(e);
+    alert("Reset failed");
+  }
+}
 </script>
