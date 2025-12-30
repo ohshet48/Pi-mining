@@ -5907,16 +5907,59 @@ const reward = d.rate * 24;
         }
         
         async function sendPasswordReset() {
-            // Keep error messaging inside the modal (no background alerts)
-            showInlineModalError('forgotPasswordError', '');
+    // Keep error messaging inside the modal (no background alerts)
+    showInlineModalError('forgotPasswordError', '');
 
-            const emailInput = document.getElementById('forgotEmail');
-            const email = (emailInput ? emailInput.value : '').trim().toLowerCase();
+    const emailInput = document.getElementById('forgotEmail');
+    const email = (emailInput ? emailInput.value : '').trim().toLowerCase();
 
-            if (!email) {
-                showInlineModalError('forgotPasswordError', 'Please enter your email.');
+    if (!email) {
+        showInlineModalError('forgotPasswordError', 'Please enter your email.');
+        return false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        showInlineModalError('forgotPasswordError', 'Invalid email format.');
+        return false;
+    }
+
+    try {
+        const response = await fetch(API_ENDPOINTS.sendPasswordReset, {
+            method: 'POST',
+            headers: getApiHeaders(),
+            body: JSON.stringify({ email })
+        });
+
+        let data = {};
+        try { data = await response.json(); } catch (_) {}
+
+        if (!response.ok) {
+            const code = (data && (data.code || data.error)) ? (data.code || data.error) : '';
+            if (response.status === 404 || code === 'email_not_found') {
+                showInlineModalError('forgotPasswordError', 'This email is not registered.');
                 return false;
             }
+            showInlineModalError('forgotPasswordError',
+                (data && (data.message || data.error)) ? (data.message || data.error) : 'Failed to send reset code.'
+            );
+            return false;
+        }
+
+        resetEmail = email;
+        showInlineModalError('forgotPasswordError', '');
+
+        const box = document.getElementById('resetWithCodeBox');
+        if (box) box.style.display = 'flex';
+
+        closeForgotPassword();
+        return true;
+    } catch (error) {
+        console.error('Password reset error:', error);
+        showInlineModalError('forgotPasswordError', 'Network error. Please try again.');
+        return false;
+    }
+}
 
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
