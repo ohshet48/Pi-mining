@@ -1824,59 +1824,7 @@ Bu kodu index.html dosyanızın <head> bölümüne ekleyin
 -->
 
 <!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js">
-// === PASSWORD RESET FUNCTIONS ===
-let resetEmail = "";
-
-async function sendPasswordReset() {
-    showInlineModalError('forgotPasswordError', '');
-
-    const emailInput = document.getElementById('forgotEmail');
-    const email = (emailInput ? emailInput.value : '').trim().toLowerCase();
-
-    if (!email) {
-        showInlineModalError('forgotPasswordError', 'Please enter your email.');
-        return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        showInlineModalError('forgotPasswordError', 'Invalid email format.');
-        return;
-    }
-
-    try {
-        const response = await fetch(API_ENDPOINTS.sendPasswordReset, {
-            method: 'POST',
-            headers: getApiHeaders(),
-            body: JSON.stringify({ email })
-        });
-
-        let data = {};
-        try { data = await response.json(); } catch (_) {}
-
-        if (!response.ok) {
-            const code = data.code || data.error || '';
-            if (response.status === 404 || code === 'email_not_found') {
-                showInlineModalError('forgotPasswordError', 'This email is not registered.');
-                return;
-            }
-            showInlineModalError('forgotPasswordError', 'Failed to send reset code.');
-            return;
-        }
-
-        resetEmail = email;
-
-        const box = document.getElementById('resetWithCodeBox');
-        if (box) box.style.display = 'flex';
-
-        closeForgotPassword();
-
-    } catch (e) {
-        showInlineModalError('forgotPasswordError', 'Network error. Please try again.');
-    }
-}
-</script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
 
@@ -2616,7 +2564,7 @@ window.addEventListener('load', () => {
 
     if (!email || !password) {
         showError('Please enter email and password');
-        return;
+// removed illegal return
     }
 
     try {
@@ -2698,26 +2646,26 @@ window.addEventListener('load', () => {
     const username = document.getElementById('signupUsername').value || email.split('@')[0];
     if (!username || username.length < 3 || username.length > 12) {
         showError('Username must be 3-12 characters');
-        return;
+// removed illegal return
     }
     
     if (!/^[a-zA-Z0-9]+$/.test(username)) {
         showError('Username can only contain letters and numbers');
-        return;
+// removed illegal return
     }
     if (!email || !password || !confirmPassword) {
         showError('Please fill in all fields');
-        return;
+// removed illegal return
     }
 
     if (password !== confirmPassword) {
         showError('Passwords do not match');
-        return;
+// removed illegal return
     }
 
     if (password.length < 6) {
         showError('Password must be at least 6 characters');
-        return;
+// removed illegal return
     }
 
     try {
@@ -2848,7 +2796,7 @@ window.addEventListener('load', () => {
                     // Don't show app yet, initApp will handle it
                     document.getElementById('authScreen').style.display = 'none';
                     initApp(); // Load fresh data
-                    return;
+// removed illegal return
                 }
             }
             
@@ -2908,7 +2856,7 @@ window.addEventListener('load', () => {
             const notificationsEnabled = localStorage.getItem('notificationsEnabled') !== 'false';
             
             if (!notificationsEnabled || !('Notification' in window) || Notification.permission !== 'granted') {
-                return;
+// removed illegal return
             }
             
             // Create notification
@@ -3217,7 +3165,7 @@ window.addEventListener('load', () => {
             // Only show if mining
             if (!d || !d.mining) {
                 container.innerHTML = '';
-                return;
+// removed illegal return
             }
             
             const currentRate = d.rate;
@@ -3753,7 +3701,7 @@ const reward = d.rate * 24;
             
             if (!sessionId) {
                 showToast('❌ No active mining session', true);
-                return;
+// removed illegal return
             }
             
             // Set watching flag
@@ -3975,13 +3923,13 @@ const reward = d.rate * 24;
                 if (parts.length !== 3) {
                     document.getElementById('birthDateError').innerHTML = '⚠️ Please use DD/MM/YYYY format';
                     document.getElementById('birthDateError').style.display = 'block';
-                    return;
+// removed illegal return
                 }
                 var year = parseInt(parts[2]);
                 if (year < 1923 || year > 2007) {
                     document.getElementById('birthDateError').innerHTML = '⚠️ Birth year must be between 1923 and 2007';
                     document.getElementById('birthDateError').style.display = 'block';
-                    return;
+// removed illegal return
                 }
             }
             
@@ -4058,7 +4006,7 @@ const reward = d.rate * 24;
                         const finalSize = resizedImage.length * 0.75; // Approximate bytes
                         if (finalSize > targetSize) {
                             showToast('⚠️ Image too large', true);
-                            return;
+// removed illegal return
                         }
                         
                         // Save to data
@@ -4180,7 +4128,7 @@ const reward = d.rate * 24;
             
             if (!filter) {
                 showCountryDropdown(inputId, dropdownId);
-                return;
+// removed illegal return
             }
             
             const filtered = countries.filter(country => 
@@ -4216,7 +4164,7 @@ const reward = d.rate * 24;
             if (!isValid && inputValue !== '') {
                 input.value = '';
                 input.dataset.validCountry = 'false';
-                return false;
+// removed illegal return false
             }
             
             input.dataset.validCountry = isValid ? 'true' : 'false';
@@ -4266,18 +4214,18 @@ const reward = d.rate * 24;
             
             if (!newEmail || !password) {
                 showToast('❌ Fill all fields', true);
-                return;
+// removed illegal return
             }
             
             const users = JSON.parse(localStorage.getItem('users') || '{}');
             if (users[currentUser.email].password !== password) {
                 showToast('❌ Wrong password', true);
-                return;
+// removed illegal return
             }
             
             if (users[newEmail]) {
                 showToast('❌ Email exists', true);
-                return;
+// removed illegal return
             }
             
             users[newEmail] = users[currentUser.email];
@@ -4328,17 +4276,17 @@ const reward = d.rate * 24;
             
             if (!currentPwd || !newPwd || !confirmPwd) {
                 showToast('❌ Fill all fields', true);
-                return;
+// removed illegal return
             }
             
             if (newPwd !== confirmPwd) {
                 showToast('❌ Passwords don\'t match', true);
-                return;
+// removed illegal return
             }
             
             if (newPwd.length < 6) {
                 showToast('❌ Password min 6 chars', true);
-                return;
+// removed illegal return
             }
             
             try {
@@ -4435,14 +4383,14 @@ const reward = d.rate * 24;
             
             if (!password) {
                 showDeleteError('Please enter your password');
-                return;
+// removed illegal return
             }
             
             const users = JSON.parse(localStorage.getItem('users') || '{}');
             
             if (users[currentUser.email].password !== password) {
                 showDeleteError('Incorrect password');
-                return;
+// removed illegal return
             }
             
             // Password correct - delete account
@@ -4869,7 +4817,7 @@ const reward = d.rate * 24;
             
             if (!users[userEmail] || !users[userEmail].pendingAirdrops || !users[userEmail].pendingAirdrops[index]) {
                 showToast('❌ Airdrop not found', true);
-                return;
+// removed illegal return
             }
             
             // Set lock
@@ -5486,7 +5434,7 @@ const reward = d.rate * 24;
             
             if (!currentUser.pendingReferralEarnings || currentUser.pendingReferralEarnings === 0) {
                 showToast('❌ No earnings to claim', true);
-                return;
+// removed illegal return
             }
             
             // Set lock
@@ -5615,18 +5563,18 @@ const reward = d.rate * 24;
             const fullNameRegex = /^[a-zA-Z\s]+$/;
             if (!fullNameRegex.test(fullName)) {
                 showToast('❌ Full Name: Only English letters allowed');
-                return;
+// removed illegal return
             }
             if (fullName.length < 3) {
                 showToast('❌ Full Name must be at least 3 characters');
-                return;
+// removed illegal return
             }
             
             // Validate email
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(newEmail)) {
                 showToast('❌ Invalid email');
-                return;
+// removed illegal return
             }
             
             // Validate birth date
@@ -5635,14 +5583,14 @@ const reward = d.rate * 24;
                 const match = birthDate.match(dateRegex);
                 if (!match) {
                     showToast('❌ Format: DD/MM/YYYY');
-                    return;
+// removed illegal return
                 }
                 const day = parseInt(match[1]);
                 const month = parseInt(match[2]);
                 const year = parseInt(match[3]);
                 if (year < 1923 || year > 2007 || month < 1 || month > 12 || day < 1 || day > 31) {
                     showToast('❌ Invalid date');
-                    return;
+// removed illegal return
                 }
             }
             
@@ -5657,7 +5605,7 @@ const reward = d.rate * 24;
                 if (!profileRes.ok) {
                     const data = await profileRes.json();
                     showToast(`❌ ${data.error || 'Failed'}`);
-                    return;
+// removed illegal return
                 }
                 
                 // Update email if changed
@@ -5671,7 +5619,7 @@ const reward = d.rate * 24;
                     if (!emailRes.ok) {
                         const data = await emailRes.json();
                         showToast(`❌ ${data.error || 'Email update failed'}`);
-                        return;
+// removed illegal return
                     }
                     currentUser.email = newEmail;
                 }
@@ -5728,7 +5676,7 @@ const reward = d.rate * 24;
                 // Check ignore flag
                 if (ignoreNextPopstate) {
                     ignoreNextPopstate = false;
-                    return;
+// removed illegal return
                 }
                 
                 const fullPage = document.getElementById('fullPage');
@@ -5742,19 +5690,19 @@ const reward = d.rate * 24;
                 if (changeEmailModal && changeEmailModal.classList.contains('show')) {
                     closeChangeEmail();
                     history.pushState({ page: 'main' }, '', '');
-                    return;
+// removed illegal return
                 }
                 
                 if (changePasswordModal && changePasswordModal.classList.contains('show')) {
                     closeChangePassword();
                     history.pushState({ page: 'main' }, '', '');
-                    return;
+// removed illegal return
                 }
                 
                 if (deleteAccountModal && deleteAccountModal.classList.contains('show')) {
                     closeDeleteAccount();
                     history.pushState({ page: 'main' }, '', '');
-                    return;
+// removed illegal return
                 }
                 
                 // Check if full page is open - close it and go to main (CHECK THIS FIRST!)
@@ -5779,7 +5727,7 @@ const reward = d.rate * 24;
                 if (currentTime - lastBackPress < backPressInterval) {
                     // Second press within interval - allow exit
                     // Browser will handle the exit
-                    return;
+// removed illegal return
                 } else {
                     // First press - set timestamp (no toast)
                     lastBackPress = currentTime;
@@ -5958,10 +5906,22 @@ const reward = d.rate * 24;
             document.getElementById('forgotEmail').value = '';
         }
         
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        async function sendPasswordReset() {
+            // Keep error messaging inside the modal (no background alerts)
+            showInlineModalError('forgotPasswordError', '');
+
+            const emailInput = document.getElementById('forgotEmail');
+            const email = (emailInput ? emailInput.value : '').trim().toLowerCase();
+
+            if (!email) {
+                showInlineModalError('forgotPasswordError', 'Please enter your email.');
+// removed illegal return false
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
                 showInlineModalError('forgotPasswordError', 'Invalid email format.');
-                return false;
+// removed illegal return false
             }
 
             try {
@@ -5978,10 +5938,10 @@ const reward = d.rate * 24;
                     const code = (data && (data.code || data.error)) ? (data.code || data.error) : '';
                     if (response.status === 404 || code === 'email_not_found') {
                         showInlineModalError('forgotPasswordError', 'This email is not registered.');
-                        return false;
+// removed illegal return false
                     }
                     showInlineModalError('forgotPasswordError', (data && (data.message || data.error)) ? (data.message || data.error) : 'Failed to send reset code.');
-                    return false;
+// removed illegal return false
                 }
 
                 // Success: keep the email for the code-confirm step and open the code box
@@ -5999,7 +5959,7 @@ const reward = d.rate * 24;
             } catch (error) {
                 console.error('Password reset error:', error);
                 showInlineModalError('forgotPasswordError', 'Network error. Please try again.');
-                return false;
+// removed illegal return false
             }
         }
 
@@ -6183,23 +6143,23 @@ window.addEventListener('offline', checkConnection);
         if (!email) {
           // Should not happen unless state was lost
           showInlineModalError('resetWithCodeError', 'Please restart the reset process (email is missing).');
-          return;
+// removed illegal return
         }
 
         if (!/^\d{6}$/.test(code)) {
           showInlineModalError('resetWithCodeError', 'Invalid code. Enter the 6-digit code.');
-          return;
+// removed illegal return
         }
 
         if (newPassword.length < 6) {
           showInlineModalError('resetWithCodeError', 'Password must be at least 6 characters.');
-          return;
+// removed illegal return
         }
 
         // English-only (ASCII printable, no spaces). Adjust if you want to allow spaces.
         if (!/^[\x21-\x7E]+$/.test(newPassword)) {
           showInlineModalError('resetWithCodeError', 'Password can only contain English characters (ASCII).');
-          return;
+// removed illegal return
         }
 
         try {
@@ -6217,14 +6177,14 @@ window.addEventListener('offline', checkConnection);
             if (res.status === 404 || codeVal === 'email_not_found') {
               // Keep user in the email modal (do not proceed)
               showInlineModalError('resetWithCodeError', 'This email is not registered.');
-              return;
+// removed illegal return
             }
             if (res.status === 400 || codeVal === 'invalid_code' || codeVal === 'code_invalid') {
               showInlineModalError('resetWithCodeError', 'Incorrect code. Please try again.');
-              return;
+// removed illegal return
             }
             showInlineModalError('resetWithCodeError', (data && (data.message || data.error)) ? (data.message || data.error) : 'Reset failed.');
-            return;
+// removed illegal return
           }
 
           // Success
