@@ -2549,7 +2549,7 @@ window.addEventListener('load', () => {
         // Show loading message immediately
         showToast('⏳ Waiting for server response...');
         
-    const email = document.getElementById('loginEmail').value;
+    const email = (window.__resetEmail || '').trim().toLowerCase();
     const password = document.getElementById('loginPassword').value;
 
     if (!email || !password) {
@@ -2571,6 +2571,9 @@ window.addEventListener('load', () => {
         const data = await response.json();
 
         if (response.ok) {
+window.__resetEmail = email;
+            console.log('RESET EMAIL SET:', window.__resetEmail);
+
             currentUser = data.user;
             localStorage.setItem('userId', user.uid);
             localStorage.setItem('userEmail', user.email);
@@ -5916,21 +5919,36 @@ const reward = d.rate * 24;
         }
         
         function closeForgotPassword() {
+    clearForgotError();
             document.getElementById('forgotPasswordModal').classList.remove('show');
             document.getElementById('forgotEmail').value = '';
         }
         
-        async function sendPasswordReset() {
+        
+function showForgotError(msg){
+  const b = document.getElementById('forgotError');
+  if(!b) return;
+  b.innerText = msg;
+  b.style.display = 'block';
+}
+function clearForgotError(){
+  const b = document.getElementById('forgotError');
+  if(!b) return;
+  b.innerText = '';
+  b.style.display = 'none';
+}
+
+async function sendPasswordReset() {
             const email = document.getElementById('forgotEmail').value.trim().toLowerCase();
             
             if (!email) {
-                showToast('❌ Please enter your email', true);
+                showForgotError('Please enter your email');
                 return;
             }
             
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
-                showToast('❌ Invalid email format', true);
+                showForgotError('Invalid email format');
                 return;
             }
             
@@ -5944,14 +5962,17 @@ const reward = d.rate * 24;
                 const data = await response.json();
                 
                 if (response.ok) {
-                    showToast('✓ Password reset link sent to your email!');
-                    closeForgotPassword();
-                } else {
-                    showToast(`❌ ${data.error || 'Failed to send reset link'}`, true);
-                }
+            clearForgotError();
+            closeForgotPassword();
+            window.__resetEmail = email;
+            const box = document.getElementById('resetWithCodeBox');
+            if (box) box.style.display = 'flex';
+        } else {
+            showForgotError(data.error || 'Email not found');
+        }
             } catch (error) {
                 console.error('Password reset error:', error);
-                showToast('❌ Failed to send reset link', true);
+                showForgotError('Failed to send reset link');
             }
         }
 
@@ -5973,7 +5994,8 @@ const reward = d.rate * 24;
         <h2 style="color: white; font-size: 22px; font-weight: 900; margin-bottom: 20px; text-align: center;">Reset Password</h2>
         <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-bottom: 20px; text-align: center;">Enter your email address and we'll send you a password reset link.</p>
         <div class="form-group">
-            <input type="email" class="form-input" id="forgotEmail" placeholder="Enter your email" style="margin-bottom: 20px;">
+            <div id="forgotError" class="error-msg" style="display:none;"></div>
+        <input type="email" class="form-input" id="forgotEmail" placeholder="Enter your email" style="margin-bottom: 20px;">
         </div>
         <button class="btn btn-primary" onclick="sendPasswordReset()" style="width: 100%; margin-bottom: 12px;">Send Reset Link</button>
         <button class="btn" onclick="closeForgotPassword()" style="width: 100%; background: rgba(100, 100, 100, 0.2); border: 1px solid rgba(150, 150, 150, 0.3);">Cancel</button>
@@ -6027,139 +6049,55 @@ window.addEventListener('offline', checkConnection);
 </script>
 
 
-<!-- ===== FORGOT PASSWORD FLOW GUARD PATCH (NON-DESTRUCTIVE) ===== -->
 <script>
-// Global guard to prevent unintended reset modal opens
-window.__allowResetModalOpen = false;
+async function __doConfirmReset(){
 
-// Monkey-patch: wrap existing openResetPasswordModal safely
-(function(){
-  const original = window.openResetPasswordModal;
-  window.openResetPasswordModal = function(){
-    if (window.__allowResetModalOpen === true) {
-      window.__allowResetModalOpen = false; // one-shot
-      if (typeof original === 'function') return original.apply(this, arguments);
-    } else {
-      // blocked unintended open
-      return;
-    }
-  };
-})();
-
-// Single authoritative submit handler
-window.handleForgotPasswordSubmit = async function(){
-  const emailInput = document.getElementById('forgotEmail');
-  const errorBox = document.getElementById('forgotError');
-  if (!emailInput || !errorBox) return;
-
-  const email = emailInput.value.trim();
-  errorBox.style.display = 'none';
-  errorBox.innerText = '';
-
-  if (!email) {
-    errorBox.innerText = 'Email required';
-    errorBox.style.display = 'block';
+  if(!window.__resetEmail){
+    if (typeof showToast === 'function') showToast('❌ Reset email missing', true);
+    else alert('Reset email missing');
     return;
   }
 
-  try {
-    const response = await fetch(API_ENDPOINTS.sendPasswordReset, {
+  const email = (window.__resetEmail || (document.getElementById('forgotEmail')||{}).value || "").trim().toLowerCase();
+  const code = (document.getElementById('resetCode')||{}).value?.trim();
+  const newPassword = (document.getElementById('resetNewPassword')||{}).value || "";
+
+  
+  if(!code || !newPassword){
+    if (typeof showToast === 'function') showToast('❌ Fill all fields', true);
+    else alert('Fill all fields');
+    return;
+  }
+
+
+  try{
+    const res = await fetch(API_ENDPOINTS.resetPasswordWithCode, {
       method: 'POST',
       headers: getApiHeaders(),
-      body: JSON.stringify({ email })
+      body: JSON.stringify({ email: window.__resetEmail, code, newPassword })
     });
-    const data = await response.json();
+    let data = {};
+    try { data = await res.json(); } catch(_) {}
 
-    if (!response.ok || data.error) {
-      errorBox.innerText = 'Email not found';
-      errorBox.style.display = 'block';
-      return;
+    if(res.ok){
+      if (typeof showToast === 'function') showToast('✓ Password reset successful');
+      else alert('Password reset successful');
+      const box = document.getElementById('resetWithCodeBox');
+      if (box) box.style.display = 'none';
+      const c = document.getElementById('resetCode'); if (c) c.value = '';
+      const p = document.getElementById('resetNewPassword'); if (p) p.value = '';
+    } else {
+      const msg = (data && data.error) ? data.error : 'Reset failed';
+      if (typeof showToast === 'function') showToast('❌ ' + msg, true);
+      else alert(msg);
     }
-
-    // allow and open exactly once on success
-    window.__allowResetModalOpen = true;
-    if (typeof window.openResetPasswordModal === 'function') {
-      window.openResetPasswordModal();
-    }
-  } catch (e) {
-    errorBox.innerText = 'Server error';
-    errorBox.style.display = 'block';
+  } catch(e){
+    if (typeof showToast === 'function') showToast('❌ Reset failed', true);
+    else alert('Reset failed');
   }
-};
+}
+window.__doConfirmReset = __doConfirmReset;
 </script>
-<!-- ===== END PATCH ===== -->
-
-
-<!-- ===== HARD LOCK: RESET MODAL CAN ONLY OPEN AFTER BACKEND SUCCESS ===== -->
-<script>
-(function(){
-  // Absolute lock flag
-  window.__RESET_ALLOWED = false;
-
-  // Kill any leftover auto-open attempts on load/state
-  document.addEventListener('DOMContentLoaded', () => {
-    window.__RESET_ALLOWED = false;
-  });
-
-  // Force-close reset modal if opened illegally
-  function forceCloseReset(){
-    const modal = document.getElementById('resetPasswordModal');
-    if (modal) modal.classList.remove('show');
-  }
-
-  // Override opener completely
-  window.openResetPasswordModal = function(){
-    if (!window.__RESET_ALLOWED) {
-      forceCloseReset();
-      return;
-    }
-    window.__RESET_ALLOWED = false; // one-time
-    const modal = document.getElementById('resetPasswordModal');
-    if (modal) modal.classList.add('show');
-  };
-
-  // Authoritative forgot submit
-  window.handleForgotPasswordSubmit = async function(){
-    const emailInput = document.getElementById('forgotEmail');
-    const errorBox = document.getElementById('forgotError');
-    if (!emailInput || !errorBox) return;
-
-    const email = emailInput.value.trim();
-    errorBox.style.display = 'none';
-    errorBox.innerText = '';
-
-    if (!email) {
-      errorBox.innerText = 'Email required';
-      errorBox.style.display = 'block';
-      return;
-    }
-
-    try {
-      const res = await fetch(API_ENDPOINTS.sendPasswordReset, {
-        method: 'POST',
-        headers: getApiHeaders(),
-        body: JSON.stringify({ email })
-      });
-      const data = await res.json();
-
-      if (!res.ok || data.error) {
-        errorBox.innerText = 'Email not found';
-        errorBox.style.display = 'block';
-        return;
-      }
-
-      // ONLY HERE unlock once
-      window.__RESET_ALLOWED = true;
-      window.openResetPasswordModal();
-
-    } catch(e) {
-      errorBox.innerText = 'Server error';
-      errorBox.style.display = 'block';
-    }
-  };
-})();
-</script>
-<!-- ===== END HARD LOCK ===== -->
 
 </body>
 </html>
@@ -6248,7 +6186,7 @@ window.handleForgotPasswordSubmit = async function(){
     <form id="resetForm">
       <input id="resetCode" class="reset-field" placeholder="6-digit code" inputmode="numeric" autocomplete="one-time-code" />
       <input id="resetNewPassword" class="reset-field" type="password" placeholder="New password" />
-      <button class="reset-btn" id="confirmResetBtn" type="button">Confirm Reset</button>
+      <button class="reset-btn" id="confirmResetBtn" type="button"  onclick="__doConfirmReset()" onclick="__doConfirmReset()">Confirm Reset</button>
     </form>
   </div>
 </div>
@@ -6260,18 +6198,9 @@ window.handleForgotPasswordSubmit = async function(){
 
   const orig = window.sendPasswordReset;
   if (typeof orig === 'function') {
-    window.sendPasswordReset = async function(){
-      const fe = document.getElementById('forgotEmail');
-      const email = (fe && fe.value ? fe.value.trim().toLowerCase() : "");
-      if (email) window.__resetEmail = email;
+    
+// resetWithCodeBox auto-open disabled
 
-      const r = await orig();
-
-      const box = document.getElementById('resetWithCodeBox');
-      if (box) box.style.display = 'flex';
-      return r;
-    }
-  }
 
   async function handleResetWithCode(){
     const email = (window.__resetEmail || (document.getElementById('forgotEmail')||{}).value || "").trim().toLowerCase();
@@ -6292,7 +6221,7 @@ window.handleForgotPasswordSubmit = async function(){
       const res = await fetch(API_ENDPOINTS.resetPasswordWithCode, {
         method: 'POST',
         headers: getApiHeaders(),
-        body: JSON.stringify({ email, code, newPassword })
+        body: JSON.stringify({ email: window.__resetEmail, code, newPassword })
       });
 
       let data = {};
@@ -6322,6 +6251,26 @@ window.handleForgotPasswordSubmit = async function(){
     }
   }
 
+  // Expose for reliable button handling
+  window.handleResetWithCode = handleResetWithCode;
+  // Robust delegated handler (prevents 'button does nothing' if binding missed)
+  function delegatedResetHandler(e){
+    const t = e && e.target;
+    if (t && t.id === 'confirmResetBtn') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (typeof window.handleResetWithCode === 'function') window.handleResetWithCode();
+    }
+  }
+  if (!document.documentElement.dataset.delegatedResetHandler) {
+    document.documentElement.dataset.delegatedResetHandler = '1';
+    document.addEventListener('click', delegatedResetHandler, true);
+    document.addEventListener('touchstart', delegatedResetHandler, true);
+  }
+
+
+
+  
   function bindResetHandlers(){
     const btn = document.getElementById('confirmResetBtn');
     if (btn && !btn.dataset.bound) {
