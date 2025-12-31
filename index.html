@@ -1820,6 +1820,18 @@
     </style>
 	<!-- 
 Bu kodu index.html dosyanızın <head> bölümüne ekleyin 
+
+<script>
+function showLoginLoading() {
+    const el = document.getElementById('loadingScreen');
+    if (el) el.style.display = 'flex';
+}
+function hideLoginLoading() {
+    const el = document.getElementById('loadingScreen');
+    if (el) el.style.display = 'none';
+}
+</script>
+
 </head> taginden ÖNCE
 -->
 
@@ -2071,6 +2083,18 @@ window.addEventListener('load', () => {
 }
 </style>
 
+
+<script>
+function showLoginLoading() {
+    const el = document.getElementById('loadingScreen');
+    if (el) el.style.display = 'flex';
+}
+function hideLoginLoading() {
+    const el = document.getElementById('loadingScreen');
+    if (el) el.style.display = 'none';
+}
+</script>
+
 </head>
 <body>
 
@@ -2094,29 +2118,7 @@ window.addEventListener('load', () => {
     <div class="tech-bg"></div>
     <div class="grid-lines"></div>
     
-    <!-- Loading Mining Screen -->
-    <div id="loadingScreen" style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(135deg, #0a1428 0%, #1a2a4a 100%);
-        display: none;
-        justify-content: center;
-        align-items: center;
-        flex-direction: column;
-        z-index: 9998;
-        gap: 20px;
-    ">
-        <div style="
-            width: 60px;
-            height: 60px;
-            border: 4px solid rgba(0, 255, 255, 0.2);
-            border-top-color: #00ffff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        "></div>
+    
         <div style="
             color: #00ffff;
             font-size: 18px;
@@ -2585,8 +2587,8 @@ window.__resetEmail = email;
                 // After login: show Loading Mining Screen instead of blank background
                 document.getElementById('authScreen').style.display = 'none';
                 document.getElementById('app').style.display = 'none';
-                document.getElementById('loadingScreen').style.display = 'flex';
-                setTimeout(() => initApp(), 100);
+                
+                initApp();
             }, 500);
         }
     } catch (error) {
@@ -2689,7 +2691,7 @@ window.__resetEmail = email;
     if (modal) modal.classList.remove('show');
     document.getElementById('authScreen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
-    setTimeout(() => initApp(), 100);
+    initApp();
             }, 1500);
 }
     } catch (error) {
@@ -2793,7 +2795,7 @@ window.__resetEmail = email;
                 }
             }
             
-            document.getElementById('loadingScreen').style.display = 'none'; // Hide loading if no user
+             // Hide loading if no user
             document.getElementById('authScreen').style.display = 'flex';
             document.getElementById('app').style.display = 'none';
         }
@@ -2869,6 +2871,7 @@ window.__resetEmail = email;
             };
         }
         async function initApp() {
+    hideLoginLoading();
     // localStorage'dan currentUser'ı oku
     const storedUser = localStorage.getItem('currentUser');
     const userId = localStorage.getItem('userId');
@@ -3000,7 +3003,7 @@ window.__resetEmail = email;
             // Request notification permission
             requestNotificationPermission();
           document.getElementById('authScreen').style.display = 'none';
-          document.getElementById('loadingScreen').style.display = 'none'; // Hide loading screen
+           // Hide loading screen
           document.getElementById('app').style.display = 'block';  
             checkMining();
             render();
@@ -5676,7 +5679,7 @@ const reward = d.rate * 24;
                 setTimeout(function() {
                     document.getElementById('splashScreen').style.display = 'none';
                     // Show loading screen
-                    document.getElementById('loadingScreen').style.display = 'flex';
+                    
                     checkAuth();
                 }, 800);
             }, 2000);
@@ -6098,6 +6101,38 @@ async function __doConfirmReset(){
 }
 window.__doConfirmReset = __doConfirmReset;
 </script>
+
+
+<!-- Loading Mining Screen (LOGIN ONLY) -->
+<div id="loadingScreen" style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #0a1428 0%, #1a2a4a 100%);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 9998;
+    gap: 20px;
+">
+    <div style="
+        width: 60px;
+        height: 60px;
+        border: 4px solid rgba(0, 255, 255, 0.2);
+        border-top-color: #00ffff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    "></div>
+    <div style="
+        color: #00ffff;
+        font-size: 18px;
+        font-weight: 600;
+        text-align: center;
+    ">Loading…</div>
+</div>
 
 </body>
 </html>
