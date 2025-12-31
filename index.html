@@ -1519,6 +1519,8 @@
         
         /* Level Card - Enhanced */
         .level-progress-bar {
+            position: relative;
+            overflow: visible;
             width: 100%;
             height: 18px;
             background: rgba(10, 20, 40, 0.85);
@@ -1538,6 +1540,12 @@
         }
         
         .level-progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            white-space: nowrap;
+            pointer-events: none;
             position: absolute;
             top: 50%;
             left: 50%;
@@ -1817,7 +1825,18 @@
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
         }
 
-    </style>
+    
+        .days-badge {
+            min-width: 9ch;
+            max-width: 9ch;
+            text-align: center;
+            white-space: nowrap;
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 1;
+        }
+        </style>
+        
 	<!-- 
 Bu kodu index.html dosyanızın <head> bölümüne ekleyin 
 
@@ -2081,7 +2100,18 @@ window.addEventListener('load', () => {
     opacity: 1;
   }
 }
-</style>
+
+        .days-badge {
+            min-width: 9ch;
+            max-width: 9ch;
+            text-align: center;
+            white-space: nowrap;
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 1;
+        }
+        </style>
+        
 
 
 <script>
@@ -4502,7 +4532,18 @@ const reward = d.rate * 24;
                             @keyframes spin {
                                 to { transform: rotate(360deg); }
                             }
-                        </style>
+                        
+        .days-badge {
+            min-width: 9ch;
+            max-width: 9ch;
+            text-align: center;
+            white-space: nowrap;
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 1;
+        }
+        </style>
+        
                     `;
                     // Load content asynchronously
                     getLeaderboardPageContent().then(html => pageContent.innerHTML = html);
@@ -4522,7 +4563,18 @@ const reward = d.rate * 24;
                             @keyframes spin {
                                 to { transform: rotate(360deg); }
                             }
-                        </style>
+                        
+        .days-badge {
+            min-width: 9ch;
+            max-width: 9ch;
+            text-align: center;
+            white-space: nowrap;
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 1;
+        }
+        </style>
+        
                     `;
                     // Load content asynchronously
                     getReferralsPageContent().then(html => pageContent.innerHTML = html);
@@ -4894,9 +4946,16 @@ const reward = d.rate * 24;
                 const response = await fetch(API_ENDPOINTS.getLeaderboard);
                 const data = await response.json();
                 
-                if (response.ok && data.leaderboard) {
+                
+if (response.ok && data.leaderboard) {
                     leaderboardData = data.leaderboard;
+
+                    // SORT: only by miningDays (higher first)
+                    leaderboardData.sort((a, b) => {
+                        return (b.miningDays || 0) - (a.miningDays || 0);
+                    });
                 }
+
             } catch (err) {
                 console.error('Failed to fetch leaderboard:', err);
             }
@@ -6218,7 +6277,18 @@ window.__doConfirmReset = __doConfirmReset;
     color:#7ddfff;
     cursor:pointer;
   }
-</style>
+
+        .days-badge {
+            min-width: 9ch;
+            max-width: 9ch;
+            text-align: center;
+            white-space: nowrap;
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 1;
+        }
+        </style>
+        
 
 <div id="resetWithCodeBox">
   <div class="reset-card">
