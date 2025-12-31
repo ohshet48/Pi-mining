@@ -6026,6 +6026,141 @@ window.addEventListener('online', checkConnection);
 window.addEventListener('offline', checkConnection);
 </script>
 
+
+<!-- ===== FORGOT PASSWORD FLOW GUARD PATCH (NON-DESTRUCTIVE) ===== -->
+<script>
+// Global guard to prevent unintended reset modal opens
+window.__allowResetModalOpen = false;
+
+// Monkey-patch: wrap existing openResetPasswordModal safely
+(function(){
+  const original = window.openResetPasswordModal;
+  window.openResetPasswordModal = function(){
+    if (window.__allowResetModalOpen === true) {
+      window.__allowResetModalOpen = false; // one-shot
+      if (typeof original === 'function') return original.apply(this, arguments);
+    } else {
+      // blocked unintended open
+      return;
+    }
+  };
+})();
+
+// Single authoritative submit handler
+window.handleForgotPasswordSubmit = async function(){
+  const emailInput = document.getElementById('forgotEmail');
+  const errorBox = document.getElementById('forgotError');
+  if (!emailInput || !errorBox) return;
+
+  const email = emailInput.value.trim();
+  errorBox.style.display = 'none';
+  errorBox.innerText = '';
+
+  if (!email) {
+    errorBox.innerText = 'Email required';
+    errorBox.style.display = 'block';
+    return;
+  }
+
+  try {
+    const response = await fetch(API_ENDPOINTS.sendPasswordReset, {
+      method: 'POST',
+      headers: getApiHeaders(),
+      body: JSON.stringify({ email })
+    });
+    const data = await response.json();
+
+    if (!response.ok || data.error) {
+      errorBox.innerText = 'Email not found';
+      errorBox.style.display = 'block';
+      return;
+    }
+
+    // allow and open exactly once on success
+    window.__allowResetModalOpen = true;
+    if (typeof window.openResetPasswordModal === 'function') {
+      window.openResetPasswordModal();
+    }
+  } catch (e) {
+    errorBox.innerText = 'Server error';
+    errorBox.style.display = 'block';
+  }
+};
+</script>
+<!-- ===== END PATCH ===== -->
+
+
+<!-- ===== HARD LOCK: RESET MODAL CAN ONLY OPEN AFTER BACKEND SUCCESS ===== -->
+<script>
+(function(){
+  // Absolute lock flag
+  window.__RESET_ALLOWED = false;
+
+  // Kill any leftover auto-open attempts on load/state
+  document.addEventListener('DOMContentLoaded', () => {
+    window.__RESET_ALLOWED = false;
+  });
+
+  // Force-close reset modal if opened illegally
+  function forceCloseReset(){
+    const modal = document.getElementById('resetPasswordModal');
+    if (modal) modal.classList.remove('show');
+  }
+
+  // Override opener completely
+  window.openResetPasswordModal = function(){
+    if (!window.__RESET_ALLOWED) {
+      forceCloseReset();
+      return;
+    }
+    window.__RESET_ALLOWED = false; // one-time
+    const modal = document.getElementById('resetPasswordModal');
+    if (modal) modal.classList.add('show');
+  };
+
+  // Authoritative forgot submit
+  window.handleForgotPasswordSubmit = async function(){
+    const emailInput = document.getElementById('forgotEmail');
+    const errorBox = document.getElementById('forgotError');
+    if (!emailInput || !errorBox) return;
+
+    const email = emailInput.value.trim();
+    errorBox.style.display = 'none';
+    errorBox.innerText = '';
+
+    if (!email) {
+      errorBox.innerText = 'Email required';
+      errorBox.style.display = 'block';
+      return;
+    }
+
+    try {
+      const res = await fetch(API_ENDPOINTS.sendPasswordReset, {
+        method: 'POST',
+        headers: getApiHeaders(),
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        errorBox.innerText = 'Email not found';
+        errorBox.style.display = 'block';
+        return;
+      }
+
+      // ONLY HERE unlock once
+      window.__RESET_ALLOWED = true;
+      window.openResetPasswordModal();
+
+    } catch(e) {
+      errorBox.innerText = 'Server error';
+      errorBox.style.display = 'block';
+    }
+  };
+})();
+</script>
+<!-- ===== END HARD LOCK ===== -->
+
 </body>
 </html>
 
