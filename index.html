@@ -1883,7 +1883,7 @@
 Bu kodu index.html dosyanızın <head> bölümüne ekleyin 
 
 <script>
-function showLoginLoading() {
+function {
     const el = document.getElementById('loadingScreen');
     if (el) el.style.display = 'flex';
 }
@@ -2199,7 +2199,7 @@ window.addEventListener('load', () => {
 
 
 <script>
-function showLoginLoading() {
+function {
     const el = document.getElementById('loadingScreen');
     if (el) el.style.display = 'flex';
 }
@@ -2681,7 +2681,7 @@ function {
         const user = userCredential.user;
 
         // LOGIN SUCCESS -> show loading overlay
-        if (typeof showLoginLoading === 'function') showLoginLoading();
+        if (typeof showLoginLoading === 'function') 
 
         // Backend'den kullanıcı bilgilerini al
         const response = await fetch(API_ENDPOINTS.getUserData, {
@@ -4638,7 +4638,7 @@ const reward = d.rate * 24;
     align-items: center;
     justify-content: center;
     z-index: 99999;
-    requestAnimationFrame(() => hideLoginLoading());
+    requestAnimationFrame(() => );
 
 }
 
