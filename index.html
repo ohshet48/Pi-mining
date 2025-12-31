@@ -5272,12 +5272,17 @@ const reward = d.rate * 24;
         
         if (refResponse.ok && refData.referrals) {
             const allReferrals = refData.referrals;
-            const activeCount = activeData.activeCount || 0;
-            
-            // Split into active and inactive based on activeCount
-            // Assume first N are active (this is a simplification - ideally backend should return active status)
-            activeRefs = allReferrals.slice(0, activeCount);
-            inactiveRefs = allReferrals.slice(activeCount);
+
+            // If backend provides per-referral active status, use it (accurate)
+            if (allReferrals.length > 0 && typeof allReferrals[0].isActive !== 'undefined') {
+                activeRefs = allReferrals.filter(r => r.isActive);
+                inactiveRefs = allReferrals.filter(r => !r.isActive);
+            } else {
+                // Backward-compatible fallback (older backend): split by count
+                const activeCount = activeData.activeCount || 0;
+                activeRefs = allReferrals.slice(0, activeCount);
+                inactiveRefs = allReferrals.slice(activeCount);
+            }
         }
     } catch (err) {
         console.error('Failed to fetch referrals:', err);
