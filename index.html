@@ -2125,7 +2125,7 @@ function hideLoginLoading() {
             font-weight: 600;
             font-family: 'Segoe UI', sans-serif;
             text-align: center;
-        ">Loading Mining Screen<br><span style="font-size: 14px; color: rgba(255,255,255,0.6);">Please wait...</span></div>
+        "><br><span style="font-size: 14px; color: rgba(255,255,255,0.6);"></span></div>
     </div>
     
     <div id="particles"></div>
@@ -2551,18 +2551,23 @@ function hideLoginLoading() {
         // Show loading message immediately
         showToast('⏳ Waiting for server response...');
         
-    const email = (window.__resetEmail || '').trim().toLowerCase();
-    const password = document.getElementById('loginPassword').value;
+    const emailEl = document.getElementById('loginEmail');
+    const passEl = document.getElementById('loginPassword');
+    const email = (emailEl && typeof emailEl.value === 'string') ? emailEl.value.trim().toLowerCase() : '';
+    const password = (passEl && typeof passEl.value === 'string') ? passEl.value.trim() : '';
 
     if (!email || !password) {
         showError('Please enter email and password');
         return;
     }
 
-    try {
+        try {
         // Firebase Authentication ile giriş
         const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
         const user = userCredential.user;
+
+        // LOGIN SUCCESS -> show loading overlay
+        if (typeof showLoginLoading === 'function') showLoginLoading();
 
         // Backend'den kullanıcı bilgilerini al
         const response = await fetch(API_ENDPOINTS.getUserData, {
@@ -2581,10 +2586,10 @@ window.__resetEmail = email;
             localStorage.setItem('userEmail', user.email);
             localStorage.setItem('isLoggedIn', 'true');
             localStorage.setItem('currentUser', JSON.stringify(data.user));
-            showSuccess('Login successful! Please Wait');
+            showSuccess('Login successful! ');
             
             setTimeout(() => {
-                // After login: show Loading Mining Screen instead of blank background
+                // After login: show  instead of blank background
                 document.getElementById('authScreen').style.display = 'none';
                 document.getElementById('app').style.display = 'none';
                 
@@ -2684,7 +2689,7 @@ window.__resetEmail = email;
             localStorage.setItem('userEmail', user.email);
             localStorage.setItem('isLoggedIn', 'true');
             localStorage.setItem('currentUser', JSON.stringify(data.user));
-            showSuccess('Account created successfully! Please Wait');
+            showSuccess('Account created successfully! ');
             window.scrollTo({ top: 0, behavior: 'smooth' });
             setTimeout(() => {
     const modal = document.getElementById('signupModal');
@@ -2872,6 +2877,8 @@ window.__resetEmail = email;
         }
         async function initApp() {
     hideLoginLoading();
+    const appEl = document.getElementById('app');
+    if (appEl) appEl.style.display = 'block';
     // localStorage'dan currentUser'ı oku
     const storedUser = localStorage.getItem('currentUser');
     const userId = localStorage.getItem('userId');
@@ -4488,7 +4495,7 @@ const reward = d.rate * 24;
                             <div style="background: rgba(0, 0, 0, 0.5); border: 2px solid rgba(0, 255, 255, 0.4); border-radius: 20px; padding: 40px 30px; max-width: 340px; width: 100%; text-align: center; box-shadow: 0 8px 32px rgba(0, 255, 255, 0.2);">
                                 <div style="width: 60px; height: 60px; border: 3px solid rgba(0, 255, 255, 0.3); border-top-color: #00ffff; border-radius: 50%; margin: 0 auto 20px; animation: spin 1s linear infinite;"></div>
                                 <h3 style="color: #00ffff; font-size: 18px; font-weight: 700; margin-bottom: 8px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Loading Leaderboard</h3>
-                                <p style="color: rgba(255, 255, 255, 0.6); font-size: 13px; margin: 0;">Please wait...</p>
+                                <p style="color: rgba(255, 255, 255, 0.6); font-size: 13px; margin: 0;"></p>
                             </div>
                         </div>
                         <style>
@@ -4508,7 +4515,7 @@ const reward = d.rate * 24;
                             <div style="background: rgba(0, 0, 0, 0.5); border: 2px solid rgba(0, 255, 255, 0.4); border-radius: 20px; padding: 40px 30px; max-width: 340px; width: 100%; text-align: center; box-shadow: 0 8px 32px rgba(0, 255, 255, 0.2);">
                                 <div style="width: 60px; height: 60px; border: 3px solid rgba(0, 255, 255, 0.3); border-top-color: #00ffff; border-radius: 50%; margin: 0 auto 20px; animation: spin 1s linear infinite;"></div>
                                 <h3 style="color: #00ffff; font-size: 18px; font-weight: 700; margin-bottom: 8px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Loading Referrals</h3>
-                                <p style="color: rgba(255, 255, 255, 0.6); font-size: 13px; margin: 0;">Please wait...</p>
+                                <p style="color: rgba(255, 255, 255, 0.6); font-size: 13px; margin: 0;"></p>
                             </div>
                         </div>
                         <style>
@@ -6103,7 +6110,7 @@ window.__doConfirmReset = __doConfirmReset;
 </script>
 
 
-<!-- Loading Mining Screen (LOGIN ONLY) -->
+<!--  (LOGIN ONLY) -->
 <div id="loadingScreen" style="
     position: fixed;
     top: 0;
@@ -6115,7 +6122,7 @@ window.__doConfirmReset = __doConfirmReset;
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    z-index: 9998;
+    z-index: 99999;
     gap: 20px;
 ">
     <div style="
