@@ -1891,16 +1891,6 @@ document.addEventListener('DOMContentLoaded', function() {
 // TODO: firebase functions:list komutundan aldığınız URL'leri buraya yapıştırın
 const FUNCTIONS_BASE_URL = 'https://europe-west1-arcastra-eba62.cloudfunctions.net';
 
-
-    // Reset password flow state (used by code-confirm step)
-    let resetEmail = "";
-
-    function showInlineModalError(containerId, message) {
-        const el = document.getElementById(containerId);
-        if (!el) return;
-        el.textContent = message || "";
-        el.style.display = message ? "block" : "none";
-    }
 const API_ENDPOINTS = {
   registerUser: `${FUNCTIONS_BASE_URL}/registerUser`,
   loginUser: `${FUNCTIONS_BASE_URL}/loginUser`,
@@ -2564,7 +2554,7 @@ window.addEventListener('load', () => {
 
     if (!email || !password) {
         showError('Please enter email and password');
-// removed illegal return
+        return;
     }
 
     try {
@@ -2646,26 +2636,26 @@ window.addEventListener('load', () => {
     const username = document.getElementById('signupUsername').value || email.split('@')[0];
     if (!username || username.length < 3 || username.length > 12) {
         showError('Username must be 3-12 characters');
-// removed illegal return
+        return;
     }
     
     if (!/^[a-zA-Z0-9]+$/.test(username)) {
         showError('Username can only contain letters and numbers');
-// removed illegal return
+        return;
     }
     if (!email || !password || !confirmPassword) {
         showError('Please fill in all fields');
-// removed illegal return
+        return;
     }
 
     if (password !== confirmPassword) {
         showError('Passwords do not match');
-// removed illegal return
+        return;
     }
 
     if (password.length < 6) {
         showError('Password must be at least 6 characters');
-// removed illegal return
+        return;
     }
 
     try {
@@ -2796,7 +2786,7 @@ window.addEventListener('load', () => {
                     // Don't show app yet, initApp will handle it
                     document.getElementById('authScreen').style.display = 'none';
                     initApp(); // Load fresh data
-// removed illegal return
+                    return;
                 }
             }
             
@@ -2856,7 +2846,7 @@ window.addEventListener('load', () => {
             const notificationsEnabled = localStorage.getItem('notificationsEnabled') !== 'false';
             
             if (!notificationsEnabled || !('Notification' in window) || Notification.permission !== 'granted') {
-// removed illegal return
+                return;
             }
             
             // Create notification
@@ -3165,7 +3155,7 @@ window.addEventListener('load', () => {
             // Only show if mining
             if (!d || !d.mining) {
                 container.innerHTML = '';
-// removed illegal return
+                return;
             }
             
             const currentRate = d.rate;
@@ -3643,38 +3633,57 @@ const reward = d.rate * 24;
             // Prevent double-claiming
             if (isClaimingDaily) return;
             if (!dailyRewardAvailable) return;
-            
+
             // Set lock
             isClaimingDaily = true;
-            
-            try {
-                // Call backend
-                fetch(API_ENDPOINTS.claimDailyReward, {
-                    method: 'POST',
-                    headers: getApiHeaders(),
-                    body: JSON.stringify({
-                        userId: currentUser.userId
-                    })
-                }).then(res => res.json())
-                  .then(data => {
-                      if (data.reward) {
-                          d.balance += data.reward;
-                          dailyRewardAvailable = false;
-                          save();
-                          showToast('✓ Claimed +5 Coins daily reward!');
-                          render();
-                      }
-                  })
-                  .catch(err => {
-                      console.error('Daily reward failed:', err);
-                      showToast('❌ Failed to claim daily reward');
-                  });
-            } finally {
-                // Release lock after delay
-                setTimeout(() => {
-                    isClaimingDaily = false;
-                }, 1000);
+
+            // Try to visually disable the button while claiming (if present)
+            const btn = document.querySelector('.reward-claim-btn');
+            if (btn) {
+                btn.disabled = true;
+                btn.style.opacity = '0.6';
+                btn.style.cursor = 'not-allowed';
             }
+
+            (async () => {
+                try {
+                    const res = await fetch(API_ENDPOINTS.claimDailyReward, {
+                        method: 'POST',
+                        headers: getApiHeaders(),
+                        body: JSON.stringify({
+                            userId: currentUser.userId
+                        })
+                    });
+
+                    const data = await res.json().catch(() => ({}));
+
+                    if (res.ok && data.reward) {
+                        d.balance += data.reward;
+                        dailyRewardAvailable = false;
+                        save();
+                        showToast('✓ Claimed +5 Coins daily reward!');
+                        render();
+                    } else {
+                        // Backend can return explicit errors (e.g., already claimed)
+                        const errMsg = (data && data.error) ? data.error : 'Failed to claim daily reward';
+                        showToast('❌ ' + errMsg, true);
+                    }
+                } catch (err) {
+                    console.error('Daily reward failed:', err);
+                    showToast('❌ Failed to claim daily reward', true);
+                } finally {
+                    // Release lock ONLY after request finishes
+                    isClaimingDaily = false;
+
+                    // Restore button state if still visible
+                    const btn2 = document.querySelector('.reward-claim-btn');
+                    if (btn2) {
+                        btn2.disabled = !dailyRewardAvailable;
+                        btn2.style.opacity = dailyRewardAvailable ? '1' : '0.6';
+                        btn2.style.cursor = dailyRewardAvailable ? 'pointer' : 'not-allowed';
+                    }
+                }
+            })();
         }
 
         function claimBonus() {
@@ -3701,7 +3710,7 @@ const reward = d.rate * 24;
             
             if (!sessionId) {
                 showToast('❌ No active mining session', true);
-// removed illegal return
+                return;
             }
             
             // Set watching flag
@@ -3923,13 +3932,13 @@ const reward = d.rate * 24;
                 if (parts.length !== 3) {
                     document.getElementById('birthDateError').innerHTML = '⚠️ Please use DD/MM/YYYY format';
                     document.getElementById('birthDateError').style.display = 'block';
-// removed illegal return
+                    return;
                 }
                 var year = parseInt(parts[2]);
                 if (year < 1923 || year > 2007) {
                     document.getElementById('birthDateError').innerHTML = '⚠️ Birth year must be between 1923 and 2007';
                     document.getElementById('birthDateError').style.display = 'block';
-// removed illegal return
+                    return;
                 }
             }
             
@@ -4006,7 +4015,7 @@ const reward = d.rate * 24;
                         const finalSize = resizedImage.length * 0.75; // Approximate bytes
                         if (finalSize > targetSize) {
                             showToast('⚠️ Image too large', true);
-// removed illegal return
+                            return;
                         }
                         
                         // Save to data
@@ -4128,7 +4137,7 @@ const reward = d.rate * 24;
             
             if (!filter) {
                 showCountryDropdown(inputId, dropdownId);
-// removed illegal return
+                return;
             }
             
             const filtered = countries.filter(country => 
@@ -4164,7 +4173,7 @@ const reward = d.rate * 24;
             if (!isValid && inputValue !== '') {
                 input.value = '';
                 input.dataset.validCountry = 'false';
-// removed illegal return false
+                return false;
             }
             
             input.dataset.validCountry = isValid ? 'true' : 'false';
@@ -4214,18 +4223,18 @@ const reward = d.rate * 24;
             
             if (!newEmail || !password) {
                 showToast('❌ Fill all fields', true);
-// removed illegal return
+                return;
             }
             
             const users = JSON.parse(localStorage.getItem('users') || '{}');
             if (users[currentUser.email].password !== password) {
                 showToast('❌ Wrong password', true);
-// removed illegal return
+                return;
             }
             
             if (users[newEmail]) {
                 showToast('❌ Email exists', true);
-// removed illegal return
+                return;
             }
             
             users[newEmail] = users[currentUser.email];
@@ -4276,17 +4285,17 @@ const reward = d.rate * 24;
             
             if (!currentPwd || !newPwd || !confirmPwd) {
                 showToast('❌ Fill all fields', true);
-// removed illegal return
+                return;
             }
             
             if (newPwd !== confirmPwd) {
                 showToast('❌ Passwords don\'t match', true);
-// removed illegal return
+                return;
             }
             
             if (newPwd.length < 6) {
                 showToast('❌ Password min 6 chars', true);
-// removed illegal return
+                return;
             }
             
             try {
@@ -4383,14 +4392,14 @@ const reward = d.rate * 24;
             
             if (!password) {
                 showDeleteError('Please enter your password');
-// removed illegal return
+                return;
             }
             
             const users = JSON.parse(localStorage.getItem('users') || '{}');
             
             if (users[currentUser.email].password !== password) {
                 showDeleteError('Incorrect password');
-// removed illegal return
+                return;
             }
             
             // Password correct - delete account
@@ -4817,7 +4826,7 @@ const reward = d.rate * 24;
             
             if (!users[userEmail] || !users[userEmail].pendingAirdrops || !users[userEmail].pendingAirdrops[index]) {
                 showToast('❌ Airdrop not found', true);
-// removed illegal return
+                return;
             }
             
             // Set lock
@@ -5434,7 +5443,7 @@ const reward = d.rate * 24;
             
             if (!currentUser.pendingReferralEarnings || currentUser.pendingReferralEarnings === 0) {
                 showToast('❌ No earnings to claim', true);
-// removed illegal return
+                return;
             }
             
             // Set lock
@@ -5563,18 +5572,18 @@ const reward = d.rate * 24;
             const fullNameRegex = /^[a-zA-Z\s]+$/;
             if (!fullNameRegex.test(fullName)) {
                 showToast('❌ Full Name: Only English letters allowed');
-// removed illegal return
+                return;
             }
             if (fullName.length < 3) {
                 showToast('❌ Full Name must be at least 3 characters');
-// removed illegal return
+                return;
             }
             
             // Validate email
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(newEmail)) {
                 showToast('❌ Invalid email');
-// removed illegal return
+                return;
             }
             
             // Validate birth date
@@ -5583,14 +5592,14 @@ const reward = d.rate * 24;
                 const match = birthDate.match(dateRegex);
                 if (!match) {
                     showToast('❌ Format: DD/MM/YYYY');
-// removed illegal return
+                    return;
                 }
                 const day = parseInt(match[1]);
                 const month = parseInt(match[2]);
                 const year = parseInt(match[3]);
                 if (year < 1923 || year > 2007 || month < 1 || month > 12 || day < 1 || day > 31) {
                     showToast('❌ Invalid date');
-// removed illegal return
+                    return;
                 }
             }
             
@@ -5605,7 +5614,7 @@ const reward = d.rate * 24;
                 if (!profileRes.ok) {
                     const data = await profileRes.json();
                     showToast(`❌ ${data.error || 'Failed'}`);
-// removed illegal return
+                    return;
                 }
                 
                 // Update email if changed
@@ -5619,7 +5628,7 @@ const reward = d.rate * 24;
                     if (!emailRes.ok) {
                         const data = await emailRes.json();
                         showToast(`❌ ${data.error || 'Email update failed'}`);
-// removed illegal return
+                        return;
                     }
                     currentUser.email = newEmail;
                 }
@@ -5676,7 +5685,7 @@ const reward = d.rate * 24;
                 // Check ignore flag
                 if (ignoreNextPopstate) {
                     ignoreNextPopstate = false;
-// removed illegal return
+                    return;
                 }
                 
                 const fullPage = document.getElementById('fullPage');
@@ -5690,19 +5699,19 @@ const reward = d.rate * 24;
                 if (changeEmailModal && changeEmailModal.classList.contains('show')) {
                     closeChangeEmail();
                     history.pushState({ page: 'main' }, '', '');
-// removed illegal return
+                    return;
                 }
                 
                 if (changePasswordModal && changePasswordModal.classList.contains('show')) {
                     closeChangePassword();
                     history.pushState({ page: 'main' }, '', '');
-// removed illegal return
+                    return;
                 }
                 
                 if (deleteAccountModal && deleteAccountModal.classList.contains('show')) {
                     closeDeleteAccount();
                     history.pushState({ page: 'main' }, '', '');
-// removed illegal return
+                    return;
                 }
                 
                 // Check if full page is open - close it and go to main (CHECK THIS FIRST!)
@@ -5727,7 +5736,7 @@ const reward = d.rate * 24;
                 if (currentTime - lastBackPress < backPressInterval) {
                     // Second press within interval - allow exit
                     // Browser will handle the exit
-// removed illegal return
+                    return;
                 } else {
                     // First press - set timestamp (no toast)
                     lastBackPress = currentTime;
@@ -5907,59 +5916,37 @@ const reward = d.rate * 24;
         }
         
         async function sendPasswordReset() {
-            // Keep error messaging inside the modal (no background alerts)
-            showInlineModalError('forgotPasswordError', '');
-
-            const emailInput = document.getElementById('forgotEmail');
-            const email = (emailInput ? emailInput.value : '').trim().toLowerCase();
-
+            const email = document.getElementById('forgotEmail').value.trim().toLowerCase();
+            
             if (!email) {
-                showInlineModalError('forgotPasswordError', 'Please enter your email.');
-// removed illegal return false
+                showToast('❌ Please enter your email', true);
+                return;
             }
-
+            
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
-                showInlineModalError('forgotPasswordError', 'Invalid email format.');
-// removed illegal return false
+                showToast('❌ Invalid email format', true);
+                return;
             }
-
+            
             try {
                 const response = await fetch(API_ENDPOINTS.sendPasswordReset, {
                     method: 'POST',
                     headers: getApiHeaders(),
-                    body: JSON.stringify({ email })
+                    body: JSON.stringify({ email: email })
                 });
-
-                let data = {};
-                try { data = await response.json(); } catch (_) {}
-
-                if (!response.ok) {
-                    const code = (data && (data.code || data.error)) ? (data.code || data.error) : '';
-                    if (response.status === 404 || code === 'email_not_found') {
-                        showInlineModalError('forgotPasswordError', 'This email is not registered.');
-// removed illegal return false
-                    }
-                    showInlineModalError('forgotPasswordError', (data && (data.message || data.error)) ? (data.message || data.error) : 'Failed to send reset code.');
-// removed illegal return false
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast('✓ Password reset link sent to your email!');
+                    closeForgotPassword();
+                } else {
+                    showToast(`❌ ${data.error || 'Failed to send reset link'}`, true);
                 }
-
-                // Success: keep the email for the code-confirm step and open the code box
-                resetEmail = email;
-                showInlineModalError('forgotPasswordError', '');
-
-                // Open code entry box
-                const box = document.getElementById('resetWithCodeBox');
-                if (box) box.style.display = 'flex';
-
-                // Close the email-entry modal
-                closeForgotPassword();
-
-                return true;
             } catch (error) {
                 console.error('Password reset error:', error);
-                showInlineModalError('forgotPasswordError', 'Network error. Please try again.');
-// removed illegal return false
+                showToast('❌ Failed to send reset link', true);
             }
         }
 
@@ -5980,8 +5967,6 @@ const reward = d.rate * 24;
     <div class="modal-content" style="max-width: 400px;">
         <h2 style="color: white; font-size: 22px; font-weight: 900; margin-bottom: 20px; text-align: center;">Reset Password</h2>
         <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-bottom: 20px; text-align: center;">Enter your email address and we'll send you a password reset link.</p>
-        <div id="forgotPasswordError" style="display:none; margin: 12px 0 16px; padding: 10px 12px; border-radius: 10px; background: rgba(255, 0, 0, 0.12); border: 1px solid rgba(255, 0, 0, 0.35); color: rgba(255,255,255,0.92); font-size: 13px; line-height: 1.3;"></div>
-
         <div class="form-group">
             <input type="email" class="form-input" id="forgotEmail" placeholder="Enter your email" style="margin-bottom: 20px;">
         </div>
@@ -6120,83 +6105,108 @@ window.addEventListener('offline', checkConnection);
     <div class="reset-close" onclick="document.getElementById('resetWithCodeBox').style.display='none'">✕</div>
     <h3>Reset Password</h3>
     <p>Enter the 6-digit code sent to your email</p>
-    <div id="resetWithCodeError" style="display:none; margin: 10px 0 14px; padding: 10px 12px; border-radius: 10px; background: rgba(255, 0, 0, 0.12); border: 1px solid rgba(255, 0, 0, 0.35); color: rgba(255,255,255,0.92); font-size: 13px; line-height: 1.3;"></div>
     <form id="resetForm">
-      <inpu<script>
-  // Reset-with-code UI logic (mobile-safe)
-  (function () {
-    const resetBox = document.getElementById('resetWithCodeBox');
-    const resetForm = document.getElementById('resetForm');
+      <input id="resetCode" class="reset-field" placeholder="6-digit code" inputmode="numeric" autocomplete="one-time-code" />
+      <input id="resetNewPassword" class="reset-field" type="password" placeholder="New password" />
+      <button class="reset-btn" id="confirmResetBtn" type="button">Confirm Reset</button>
+    </form>
+  </div>
+</div>
 
-    if (resetBox) resetBox.style.display = 'none';
+<script>
+(function(){
+  // Keep reset email even if the "Forgot password" modal gets closed/cleared
+  window.__resetEmail = window.__resetEmail || "";
 
-    if (resetForm) {
-      resetForm.addEventListener('submit', async function (e) {
+  const orig = window.sendPasswordReset;
+  if (typeof orig === 'function') {
+    window.sendPasswordReset = async function(){
+      const fe = document.getElementById('forgotEmail');
+      const email = (fe && fe.value ? fe.value.trim().toLowerCase() : "");
+      if (email) window.__resetEmail = email;
+
+      const r = await orig();
+
+      const box = document.getElementById('resetWithCodeBox');
+      if (box) box.style.display = 'flex';
+      return r;
+    }
+  }
+
+  async function handleResetWithCode(){
+    const email = (window.__resetEmail || (document.getElementById('forgotEmail')||{}).value || "").trim().toLowerCase();
+    const code  = (document.getElementById('resetCode')||{}).value?.trim();
+    const newPassword = (document.getElementById('resetNewPassword')||{}).value || "";
+
+    if (!email || !code || !newPassword) {
+      if (typeof showToast === 'function') showToast('❌ Fill all fields', true);
+      else alert('Fill all fields');
+      return;
+    }
+
+    const btn = document.getElementById('confirmResetBtn');
+    const origText = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; }
+
+    try {
+      const res = await fetch(API_ENDPOINTS.resetPasswordWithCode, {
+        method: 'POST',
+        headers: getApiHeaders(),
+        body: JSON.stringify({ email, code, newPassword })
+      });
+
+      let data = {};
+      try { data = await res.json(); } catch(_) {}
+
+      if (res.ok) {
+        if (typeof showToast === 'function') showToast('✓ Password reset successful');
+        else alert('Password reset successful');
+
+        const box = document.getElementById('resetWithCodeBox');
+        if (box) box.style.display = 'none';
+
+        const c = document.getElementById('resetCode');
+        const p = document.getElementById('resetNewPassword');
+        if (c) c.value = '';
+        if (p) p.value = '';
+      } else {
+        const msg = (data && data.error) ? data.error : 'Reset failed';
+        if (typeof showToast === 'function') showToast(`❌ ${msg}`, true);
+        else alert(msg);
+      }
+    } catch (err) {
+      if (typeof showToast === 'function') showToast('❌ Reset failed', true);
+      else alert('Reset failed');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = origText || 'Confirm Reset'; }
+    }
+  }
+
+  function bindResetHandlers(){
+    const btn = document.getElementById('confirmResetBtn');
+    if (btn && !btn.dataset.bound) {
+      btn.dataset.bound = '1';
+
+      const fire = (e) => {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        handleResetWithCode();
+      };
+
+      btn.addEventListener('click', fire, { passive: false });
+      btn.addEventListener('touchstart', fire, { passive: false });
+    }
+
+    const form = document.getElementById('resetForm');
+    if (form && !form.dataset.bound) {
+      form.dataset.bound = '1';
+      form.addEventListener('submit', (e) => {
         e.preventDefault();
-
-        showInlineModalError('resetWithCodeError', '');
-
-        const email = (resetEmail || '').trim().toLowerCase();
-        const code = (document.getElementById('resetCode') || {}).value?.trim() || '';
-        const newPassword = (document.getElementById('resetNewPassword') || {}).value || '';
-
-        if (!email) {
-          // Should not happen unless state was lost
-          showInlineModalError('resetWithCodeError', 'Please restart the reset process (email is missing).');
-// removed illegal return
-        }
-
-        if (!/^\d{6}$/.test(code)) {
-          showInlineModalError('resetWithCodeError', 'Invalid code. Enter the 6-digit code.');
-// removed illegal return
-        }
-
-        if (newPassword.length < 6) {
-          showInlineModalError('resetWithCodeError', 'Password must be at least 6 characters.');
-// removed illegal return
-        }
-
-        // English-only (ASCII printable, no spaces). Adjust if you want to allow spaces.
-        if (!/^[\x21-\x7E]+$/.test(newPassword)) {
-          showInlineModalError('resetWithCodeError', 'Password can only contain English characters (ASCII).');
-// removed illegal return
-        }
-
-        try {
-          const res = await fetch(API_ENDPOINTS.resetPasswordWithCode, {
-            method: 'POST',
-            headers: getApiHeaders(),
-            body: JSON.stringify({ email, code, newPassword })
-          });
-
-          let data = {};
-          try { data = await res.json(); } catch (_) {}
-
-          if (!res.ok) {
-            const codeVal = (data && (data.code || data.error)) ? (data.code || data.error) : '';
-            if (res.status === 404 || codeVal === 'email_not_found') {
-              // Keep user in the email modal (do not proceed)
-              showInlineModalError('resetWithCodeError', 'This email is not registered.');
-// removed illegal return
-            }
-            if (res.status === 400 || codeVal === 'invalid_code' || codeVal === 'code_invalid') {
-              showInlineModalError('resetWithCodeError', 'Incorrect code. Please try again.');
-// removed illegal return
-            }
-            showInlineModalError('resetWithCodeError', (data && (data.message || data.error)) ? (data.message || data.error) : 'Reset failed.');
-// removed illegal return
-          }
-
-          // Success
-          showInlineModalError('resetWithCodeError', '');
-          resetEmail = '';
-          if (resetBox) resetBox.style.display = 'none';
-          showToast('✓ Password reset successful');
-        } catch (err) {
-          console.error('Reset-with-code error:', err);
-          showInlineModalError('resetWithCodeError', 'Network error. Please try again.');
-        }
+        handleResetWithCode();
       }, { passive: false });
     }
-  })();
+  }
+
+  document.addEventListener('DOMContentLoaded', bindResetHandlers);
+  bindResetHandlers();
+})();
 </script>
