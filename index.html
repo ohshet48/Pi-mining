@@ -502,7 +502,18 @@
             text-align: center;
         }
         
-        /* Toast Notification */
+        
+        .info-msg {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.5);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 20px;
+            color: #bfdbfe;
+            font-size: 14px;
+            text-align: center;
+        }
+/* Toast Notification */
         .toast-notification {
             position: fixed;
             top: 20px;
@@ -5983,17 +5994,24 @@ if (response.ok && data.leaderboard) {
         }
         
         
-function showForgotError(msg){
+function showForgotStatus(msg, type){
   const b = document.getElementById('forgotError');
   if(!b) return;
   b.innerText = msg;
   b.style.display = 'block';
+  if(type === 'success') b.className = 'success-msg';
+  else if(type === 'info') b.className = 'info-msg';
+  else b.className = 'error-msg';
 }
+function showForgotError(msg){ showForgotStatus(msg, 'error'); }
+function showForgotInfo(msg){ showForgotStatus(msg, 'info'); }
+function showForgotSuccess(msg){ showForgotStatus(msg, 'success'); }
 function clearForgotError(){
   const b = document.getElementById('forgotError');
   if(!b) return;
   b.innerText = '';
   b.style.display = 'none';
+  b.className = 'error-msg';
 }
 
 async function sendPasswordReset() {
@@ -6011,6 +6029,8 @@ async function sendPasswordReset() {
             }
             
             try {
+                showForgotInfo("Waiting for server response..");
+
                 const response = await fetch(API_ENDPOINTS.sendPasswordReset, {
                     method: 'POST',
                     headers: getApiHeaders(),
@@ -6020,14 +6040,17 @@ async function sendPasswordReset() {
                 const data = await response.json();
                 
                 if (response.ok) {
-            clearForgotError();
-            closeForgotPassword();
-            window.__resetEmail = email;
-            const box = document.getElementById('resetWithCodeBox');
-            if (box) box.style.display = 'flex';
-        } else {
-            showForgotError(data.error || 'Email not found');
-        }
+                    showForgotSuccess(data.message || "Reset link sent. Check your email.");
+                    // Keep success message visible briefly, then proceed
+                    setTimeout(() => {
+                        closeForgotPassword();
+                        window.__resetEmail = email;
+                        const box = document.getElementById('resetWithCodeBox');
+                        if (box) box.style.display = 'flex';
+                    }, 1000);
+                } else {
+                    showForgotError(data.error || 'Email not found');
+                }
             } catch (error) {
                 console.error('Password reset error:', error);
                 showForgotError('Failed to send reset link');
@@ -6189,6 +6212,37 @@ window.__doConfirmReset = __doConfirmReset;
     ">Loading…</div>
 </div>
 
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('sendResetLinkBtn');
+  const modal = document.getElementById('resetPasswordModal') || document.querySelector('.modal-overlay');
+  let msgBox = document.getElementById('sendResetMsg');
+
+  if (!msgBox && modal) {
+    msgBox = document.createElement('div');
+    msgBox.id = 'sendResetMsg';
+    msgBox.style.marginTop = '12px';
+    msgBox.style.textAlign = 'center';
+    modal.querySelector('.modal-content')?.appendChild(msgBox);
+  }
+
+  if (!btn) return;
+
+  btn.addEventListener('click', () => {
+    if (msgBox) {
+      msgBox.innerText = 'Waiting for server response..';
+      msgBox.className = '';
+    }
+  });
+
+  document.addEventListener('sendResetResponse', (e) => {
+    if (!msgBox) return;
+    msgBox.innerText = e.detail?.message || '';
+  });
+});
+</script>
+
 </body>
 </html>
 
@@ -6276,7 +6330,36 @@ window.__doConfirmReset = __doConfirmReset;
             font-weight: 700;
             line-height: 1;
         }
-        </style>
+
+  .reset-status{
+    margin-top:12px;
+    padding:10px 12px;
+    border-radius:12px;
+    font-size:13px;
+    font-weight:700;
+    line-height:1.35;
+    text-align:center;
+    border:1px solid rgba(0,255,255,0.25);
+    background:rgba(0,0,0,0.35);
+    color:#e5f6ff;
+  }
+  .reset-status.waiting{
+    border-color: rgba(56,189,248,0.45);
+    background: rgba(14,165,233,0.12);
+    color:#bae6fd;
+  }
+  .reset-status.ok{
+    border-color: rgba(34,197,94,0.55);
+    background: rgba(34,197,94,0.12);
+    color:#bbf7d0;
+  }
+  .reset-status.err{
+    border-color: rgba(239,68,68,0.55);
+    background: rgba(239,68,68,0.12);
+    color:#fecaca;
+  }
+
+</style>
         
 
 <div id="resetWithCodeBox">
@@ -6284,10 +6367,11 @@ window.__doConfirmReset = __doConfirmReset;
     <div class="reset-close" onclick="document.getElementById('resetWithCodeBox').style.display='none'">✕</div>
     <h3>Reset Password</h3>
     <p>Enter the 6-digit code sent to your email</p>
+      <div id="resetStatusMsg" class="reset-status" style="display:none;"></div>
     <form id="resetForm">
       <input id="resetCode" class="reset-field" placeholder="6-digit code" inputmode="numeric" autocomplete="one-time-code" />
       <input id="resetNewPassword" class="reset-field" type="password" placeholder="New password" />
-      <button class="reset-btn" id="confirmResetBtn" type="button"  onclick="__doConfirmReset()" onclick="__doConfirmReset()">Confirm Reset</button>
+      <button class="reset-btn" id="confirmResetBtn" type="button"  onclick="window.handleResetWithCode && window.handleResetWithCode()">Confirm Reset</button>
     </form>
   </div>
 </div>
@@ -6304,52 +6388,88 @@ window.__doConfirmReset = __doConfirmReset;
 
 
   async function handleResetWithCode(){
-    const email = (window.__resetEmail || (document.getElementById('forgotEmail')||{}).value || "").trim().toLowerCase();
-    const code  = (document.getElementById('resetCode')||{}).value?.trim();
-    const newPassword = (document.getElementById('resetNewPassword')||{}).value || "";
 
-    if (!email || !code || !newPassword) {
-      if (typeof showToast === 'function') showToast('❌ Fill all fields', true);
-      else alert('Fill all fields');
-      return;
-    }
+const email = (window.__resetEmail || (document.getElementById('forgotEmail')||{}).value || "").trim().toLowerCase();
+const code  = (document.getElementById('resetCode')||{}).value?.trim();
+const newPassword = (document.getElementById('resetNewPassword')||{}).value || "";
 
-    const btn = document.getElementById('confirmResetBtn');
-    const origText = btn ? btn.textContent : '';
-    if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; }
+const box = document.getElementById('resetWithCodeBox');
+const statusEl = document.getElementById('resetStatusMsg');
 
-    try {
-      const res = await fetch(API_ENDPOINTS.resetPasswordWithCode, {
-        method: 'POST',
-        headers: getApiHeaders(),
-        body: JSON.stringify({ email: window.__resetEmail, code, newPassword })
-      });
+const setStatus = (msg, kind) => {
+  if (!statusEl) return;
+  statusEl.style.display = 'block';
+  statusEl.className = 'reset-status' + (kind ? (' ' + kind) : '');
+  statusEl.textContent = msg;
+};
 
-      let data = {};
-      try { data = await res.json(); } catch(_) {}
+const clearStatus = () => {
+  if (!statusEl) return;
+  statusEl.style.display = 'none';
+  statusEl.textContent = '';
+  statusEl.className = 'reset-status';
+};
 
-      if (res.ok) {
-        if (typeof showToast === 'function') showToast('✓ Password reset successful');
-        else alert('Password reset successful');
+if (!email || !code || !newPassword) {
+  setStatus('❌ Fill all fields', 'err');
+  return;
+}
 
-        const box = document.getElementById('resetWithCodeBox');
-        if (box) box.style.display = 'none';
+const btn = document.getElementById('confirmResetBtn');
+const origText = btn ? btn.textContent : '';
+if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; }
 
-        const c = document.getElementById('resetCode');
-        const p = document.getElementById('resetNewPassword');
-        if (c) c.value = '';
-        if (p) p.value = '';
-      } else {
-        const msg = (data && data.error) ? data.error : 'Reset failed';
-        if (typeof showToast === 'function') showToast(`❌ ${msg}`, true);
-        else alert(msg);
-      }
-    } catch (err) {
-      if (typeof showToast === 'function') showToast('❌ Reset failed', true);
-      else alert('Reset failed');
-    } finally {
-      if (btn) { btn.disabled = false; btn.textContent = origText || 'Confirm Reset'; }
-    }
+// Immediately show waiting message INSIDE modal (backend-independent)
+setStatus('⏳ Waiting for server response..', 'waiting');
+
+let closeTimer = null;
+const closeModalAfter = (ms) => {
+  if (closeTimer) clearTimeout(closeTimer);
+  closeTimer = setTimeout(() => {
+    if (box) box.style.display = 'none';
+    clearStatus();
+    // Reset button state even if modal closes
+    if (btn) { btn.disabled = false; btn.textContent = origText || 'Confirm Reset'; }
+  }, ms);
+};
+
+try {
+  const res = await fetch(API_ENDPOINTS.resetPasswordWithCode, {
+    method: 'POST',
+    headers: getApiHeaders(),
+    body: JSON.stringify({ email: window.__resetEmail, code, newPassword })
+  });
+
+  let data = {};
+  try { data = await res.json(); } catch(_) {}
+
+  if (res.ok) {
+    setStatus('✓ Password reset successful', 'ok');
+
+    // Clear fields on success
+    const c = document.getElementById('resetCode');
+    const p = document.getElementById('resetNewPassword');
+    if (c) c.value = '';
+    if (p) p.value = '';
+
+    // Show message for 1 second, then close modal
+    closeModalAfter(1000);
+  } else {
+    const msg = (data && (data.error || data.message)) ? (data.error || data.message) : 'Invalid code';
+    setStatus(`❌ ${msg}`, 'err');
+
+    // Show message for 1 second, then close modal
+    closeModalAfter(1000);
+  }
+} catch (err) {
+  setStatus('❌ Reset failed', 'err');
+  closeModalAfter(1000);
+} finally {
+  // If close timer is set, button will be restored when modal closes.
+  if (!closeTimer) {
+    if (btn) { btn.disabled = false; btn.textContent = origText || 'Confirm Reset'; }
+  }
+}
   }
 
   // Expose for reliable button handling
