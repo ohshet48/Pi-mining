@@ -1914,17 +1914,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         console.log('currentUser loaded:', currentUser);
+        console.log('🔄 Calling initApp to load fresh data...');
         
-        setTimeout(() => {
-            console.log('Showing app...');
-            document.getElementById('authScreen').style.display = 'none';
-            document.getElementById('app').style.display = 'block';
-            console.log('Calling initApp...');
-            initApp();
-            console.log('initApp completed');
-        }, 500);
+        // Direkt initApp çağır - splash screen initApp bitince kapanacak
+        document.getElementById('authScreen').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        initApp();
     } else {
         console.log('Auto-login FAILED - missing data');
+        // checkAuth zaten splash'i kapatacak
     }
 });
 // ============================================
@@ -2828,12 +2826,14 @@ window.__resetEmail = email;
                 if (currentUser) {
                     // Don't show app yet, initApp will handle it
                     document.getElementById('authScreen').style.display = 'none';
-                    initApp(); // Load fresh data
+                    initApp(); // Load fresh data - splash will be hidden after data loads
                     return;
                 }
             }
             
-             // Hide loading if no user
+            // No user found - show auth screen and hide splash
+            console.log('❌ No saved user - showing auth screen');
+            hideSplashScreen();
             document.getElementById('authScreen').style.display = 'flex';
             document.getElementById('app').style.display = 'none';
         }
@@ -2960,6 +2960,9 @@ window.__resetEmail = email;
                 activeMiningSession = userData.activeMiningSession || null; // Store for rate calculation
                 localStorage.setItem('currentUser', JSON.stringify(userData.user));
                 
+                // 🆕 Backend'den gelen güncel değerleri hemen uygula
+                dailyRewardAvailable = userData.user.dailyRewardAvailable || false;
+                
                 // Aktif mining session varsa yükle
                 if (userData.activeMiningSession) {
                     const session = userData.activeMiningSession;
@@ -2971,6 +2974,9 @@ window.__resetEmail = email;
                 }
                 
                 console.log('✅ User data yüklendi');
+                console.log('   - dailyRewardAvailable:', dailyRewardAvailable);
+                console.log('   - pendingLevelUp:', userData.user.pendingLevelUp);
+                console.log('   - pendingReferralEarnings:', userData.user.pendingReferralEarnings);
             }
             
             // Process Referrals
@@ -3048,6 +3054,10 @@ window.__resetEmail = email;
             checkMining();
             render();
             startTimer();
+            
+            // 🆕 TÜM VERİLER YÜKLENDİ - SPLASH SCREEN'İ KAPAT
+            console.log('✅ App initialized - hiding splash screen');
+            hideSplashScreen();
         }
         
         function calculateActiveRefs() {
@@ -3069,9 +3079,20 @@ window.__resetEmail = email;
                 users[userEmail].miningDays = d.miningDays;
                 users[userEmail].pendingLevelUp = d.pendingLevelUp;
                 users[userEmail].dailyRewardAvailable = dailyRewardAvailable;
+                users[userEmail].pendingReferralEarnings = d.pendingReferralEarnings; // 🆕 EKLENDI
                 
                 localStorage.setItem('users', JSON.stringify(users));
-                currentUser = users[userEmail];
+                
+                // 🆕 currentUser'ı da güncelleyelim
+                currentUser.balance = d.balance;
+                currentUser.level = d.level;
+                currentUser.miningDays = d.miningDays;
+                currentUser.pendingLevelUp = d.pendingLevelUp;
+                currentUser.dailyRewardAvailable = dailyRewardAvailable;
+                currentUser.pendingReferralEarnings = d.pendingReferralEarnings;
+                
+                // 🆕 localStorage'daki currentUser object'ini de güncelleyelim
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
             }
         }
         
@@ -3871,6 +3892,8 @@ const reward = d.rate * 24;
             if (timerStarted) return; // Prevent multiple timers
             timerStarted = true;
             
+            let lastRefreshTime = Date.now();
+            
             setInterval(function() {
                 if (d.mining && d.timeLeft > 0) {
                     d.timeLeft--;
@@ -3880,11 +3903,49 @@ const reward = d.rate * 24;
                     render();
                 }
                 
-                // Update active referrals count every 10 seconds
-                if (Date.now() % 10000 < 1000) {
-                    d.activeRefs = calculateActiveRefs();
+                // 🆕 Update active referrals from backend every 5 minutes
+                const now = Date.now();
+                if (now - lastRefreshTime >= 300000) { // 5 minutes
+                    lastRefreshTime = now;
+                    updateActiveReferralsCount();
                 }
             }, 1000);
+        }
+        
+        // 🆕 Update active referrals count from backend
+        async function updateActiveReferralsCount() {
+            try {
+                const activeRefResponse = await fetch(API_ENDPOINTS.getActiveReferrals + '?userId=' + currentUser.userId);
+                if (activeRefResponse.ok) {
+                    const activeRefData = await activeRefResponse.json();
+                    const newCount = activeRefData.activeCount || 0;
+                    
+                    // Update localStorage
+                    localStorage.setItem('activeReferralsCount_' + currentUser.email, newCount);
+                    
+                    // Update d.activeRefs
+                    const oldCount = d.activeRefs;
+                    d.activeRefs = newCount;
+                    
+                    // Recalculate rate
+                    const baseRate = currentUser.rate || 0.25;
+                    const refBonus = d.activeRefs * 0.05;
+                    let adBonus = 0;
+                    if (activeMiningSession && activeMiningSession.adBoostActive) {
+                        const boostCount = activeMiningSession.adBoostCount || 1;
+                        adBonus = boostCount * 0.25;
+                    }
+                    d.rate = baseRate + refBonus + adBonus;
+                    
+                    // Re-render if count changed
+                    if (oldCount !== newCount) {
+                        console.log(`🔄 Active referrals updated: ${oldCount} → ${newCount}`);
+                        render();
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to update active referrals:', err);
+            }
         }
         
         function createParticles() {
@@ -5064,8 +5125,8 @@ if (response.ok && data.leaderboard) {
                 <div style="display: flex; flex-direction: column; gap: 6px;">
             `;
             
-            // Current user card (if in top 100)
-            if (currentUserRank > 0 && currentUserData) {
+            // Current user card - SADECE top 100'de DEĞİLSE göster (yoksa listede zaten var)
+            if (currentUserRank > 100 && currentUserData) {
                 // Calculate current user progress
                 const userCurrentReq = levelRequirements[currentUserData.level] || 0;
                 const userNextReq = levelRequirements[currentUserData.level + 1];
@@ -5334,27 +5395,21 @@ if (response.ok && data.leaderboard) {
     let inactiveRefs = [];
     
     try {
-        // Get all referrals
+        // Get all referrals with active status (backend now includes isActive for each referral)
         const refResponse = await fetch(API_ENDPOINTS.getReferrals + '?userId=' + currentUser.userId);
         const refData = await refResponse.json();
         
-        // Get active count
-        const activeResponse = await fetch(API_ENDPOINTS.getActiveReferrals + '?userId=' + currentUser.userId);
-        const activeData = await activeResponse.json();
-        
         if (refResponse.ok && refData.referrals) {
             const allReferrals = refData.referrals;
-
-            // If backend provides per-referral active status, use it (accurate)
-            if (allReferrals.length > 0 && typeof allReferrals[0].isActive !== 'undefined') {
-                activeRefs = allReferrals.filter(r => r.isActive);
-                inactiveRefs = allReferrals.filter(r => !r.isActive);
-            } else {
-                // Backward-compatible fallback (older backend): split by count
-                const activeCount = activeData.activeCount || 0;
-                activeRefs = allReferrals.slice(0, activeCount);
-                inactiveRefs = allReferrals.slice(activeCount);
-            }
+            
+            console.log('📊 Referrals from backend:', allReferrals);
+            
+            // Backend artık her referans için isActive bilgisi gönderiyor
+            activeRefs = allReferrals.filter(r => r.isActive === true);
+            inactiveRefs = allReferrals.filter(r => r.isActive === false);
+            
+            console.log(`✅ Active referrals: ${activeRefs.length}`);
+            console.log(`⏸️ Inactive referrals: ${inactiveRefs.length}`);
         }
     } catch (err) {
         console.error('Failed to fetch referrals:', err);
@@ -5738,17 +5793,25 @@ if (response.ok && data.leaderboard) {
         
         createParticles();
         
-        // Splash screen - Firebase yüklendikten sonra kaybol
-        window.addEventListener('load', function() {
-            setTimeout(function() {
-                document.getElementById('splashScreen').classList.add('fade-out');
-                setTimeout(function() {
-                    document.getElementById('splashScreen').style.display = 'none';
-                    // Show loading screen
-                    
-                    checkAuth();
+        // Splash screen utility function
+        function hideSplashScreen() {
+            const splash = document.getElementById('splashScreen');
+            if (splash && !splash.classList.contains('fade-out')) {
+                console.log('🎬 Hiding splash screen...');
+                splash.classList.add('fade-out');
+                setTimeout(() => {
+                    splash.style.display = 'none';
                 }, 800);
-            }, 2000);
+            }
+        }
+        
+        // Splash screen - Manuel olarak kapatılacak (initApp veya checkAuth tarafından)
+        // Page load olduğunda auth check başlat
+        window.addEventListener('load', function() {
+            console.log('📱 Page loaded, checking auth...');
+            setTimeout(() => {
+                checkAuth();
+            }, 1000); // 1 saniye bekle (Firebase init için)
         });
         
         // Exit handling - double back press
