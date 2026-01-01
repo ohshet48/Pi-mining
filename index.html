@@ -1933,6 +1933,46 @@ function getApiHeaders(additionalHeaders = {}) {
   };
 }
 
+// 🆕 GLOBAL API WRAPPER - Session kontrolü ile
+async function apiCall(endpoint, options = {}) {
+  // Session ID ekle (varsa)
+  const clientSessionId = localStorage.getItem('deviceSessionId');
+  
+  // Body'ye session ID ekle
+  if (options.body) {
+    try {
+      const bodyData = JSON.parse(options.body);
+      bodyData.clientSessionId = clientSessionId;
+      options.body = JSON.stringify(bodyData);
+    } catch (e) {
+      // Body parse edilemezse (GET request vs.) devam et
+    }
+  }
+  
+  // API çağrısı yap
+  const response = await fetch(endpoint, options);
+  
+  // 401 kontrolü - Session geçersiz mi?
+  if (response.status === 401) {
+    try {
+      const errorData = await response.json();
+      if (errorData.reason === 'logged_in_elsewhere') {
+        // Başka cihazdan giriş yapılmış!
+        showToast('⚠️ Your account is logged in on another device', true);
+        setTimeout(() => {
+          logout();
+        }, 2000);
+        throw new Error('Session expired - logged in elsewhere');
+      }
+    } catch (e) {
+      // JSON parse hatası - normal 401
+      throw e;
+    }
+  }
+  
+  return response;
+}
+
 // Auto-login when DOM is ready  
 // ============================================
 // IMMEDIATE AUTO-LOGIN CHECK - VERİ ÇEKİMİ HEMEN BAŞLAR
@@ -3235,11 +3275,11 @@ window.__resetEmail = email;
 
         function save() {
             const users = JSON.parse(localStorage.getItem('users') || '{}');
-            const userEmail = localStorage.getItem('currentUser');
+            const userEmail = currentUser.email; // 🆕 currentUser.email kullan
             
             if (users[userEmail]) {
                 users[userEmail].balance = d.balance;
-                users[userEmail].rate = (currentUser.rate || 0.25); // Save base rate only (no referral/ad session bonuses)
+                users[userEmail].rate = (currentUser.rate || 0.25);
                 users[userEmail].level = d.level;
                 users[userEmail].refs = d.refs;
                 users[userEmail].streak = d.streak;
@@ -3312,7 +3352,7 @@ window.__resetEmail = email;
             const newBaseRate = baseRate + levelBonus;
                 // Update user's base rate with level bonus, but ensure MAX 5.0
                 const users = JSON.parse(localStorage.getItem('users') || '{}');
-                const userEmail = localStorage.getItem('currentUser');
+                const userEmail = currentUser.email; // 🆕 currentUser.email kullan
                 if (users[userEmail]) {
                     
                     // Check if current total rate would exceed 5.0
@@ -3750,24 +3790,24 @@ ${(() => {const miningDuration = localStorage.getItem('miningDuration_' + curren
             const miningDuration = 24 * 60 * 60 * 1000; // 24 hours in ms
             const end = now + miningDuration;
             localStorage.setItem('miningEndTime_' + currentUser.email, end);
-            localStorage.setItem('miningDuration_' + currentUser.email, miningDuration); // Store duration
+            localStorage.setItem('miningDuration_' + currentUser.email, miningDuration);
             
             // Reset ad boost for new session
             const users = JSON.parse(localStorage.getItem('users') || '{}');
             if (users[currentUser.email]) {
-                // Remove any ad boost from previous session
-                const baseRate = 0.25; // Starting rate
-                const levelBonus = (users[currentUser.email].level - 1) * 0.05; // Level rewards
+                const baseRate = 0.25;
+                const levelBonus = (users[currentUser.email].level - 1) * 0.05;
                 users[currentUser.email].rate = baseRate + levelBonus;
-                                users[currentUser.email].adBoostAmount = 0; // Clear ad boost for new session
-localStorage.setItem('users', JSON.stringify(users));
+                users[currentUser.email].adBoostAmount = 0;
+                localStorage.setItem('users', JSON.stringify(users));
                 currentUser = users[currentUser.email];
             }
             
-            // Clear ad cooldown
             localStorage.removeItem('adCooldown_' + currentUser.email);
+            
             // Call backend to start mining
-        await startMiningOnBackend();
+            await startMiningOnBackend();
+            
             d.mining = true;
             d.timeLeft = 24 * 60 * 60;
 
@@ -3786,12 +3826,15 @@ localStorage.setItem('users', JSON.stringify(users));
             }
             d.lastDate = today;
             save();
-            initApp();
+            
+            // 🆕 initApp() kaldırıldı - gereksiz backend çağrısı
             render();
         }
+        
 async function startMiningOnBackend() {
             try {
-                const response = await fetch(API_ENDPOINTS.startMining, {
+                // 🆕 apiCall wrapper kullan
+                const response = await apiCall(API_ENDPOINTS.startMining, {
                     method: 'POST',
                     headers: getApiHeaders(),
                     body: JSON.stringify({
@@ -3816,7 +3859,7 @@ async function startMiningOnBackend() {
                         // Clear session ad boost now that mining ended
             try {
                 const users = JSON.parse(localStorage.getItem('users') || '{}');
-                const userEmail = localStorage.getItem('currentUser');
+                const userEmail = currentUser.email; // 🆕 currentUser.email kullan
                 if (users[userEmail]) {
                     users[userEmail].adBoostAmount = 0;
                     localStorage.setItem('users', JSON.stringify(users));
@@ -3874,13 +3917,13 @@ async function startMiningOnBackend() {
             d.miningDays++;
             dailyRewardAvailable = true;
             save();
-            render();  // UI'ı anında güncelle
+            render();
             
-            // 🆕 Başarı mesajı hemen göster
             showToast(`✅ Claimed ${reward.toFixed(2)} ARC!`);
             
             try {
-                const response = await fetch(API_ENDPOINTS.claimReward, {
+                // 🆕 apiCall wrapper kullan - session kontrolü otomatik
+                const response = await apiCall(API_ENDPOINTS.claimReward, {
                     method: 'POST',
                     headers: getApiHeaders(),
                     body: JSON.stringify({
@@ -3891,7 +3934,6 @@ async function startMiningOnBackend() {
                 });
 
                 if (response.ok) {
-                    // Backend başarılı - zaten güncelledik
                     checkLevelUp();
                     sendMiningCompleteNotification();
                 } else {
@@ -3905,8 +3947,15 @@ async function startMiningOnBackend() {
                 }
             } catch (error) {
                 console.error('Backend error:', error);
-                // Network hatası - veriyi koruyalım, backend retry edebilir
-                showToast('⚠️ Network error. Your reward is saved locally.', true);
+                // Session hatası yakalandı - apiCall içinde logout yapılacak
+                if (error.message && error.message.includes('Session expired')) {
+                    d.balance -= reward;
+                    d.miningDays--;
+                    dailyRewardAvailable = false;
+                    save();
+                } else {
+                    showToast('⚠️ Network error. Your reward is saved locally.', true);
+                }
             }
         }
         function claimDailyReward() {
@@ -3927,7 +3976,8 @@ async function startMiningOnBackend() {
 
             (async () => {
                 try {
-                    const res = await fetch(API_ENDPOINTS.claimDailyReward, {
+                    // 🆕 apiCall wrapper kullan - session kontrolü otomatik
+                    const res = await apiCall(API_ENDPOINTS.claimDailyReward, {
                         method: 'POST',
                         headers: getApiHeaders(),
                         body: JSON.stringify({
@@ -4037,7 +4087,8 @@ async function startMiningOnBackend() {
                 
                 // Call backend to apply boost
                 try {
-                    const response = await fetch(API_ENDPOINTS.applyAdBoost, {
+                    // 🆕 apiCall wrapper kullan - session kontrolü otomatik
+                    const response = await apiCall(API_ENDPOINTS.applyAdBoost, {
                         method: 'POST',
                         headers: getApiHeaders(),
                         body: JSON.stringify({ 
@@ -5011,7 +5062,7 @@ async function startMiningOnBackend() {
         
         function getAirdropPageContent() {
             // Get pending airdrops from localStorage
-            const userEmail = localStorage.getItem('currentUser');
+            const userEmail = currentUser.email; // 🆕 currentUser.email kullan
             let users = JSON.parse(localStorage.getItem('users')) || {};
             const pendingAirdrops = users[userEmail]?.pendingAirdrops || [];
             
@@ -5118,7 +5169,7 @@ async function startMiningOnBackend() {
             // Prevent double-claiming
             if (isClaimingAirdrop) return;
             
-            const userEmail = localStorage.getItem('currentUser');
+            const userEmail = currentUser.email; // 🆕 currentUser.email kullan
             let users = JSON.parse(localStorage.getItem('users')) || {};
             
             if (!users[userEmail] || !users[userEmail].pendingAirdrops || !users[userEmail].pendingAirdrops[index]) {
@@ -5775,8 +5826,8 @@ if (response.ok && data.leaderboard) {
             isClaimingReferral = true;
             
             try {
-                // Call backend
-                fetch(API_ENDPOINTS.claimReferralEarnings, {
+                // Call backend - 🆕 apiCall wrapper kullan
+                apiCall(API_ENDPOINTS.claimReferralEarnings, {
                     method: 'POST',
                     headers: getApiHeaders(),
                     body: JSON.stringify({
