@@ -1919,6 +1919,9 @@ const API_ENDPOINTS = {
   sendPasswordReset: `${FUNCTIONS_BASE_URL}/sendPasswordReset`,
   resetPasswordWithCode: `${FUNCTIONS_BASE_URL}/resetPasswordWithCode`,
   sendEmailVerification: `${FUNCTIONS_BASE_URL}/sendEmailVerification`,
+  getAirdrops: `${FUNCTIONS_BASE_URL}/getAirdrops`,           // 🆕
+  claimAirdrop: `${FUNCTIONS_BASE_URL}/claimAirdrop`,         // 🆕
+  getAnnouncements: `${FUNCTIONS_BASE_URL}/getAnnouncements`, // 🆕
 };
 
 // API Key for mobile app security
@@ -5054,20 +5057,22 @@ async function startMiningOnBackend() {
             showToast(enabled ? '🔔 Notifications enabled' : '🔕 Notifications disabled');
         }
         
-        function getAnnouncementsPageContent() {
-            // TODO: Replace this with server API call
-            // Example: fetch('/api/announcements').then(res => res.json()).then(data => ...)
+        async function getAnnouncementsPageContent() {
+            // 🆕 Backend'den announcements çek
+            let announcements = [];
             
-            const announcements = [
-                // Mock data - replace with server data
-                // {
-                //     id: 1,
-                //     title: "Welcome to Arc Astra",
-                //     date: "2024-12-10",
-                //     content: "We are excited to launch Arc Astra!",
-                //     priority: "high" // high, medium, low
-                // }
-            ];
+            try {
+                const response = await fetch(API_ENDPOINTS.getAnnouncements, {
+                    headers: getApiHeaders()
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    announcements = data.announcements || [];
+                }
+            } catch (error) {
+                console.error('Failed to fetch announcements:', error);
+            }
             
             if (announcements.length === 0) {
                 return `
@@ -5095,7 +5100,7 @@ async function startMiningOnBackend() {
                             <span style="background: ${priorityColor}20; color: ${priorityColor}; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; white-space: nowrap; margin-left: 12px;">${priorityBadge}</span>
                         </div>
                         <div style="color: #8b5cf6; font-size: 13px; margin-bottom: 12px; font-weight: 600;">
-                            📅 ${formatAnnouncementDate(announcement.date)}
+                            📅 ${formatAnnouncementDate(announcement.createdAt || announcement.date)}
                         </div>
                         <div style="color: #c4b5fd; font-size: 15px; line-height: 1.6;">
                             ${announcement.content}
@@ -5114,11 +5119,22 @@ async function startMiningOnBackend() {
             return date.toLocaleDateString('en-US', options);
         }
         
-        function getAirdropPageContent() {
-            // Get pending airdrops from localStorage
-            const userEmail = currentUser.email; // 🆕 currentUser.email kullan
-            let users = getCachedUsers();
-            const pendingAirdrops = users[userEmail]?.pendingAirdrops || [];
+        async function getAirdropPageContent() {
+            // 🆕 Backend'den airdrops çek
+            let pendingAirdrops = [];
+            
+            try {
+                const response = await fetch(API_ENDPOINTS.getAirdrops + '?userId=' + currentUser.userId, {
+                    headers: getApiHeaders()
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    pendingAirdrops = (data.airdrops || []).filter(a => !a.claimed);
+                }
+            } catch (error) {
+                console.error('Failed to fetch airdrops:', error);
+            }
             
             if (pendingAirdrops.length === 0) {
                 return `
@@ -5219,15 +5235,15 @@ async function startMiningOnBackend() {
             return html;
         }
         
-        function claimAirdrop(index) {
+        async function claimAirdrop(index) {
             // Prevent double-claiming
-            if (isClaimingAirdrop) return;
+            if (isClaimingAirdrop) {
+                showToast('⏳ Please wait...', true);
+                return;
+            }
             
-            const userEmail = currentUser.email; // 🆕 currentUser.email kullan
-            let users = getCachedUsers();
-            
-            if (!users[userEmail] || !users[userEmail].pendingAirdrops || !users[userEmail].pendingAirdrops[index]) {
-                showToast('❌ Airdrop not found', true);
+            if (!currentUser || !currentUser.userId) {
+                showToast('❌ Please login first', true);
                 return;
             }
             
@@ -5235,43 +5251,67 @@ async function startMiningOnBackend() {
             isClaimingAirdrop = true;
             
             try {
-                const airdrop = users[userEmail].pendingAirdrops[index];
+                showToast('⏳ Claiming airdrop...');
                 
-                // Add to balance
-                users[userEmail].balance = (users[userEmail].balance || 0) + airdrop.amount;
+                // 🆕 Backend'e claim isteği gönder
+                const response = await apiCall(API_ENDPOINTS.claimAirdrop, {
+                    method: 'POST',
+                    headers: getApiHeaders(),
+                    body: JSON.stringify({
+                        userId: currentUser.userId,
+                        airdropId: index
+                    })
+                });
                 
-                // Ensure user's rate doesn't exceed 5.0 (safety check)
-                const activeRefs = calculateActiveRefs();
-                const currentTotalRate = (users[userEmail].rate || 0.25) + (activeRefs * 0.05);
-                if (currentTotalRate > 5.0) {
-                    users[userEmail].rate = Math.max(0.25, 5.0 - (activeRefs * 0.05));
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Update local balance
+                    d.balance = data.newBalance;
+                    currentUser.balance = data.newBalance;
+                    
+                    // Refresh airdrops from backend
+                    const airdropsResponse = await fetch(API_ENDPOINTS.getAirdrops + '?userId=' + currentUser.userId, {
+                        headers: getApiHeaders()
+                    });
+                    
+                    if (airdropsResponse.ok) {
+                        const airdropsData = await airdropsResponse.json();
+                        currentUser.pendingAirdrops = airdropsData.airdrops || [];
+                        
+                        // Update hasPendingAirdrops
+                        hasPendingAirdrops = currentUser.pendingAirdrops.length > 0;
+                    }
+                    
+                    // Save to localStorage
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    save();
+                    
+                    // Show success message
+                    showToast(`✅ Claimed ${data.amount} ARC!`);
+                    
+                    // Refresh page content
+                    openPage('airdrop');
+                    
+                    // Update main screen
+                    render();
+                } else {
+                    showToast(`❌ ${data.error || 'Failed to claim airdrop'}`, true);
+                }
+            } catch (error) {
+                console.error('Claim airdrop error:', error);
+                
+                if (error.message && error.message.includes('Session expired')) {
+                    // Session hatası - logout yapılacak
+                    return;
                 }
                 
-                // Remove from pending airdrops
-                users[userEmail].pendingAirdrops.splice(index, 1);
-                
-                // Save to localStorage
-                setUsers(users);
-                
-                // Update current user
-                currentUser = users[userEmail];
-                
-                // Update hasPendingAirdrops
-                hasPendingAirdrops = (currentUser.pendingAirdrops && currentUser.pendingAirdrops.length > 0) || false;
-                
-                // Show success message
-                showToast(`✓ Claimed ${airdrop.amount} Coins!`);
-                
-                // Refresh page content
-                openPage('airdrop');
-                
-                // Update main screen to refresh green indicators
-                render();
+                showToast('❌ Network error. Please try again.', true);
             } finally {
                 // Release lock after delay
                 setTimeout(() => {
                     isClaimingAirdrop = false;
-                }, 1000);
+                }, 2000);
             }
         }
         
