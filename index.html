@@ -3003,6 +3003,37 @@ window.__resetEmail = email;
         let hasPendingAirdrops = false;
         let activeMiningSession = null; // Store active session for ad boost check
         
+        // 🆕 PERFORMANS: localStorage cache (memory'de tut)
+        let localStorageCache = {
+            users: null,
+            lastCacheTime: 0,
+            CACHE_TTL: 5000 // 5 saniye cache
+        };
+        
+        // Helper: cached localStorage read
+        function getCachedUsers() {
+            const now = Date.now();
+            if (localStorageCache.users && (now - localStorageCache.lastCacheTime) < localStorageCache.CACHE_TTL) {
+                return localStorageCache.users; // Cache hit
+            }
+            // Cache miss - read and update
+            localStorageCache.users = getCachedUsers();
+            localStorageCache.lastCacheTime = now;
+            return localStorageCache.users;
+        }
+        
+        // Helper: invalidate cache when writing
+        function invalidateUsersCache() {
+            localStorageCache.users = null;
+            localStorageCache.lastCacheTime = 0;
+        }
+        
+        // 🆕 Helper: save users with cache invalidation
+        function setUsers(users) {
+            setUsers(users);
+            invalidateUsersCache();
+        }
+        
         // Claiming locks to prevent double-claims
         let isClaimingLevel = false;
         let isClaimingReferral = false;
@@ -3274,8 +3305,10 @@ window.__resetEmail = email;
         }
 
         function save() {
-            const users = JSON.parse(localStorage.getItem('users') || '{}');
-            const userEmail = currentUser.email; // 🆕 currentUser.email kullan
+            if (!currentUser || !currentUser.email) return;
+            
+            const users = getCachedUsers(); // 🆕 Cache'den oku
+            const userEmail = currentUser.email;
             
             if (users[userEmail]) {
                 users[userEmail].balance = d.balance;
@@ -3289,7 +3322,7 @@ window.__resetEmail = email;
                 users[userEmail].dailyRewardAvailable = dailyRewardAvailable;
                 users[userEmail].pendingReferralEarnings = d.pendingReferralEarnings; // 🆕 EKLENDI
                 
-                localStorage.setItem('users', JSON.stringify(users));
+                setUsers(users);
                 
                 // 🆕 currentUser'ı da güncelleyelim
                 currentUser.balance = d.balance;
@@ -3351,7 +3384,7 @@ window.__resetEmail = email;
             const levelBonus = (claimedLevel - 1) * 0.05;
             const newBaseRate = baseRate + levelBonus;
                 // Update user's base rate with level bonus, but ensure MAX 5.0
-                const users = JSON.parse(localStorage.getItem('users') || '{}');
+                const users = getCachedUsers();
                 const userEmail = currentUser.email; // 🆕 currentUser.email kullan
                 if (users[userEmail]) {
                     
@@ -3366,7 +3399,7 @@ window.__resetEmail = email;
                         users[userEmail].rate = newBaseRate;
                     }
                     
-                    localStorage.setItem('users', JSON.stringify(users));
+                    setUsers(users);
                     currentUser = users[userEmail];
                 }
                 
@@ -3786,20 +3819,25 @@ ${(() => {const miningDuration = localStorage.getItem('miningDuration_' + curren
         }
 	
         async function startMine() {
+            if (!currentUser || !currentUser.email) {
+                showToast('❌ Please login first', true);
+                return;
+            }
+            
             const now = Date.now();
-            const miningDuration = 24 * 60 * 60 * 1000; // 24 hours in ms
+            const miningDuration = 24 * 60 * 60 * 1000;
             const end = now + miningDuration;
             localStorage.setItem('miningEndTime_' + currentUser.email, end);
             localStorage.setItem('miningDuration_' + currentUser.email, miningDuration);
             
             // Reset ad boost for new session
-            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            const users = getCachedUsers();
             if (users[currentUser.email]) {
                 const baseRate = 0.25;
                 const levelBonus = (users[currentUser.email].level - 1) * 0.05;
                 users[currentUser.email].rate = baseRate + levelBonus;
                 users[currentUser.email].adBoostAmount = 0;
-                localStorage.setItem('users', JSON.stringify(users));
+                setUsers(users);
                 currentUser = users[currentUser.email];
             }
             
@@ -3858,11 +3896,11 @@ async function startMiningOnBackend() {
             localStorage.removeItem('miningEndTime_' + currentUser.email);
                         // Clear session ad boost now that mining ended
             try {
-                const users = JSON.parse(localStorage.getItem('users') || '{}');
+                const users = getCachedUsers();
                 const userEmail = currentUser.email; // 🆕 currentUser.email kullan
                 if (users[userEmail]) {
                     users[userEmail].adBoostAmount = 0;
-                    localStorage.setItem('users', JSON.stringify(users));
+                    setUsers(users);
                     currentUser = users[userEmail];
                 }
             } catch(e) {}
@@ -4162,10 +4200,30 @@ async function startMiningOnBackend() {
             setInterval(function() {
                 if (d.mining && d.timeLeft > 0) {
                     d.timeLeft--;
+                    
+                    // 🆕 PERFORMANS OPTİMİZASYONU
+                    // Sadece her 10 saniyede bir full render (earning amount güncellemesi için)
+                    // Diğer saniyeler: sadece timer text güncelle
+                    if (d.timeLeft % 10 === 0) {
+                        render(); // Full render - earning amount güncellenecek
+                    } else {
+                        // Hızlı güncelleme: sadece timer
+                        const timerElement = document.querySelector('.timer-time');
+                        if (timerElement) {
+                            timerElement.textContent = fmt(d.timeLeft);
+                        }
+                        
+                        // Progress circle güncelle
+                        const progressCircle = document.querySelector('.timer-progress');
+                        if (progressCircle) {
+                            const offset = 440 - ((86400 - d.timeLeft) / 86400) * 440;
+                            progressCircle.setAttribute('stroke-dashoffset', offset);
+                        }
+                    }
+                    
                     if (d.timeLeft <= 0) {
                         completeMine();
                     }
-                    render();
                 }
             }, 1000);
         }
@@ -4274,12 +4332,12 @@ async function startMiningOnBackend() {
             save();
             
             // Also save to users object
-            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            const users = getCachedUsers();
             if (users[currentUser.email]) {
                 users[currentUser.email].fullName = d.fullName;
                 users[currentUser.email].birthDate = d.birthDate;
                 users[currentUser.email].country = d.country;
-                localStorage.setItem('users', JSON.stringify(users));
+                setUsers(users);
             }
             
             // Disable inputs and hide save button
@@ -4552,7 +4610,7 @@ async function startMiningOnBackend() {
                 return;
             }
             
-            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            const users = getCachedUsers();
             if (users[currentUser.email].password !== password) {
                 showToast('❌ Wrong password', true);
                 return;
@@ -4567,7 +4625,7 @@ async function startMiningOnBackend() {
             users[newEmail].email = newEmail;
             delete users[currentUser.email];
             
-            localStorage.setItem('users', JSON.stringify(users));
+            setUsers(users);
             currentUser.email = newEmail;
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             
@@ -4721,7 +4779,7 @@ async function startMiningOnBackend() {
                 return;
             }
             
-            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            const users = getCachedUsers();
             
             if (users[currentUser.email].password !== password) {
                 showDeleteError('Incorrect password');
@@ -5063,7 +5121,7 @@ async function startMiningOnBackend() {
         function getAirdropPageContent() {
             // Get pending airdrops from localStorage
             const userEmail = currentUser.email; // 🆕 currentUser.email kullan
-            let users = JSON.parse(localStorage.getItem('users')) || {};
+            let users = getCachedUsers();
             const pendingAirdrops = users[userEmail]?.pendingAirdrops || [];
             
             if (pendingAirdrops.length === 0) {
@@ -5170,7 +5228,7 @@ async function startMiningOnBackend() {
             if (isClaimingAirdrop) return;
             
             const userEmail = currentUser.email; // 🆕 currentUser.email kullan
-            let users = JSON.parse(localStorage.getItem('users')) || {};
+            let users = getCachedUsers();
             
             if (!users[userEmail] || !users[userEmail].pendingAirdrops || !users[userEmail].pendingAirdrops[index]) {
                 showToast('❌ Airdrop not found', true);
@@ -5197,7 +5255,7 @@ async function startMiningOnBackend() {
                 users[userEmail].pendingAirdrops.splice(index, 1);
                 
                 // Save to localStorage
-                localStorage.setItem('users', JSON.stringify(users));
+                setUsers(users);
                 
                 // Update current user
                 currentUser = users[userEmail];
@@ -5628,7 +5686,7 @@ if (response.ok && data.leaderboard) {
             }
             
             // Get current user from backend
-            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            const users = getCachedUsers();
             const currentEmail = localStorage.getItem('currentUser');
             
             // Get referrals from backend
