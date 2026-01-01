@@ -1889,6 +1889,50 @@ console.log('Initializing Firebase...');
 firebase.initializeApp(firebaseConfig);
 console.log('Firebase initialized:', firebase.apps.length);
 const messaging = firebase.messaging();
+
+// ============================================
+// Firebase Cloud Functions URL'leri - AUTO-LOGIN'DEN ÖNCE
+// ============================================
+const FUNCTIONS_BASE_URL = 'https://europe-west1-arcastra-eba62.cloudfunctions.net';
+
+const API_ENDPOINTS = {
+  registerUser: `${FUNCTIONS_BASE_URL}/registerUser`,
+  loginUser: `${FUNCTIONS_BASE_URL}/loginUser`,
+  updateFcmToken: `${FUNCTIONS_BASE_URL}/updateFcmToken`,
+  startMining: `${FUNCTIONS_BASE_URL}/startMining`,
+  applyAdBoost: `${FUNCTIONS_BASE_URL}/applyAdBoost`,
+  claimReward: `${FUNCTIONS_BASE_URL}/claimReward`,
+  getUserData: `${FUNCTIONS_BASE_URL}/getUserData`,
+  getMiningSessions: `${FUNCTIONS_BASE_URL}/getMiningSessions`,
+  sendMiningNotification: `${FUNCTIONS_BASE_URL}/sendMiningNotification`,
+  updateLevel: `${FUNCTIONS_BASE_URL}/updateLevel`,
+  claimDailyReward: `${FUNCTIONS_BASE_URL}/claimDailyReward`,
+  claimReferralEarnings: `${FUNCTIONS_BASE_URL}/claimReferralEarnings`,
+  getReferrals: `${FUNCTIONS_BASE_URL}/getReferrals`,
+  getActiveReferrals: `${FUNCTIONS_BASE_URL}/getActiveReferrals`,
+  getTransactions: `${FUNCTIONS_BASE_URL}/getTransactions`,
+  getLeaderboard: `${FUNCTIONS_BASE_URL}/getLeaderboard`,
+  updateProfile: `${FUNCTIONS_BASE_URL}/updateProfile`,
+  updateEmail: `${FUNCTIONS_BASE_URL}/updateEmail`,
+  updatePassword: `${FUNCTIONS_BASE_URL}/updatePassword`,
+  deleteAccount: `${FUNCTIONS_BASE_URL}/deleteAccount`,
+  sendPasswordReset: `${FUNCTIONS_BASE_URL}/sendPasswordReset`,
+  resetPasswordWithCode: `${FUNCTIONS_BASE_URL}/resetPasswordWithCode`,
+  sendEmailVerification: `${FUNCTIONS_BASE_URL}/sendEmailVerification`,
+};
+
+// API Key for mobile app security
+const API_KEY = 'arc_astra_mobile_2024_x7K9mP3qR8wL5nF2';
+
+// Helper function to add API key to headers
+function getApiHeaders(additionalHeaders = {}) {
+  return {
+    'Content-Type': 'application/json',
+    'X-API-Key': API_KEY,
+    ...additionalHeaders
+  };
+}
+
 // Auto-login when DOM is ready  
 // ============================================
 // IMMEDIATE AUTO-LOGIN CHECK - VERİ ÇEKİMİ HEMEN BAŞLAR
@@ -1972,50 +2016,6 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Auto-login FAILED - missing data');
     }
 });
-// ============================================
-// Firebase Cloud Functions URL'leri
-// ============================================
-// TODO: firebase functions:list komutundan aldığınız URL'leri buraya yapıştırın
-const FUNCTIONS_BASE_URL = 'https://europe-west1-arcastra-eba62.cloudfunctions.net';
-
-const API_ENDPOINTS = {
-  registerUser: `${FUNCTIONS_BASE_URL}/registerUser`,
-  loginUser: `${FUNCTIONS_BASE_URL}/loginUser`,
-  updateFcmToken: `${FUNCTIONS_BASE_URL}/updateFcmToken`,
-  startMining: `${FUNCTIONS_BASE_URL}/startMining`,
-  applyAdBoost: `${FUNCTIONS_BASE_URL}/applyAdBoost`,
-  claimReward: `${FUNCTIONS_BASE_URL}/claimReward`,
-  getUserData: `${FUNCTIONS_BASE_URL}/getUserData`,
-  getMiningSessions: `${FUNCTIONS_BASE_URL}/getMiningSessions`,
-  sendMiningNotification: `${FUNCTIONS_BASE_URL}/sendMiningNotification`,
-  updateLevel: `${FUNCTIONS_BASE_URL}/updateLevel`,
-  claimDailyReward: `${FUNCTIONS_BASE_URL}/claimDailyReward`,
-  claimReferralEarnings: `${FUNCTIONS_BASE_URL}/claimReferralEarnings`,
-  getReferrals: `${FUNCTIONS_BASE_URL}/getReferrals`,
-  getActiveReferrals: `${FUNCTIONS_BASE_URL}/getActiveReferrals`,
-  getTransactions: `${FUNCTIONS_BASE_URL}/getTransactions`,
-  getLeaderboard: `${FUNCTIONS_BASE_URL}/getLeaderboard`,
-  updateProfile: `${FUNCTIONS_BASE_URL}/updateProfile`,
-  updateEmail: `${FUNCTIONS_BASE_URL}/updateEmail`,
-  updatePassword: `${FUNCTIONS_BASE_URL}/updatePassword`,
-  deleteAccount: `${FUNCTIONS_BASE_URL}/deleteAccount`,
-  sendPasswordReset: `${FUNCTIONS_BASE_URL}/sendPasswordReset`,
-  resetPasswordWithCode: `${FUNCTIONS_BASE_URL}/resetPasswordWithCode`,
-  sendEmailVerification: `${FUNCTIONS_BASE_URL}/sendEmailVerification`,
-};
-
-// API Key for mobile app security
-const API_KEY = 'arc_astra_mobile_2024_x7K9mP3qR8wL5nF2';
-
-// Helper function to add API key to headers
-function getApiHeaders(additionalHeaders = {}) {
-  return {
-    'Content-Type': 'application/json',
-    'X-API-Key': API_KEY,
-    ...additionalHeaders
-  };
-}
-  
 
 // ============================================
 // FCM (Firebase Cloud Messaging) Functions
