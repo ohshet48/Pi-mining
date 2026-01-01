@@ -3017,7 +3017,7 @@ window.__resetEmail = email;
                 return localStorageCache.users; // Cache hit
             }
             // Cache miss - read and update
-            localStorageCache.users = getCachedUsers();
+            localStorageCache.users = JSON.parse(localStorage.getItem('users') || '{}'); // ✅ FIX
             localStorageCache.lastCacheTime = now;
             return localStorageCache.users;
         }
@@ -3030,7 +3030,7 @@ window.__resetEmail = email;
         
         // 🆕 Helper: save users with cache invalidation
         function setUsers(users) {
-            setUsers(users);
+            localStorage.setItem('users', JSON.stringify(users)); // ✅ FIX
             invalidateUsersCache();
         }
         
