@@ -1890,22 +1890,15 @@ firebase.initializeApp(firebaseConfig);
 console.log('Firebase initialized:', firebase.apps.length);
 const messaging = firebase.messaging();
 // Auto-login when DOM is ready  
-document.addEventListener('DOMContentLoaded', function() {
-    // Auto-reload when internet connection restored
-    window.addEventListener('online', () => {
-        console.log('Internet connection restored - reloading...');
-        location.reload();
-    });
-    
-    console.log('=== AUTO-LOGIN BAŞLADI ===');
+// ============================================
+// IMMEDIATE AUTO-LOGIN CHECK - VERİ ÇEKİMİ HEMEN BAŞLAR
+// ============================================
+(function() {
+    console.log('=== AUTO-LOGIN CHECK (IMMEDIATE) ===');
     
     const isLoggedIn = localStorage.getItem('isLoggedIn');
     const userId = localStorage.getItem('userId');
     const storedUser = localStorage.getItem('currentUser');
-    
-    console.log('isLoggedIn:', isLoggedIn);
-    console.log('userId:', userId);
-    console.log('storedUser:', storedUser ? 'VAR' : 'YOK');
     
     if (isLoggedIn === 'true' && userId && storedUser) {
         currentUser = JSON.parse(storedUser);
@@ -1913,16 +1906,70 @@ document.addEventListener('DOMContentLoaded', function() {
             currentUser.username = currentUser.email.split('@')[0];
         }
         
-        console.log('currentUser loaded:', currentUser);
-        console.log('🔄 Calling initApp to load fresh data...');
+        console.log('✅ User found - pre-fetching data...');
         
-        // Direkt initApp çağır - splash screen initApp bitince kapanacak
+        // 🆕 VERİ ÇEKİMİNİ HEMEN BAŞLAT (DOM hazır olmadan)
+        if (typeof fetch !== 'undefined') {
+            const clientSessionId = localStorage.getItem('deviceSessionId');
+            
+            window.userDataPromise = fetch(API_ENDPOINTS.getUserData, {
+                method: 'POST',
+                headers: getApiHeaders(),
+                body: JSON.stringify({ 
+                    userId: userId,
+                    clientSessionId: clientSessionId  // 🆕 Session kontrolü
+                })
+            }).then(r => {
+                // 🆕 401 kontrolü (başka cihazdan giriş)
+                if (r.status === 401) {
+                    return r.json().then(data => {
+                        if (data.reason === 'logged_in_elsewhere') {
+                            // Session geçersiz - logout gerekli
+                            console.log('⚠️ Session invalid - logged in elsewhere');
+                            return null;
+                        }
+                        return data;
+                    });
+                }
+                return r.json();
+            })
+              .catch(e => {
+                  console.log('Pre-fetch failed:', e);
+                  return null;
+              });
+            
+            console.log('🚀 getUserData pre-fetch started!');
+        }
+    }
+})();
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-reload when internet connection restored
+    window.addEventListener('online', () => {
+        console.log('Internet connection restored - reloading...');
+        location.reload();
+    });
+    
+    console.log('=== DOM READY - AUTO-LOGIN ===');
+    
+    const isLoggedIn = localStorage.getItem('isLoggedIn');
+    const userId = localStorage.getItem('userId');
+    const storedUser = localStorage.getItem('currentUser');
+    
+    if (isLoggedIn === 'true' && userId && storedUser) {
+        currentUser = JSON.parse(storedUser);
+        if (!currentUser.username && currentUser.email) {
+            currentUser.username = currentUser.email.split('@')[0];
+        }
+        
+        console.log('🔄 Calling initApp...');
+        
+        // Direkt initApp çağır - veri zaten çekilmeye başladı
         document.getElementById('authScreen').style.display = 'none';
         document.getElementById('app').style.display = 'block';
         initApp();
     } else {
         console.log('Auto-login FAILED - missing data');
-        // checkAuth zaten splash'i kapatacak
     }
 });
 // ============================================
@@ -2600,11 +2647,17 @@ function hideLoginLoading() {
         // LOGIN SUCCESS -> show loading overlay
         if (typeof showLoginLoading === 'function') showLoginLoading();
 
-        // Backend'den kullanıcı bilgilerini al
-        const response = await fetch(API_ENDPOINTS.getUserData, {
+        // 🆕 Mevcut cihaz session ID'sini al (varsa)
+        const clientSessionId = localStorage.getItem('deviceSessionId');
+
+        // Backend'den kullanıcı bilgilerini al + session kontrolü
+        const response = await fetch(API_ENDPOINTS.loginUser, {
             method: 'POST',
             headers: getApiHeaders(),
-            body: JSON.stringify({ userId: user.uid })
+            body: JSON.stringify({ 
+                userId: user.uid,
+                clientSessionId: clientSessionId  // 🆕 Session ID gönder
+            })
         });
         const data = await response.json();
 
@@ -2617,6 +2670,17 @@ window.__resetEmail = email;
             localStorage.setItem('userEmail', user.email);
             localStorage.setItem('isLoggedIn', 'true');
             localStorage.setItem('currentUser', JSON.stringify(data.user));
+            
+            // 🆕 Yeni session ID kaydet
+            if (data.sessionId) {
+                localStorage.setItem('deviceSessionId', data.sessionId);
+            }
+            
+            // 🆕 Başka cihazdan giriş yapılmışsa bildir
+            if (data.sessionStatus === 'replaced') {
+                showToast('⚠️ Previous session on another device has been closed');
+            }
+            
             showSuccess('Login successful! ');
             
             setTimeout(() => {
@@ -2673,6 +2737,12 @@ window.__resetEmail = email;
     const email = document.getElementById('signupEmail').value;
     const password = document.getElementById('signupPassword').value;
     const confirmPassword = document.getElementById('signupPasswordConfirm').value;
+    
+    // 🆕 Profil bilgileri
+    const fullName = document.getElementById('signupFullName').value.trim();
+    const birthDate = document.getElementById('signupBirthDate').value.trim();
+    const country = document.getElementById('signupCountry').value.trim();
+    
 // Username validation
     const username = document.getElementById('signupUsername').value || email.split('@')[0];
     if (!username || username.length < 3 || username.length > 12) {
@@ -2684,6 +2754,45 @@ window.__resetEmail = email;
         showError('Username can only contain letters and numbers');
         return;
     }
+    
+    // 🆕 Full name validation
+    if (!fullName || fullName.length < 3) {
+        showError('Full name must be at least 3 characters');
+        return;
+    }
+    
+    if (!/^[a-zA-Z\s]+$/.test(fullName)) {
+        showError('Full name: Only English letters allowed');
+        return;
+    }
+    
+    // 🆕 Birth date validation
+    if (!birthDate) {
+        showError('Please enter your birth date');
+        return;
+    }
+    
+    const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+    const match = birthDate.match(dateRegex);
+    if (!match) {
+        showError('Birth date format: DD/MM/YYYY');
+        return;
+    }
+    
+    const day = parseInt(match[1]);
+    const month = parseInt(match[2]);
+    const year = parseInt(match[3]);
+    if (year < 1923 || year > 2007 || month < 1 || month > 12 || day < 1 || day > 31) {
+        showError('Invalid birth date');
+        return;
+    }
+    
+    // 🆕 Country validation
+    if (!country || country.length < 2) {
+        showError('Please select your country');
+        return;
+    }
+    
     if (!email || !password || !confirmPassword) {
         showError('Please fill in all fields');
         return;
@@ -2710,6 +2819,9 @@ window.__resetEmail = email;
                 userId: user.uid,
                 email: user.email,
                 username: username,
+                fullName: fullName,        // 🆕
+                birthDate: birthDate,      // 🆕
+                country: country,          // 🆕
 				referralCode: document.getElementById('signupReferral').value || null
             })
         });
@@ -2720,6 +2832,12 @@ window.__resetEmail = email;
             localStorage.setItem('userEmail', user.email);
             localStorage.setItem('isLoggedIn', 'true');
             localStorage.setItem('currentUser', JSON.stringify(data.user));
+            
+            // 🆕 Session ID kaydet
+            if (data.sessionId) {
+                localStorage.setItem('deviceSessionId', data.sessionId);
+            }
+            
             showSuccess('Account created successfully! ');
             window.scrollTo({ top: 0, behavior: 'smooth' });
             setTimeout(() => {
@@ -2796,6 +2914,7 @@ window.__resetEmail = email;
         
         function confirmLogout() {
             localStorage.removeItem('currentUser');
+            localStorage.removeItem('deviceSessionId');  // 🆕 Session ID temizle
             window.location.reload();
         }
         
@@ -2927,73 +3046,122 @@ window.__resetEmail = email;
     // Backend'den TÜM verileri çek - PARALEL (3x hızlı!)
     if (userId) {
         try {
-            console.log('🔄 Backend veriler çekiliyor (paralel)...');
+            console.log('🔄 Backend veriler çekiliyor...');
             
-            // PARALEL API ÇAĞRILARI - 3'ü aynı anda!
-            const [userResponse, refResponse, activeRefResponse] = await Promise.all([
-                // 1. User Data
-                fetch(API_ENDPOINTS.getUserData, {
-                    method: 'POST',
-                    headers: getApiHeaders(),
-                    body: JSON.stringify({ userId: userId })
-                }),
-                
-                // 2. Referrals
-                fetch(API_ENDPOINTS.getReferrals + '?userId=' + userId)
-                    .catch(e => {
-                        console.log('⚠️ Referrals yüklenemedi:', e);
-                        return null;
-                    }),
-                
-                // 3. Active Referrals Count
-                fetch(API_ENDPOINTS.getActiveReferrals + '?userId=' + userId)
-                    .catch(e => {
-                        console.log('⚠️ Active referrals yüklenemedi:', e);
-                        return null;
-                    })
-            ]);
+            let userResponse;
             
-            // Process User Data
-            if (userResponse.ok) {
-                const userData = await userResponse.json();
-                currentUser = userData.user;
-                activeMiningSession = userData.activeMiningSession || null; // Store for rate calculation
-                localStorage.setItem('currentUser', JSON.stringify(userData.user));
-                
-                // 🆕 Backend'den gelen güncel değerleri hemen uygula
-                dailyRewardAvailable = userData.user.dailyRewardAvailable || false;
-                
-                // Aktif mining session varsa yükle
-                if (userData.activeMiningSession) {
-                    const session = userData.activeMiningSession;
-                    const endTime = session.endTime._seconds ? session.endTime._seconds * 1000 : session.endTime;
-                    const startTime = session.startTime._seconds ? session.startTime._seconds * 1000 : session.startTime;
-                    localStorage.setItem('miningEndTime_' + currentUser.email, endTime);
-                    localStorage.setItem('miningStartTime_' + currentUser.email, startTime);
-                    localStorage.setItem('currentSessionId_' + currentUser.email, session.sessionId);
+            // 🆕 Eğer pre-fetch yapıldıysa onu kullan
+            if (window.userDataPromise) {
+                console.log('⚡ Using pre-fetched data...');
+                try {
+                    const preData = await window.userDataPromise;
+                    if (preData && preData.user) {
+                        // Pre-fetch başarılı - onu kullan
+                        userResponse = { ok: true };
+                        const userData = preData;
+                        
+                        currentUser = userData.user;
+                        activeMiningSession = userData.activeMiningSession || null;
+                        localStorage.setItem('currentUser', JSON.stringify(userData.user));
+                        
+                        dailyRewardAvailable = userData.user.dailyRewardAvailable || false;
+                        
+                        // Referans sayıları
+                        const totalRefs = (userData.user.referrals || []).length;
+                        const activeRefsCount = userData.activeReferralsCount || 0;
+                        
+                        localStorage.setItem('totalReferralsCount_' + currentUser.email, totalRefs);
+                        localStorage.setItem('activeReferralsCount_' + currentUser.email, activeRefsCount);
+                        
+                        console.log(`📊 Referrals: ${activeRefsCount}/${totalRefs} aktif`);
+                        
+                        // Mining session
+                        if (userData.activeMiningSession) {
+                            const session = userData.activeMiningSession;
+                            const endTime = session.endTime._seconds ? session.endTime._seconds * 1000 : session.endTime;
+                            const startTime = session.startTime._seconds ? session.startTime._seconds * 1000 : session.startTime;
+                            localStorage.setItem('miningEndTime_' + currentUser.email, endTime);
+                            localStorage.setItem('miningStartTime_' + currentUser.email, startTime);
+                            localStorage.setItem('currentSessionId_' + currentUser.email, session.sessionId);
+                        }
+                        
+                        console.log('✅ Pre-fetched data loaded!');
+                        console.log('   - dailyRewardAvailable:', dailyRewardAvailable);
+                        console.log('   - pendingLevelUp:', userData.user.pendingLevelUp);
+                        console.log('   - pendingReferralEarnings:', userData.user.pendingReferralEarnings);
+                    } else {
+                        throw new Error('Pre-fetch data invalid');
+                    }
+                } catch (e) {
+                    console.log('Pre-fetch kullanılamadı, yeni fetch:', e);
+                    userResponse = null;
                 }
                 
-                console.log('✅ User data yüklendi');
-                console.log('   - dailyRewardAvailable:', dailyRewardAvailable);
-                console.log('   - pendingLevelUp:', userData.user.pendingLevelUp);
-                console.log('   - pendingReferralEarnings:', userData.user.pendingReferralEarnings);
+                // Pre-fetch promise'i temizle
+                window.userDataPromise = null;
             }
             
-            // Process Referrals
-            if (refResponse && refResponse.ok) {
-                const refData = await refResponse.json();
-                localStorage.setItem('referrals_' + currentUser.email, JSON.stringify(refData.referrals || []));
-                console.log('✅ Referrals yüklendi');
+            // Eğer pre-fetch yoksa veya başarısızsa, normal fetch
+            if (!userResponse || !userResponse.ok) {
+                console.log('🔄 Fetching fresh data...');
+                
+                // 🆕 Session ID al
+                const clientSessionId = localStorage.getItem('deviceSessionId');
+                
+                userResponse = await fetch(API_ENDPOINTS.getUserData, {
+                    method: 'POST',
+                    headers: getApiHeaders(),
+                    body: JSON.stringify({ 
+                        userId: userId,
+                        clientSessionId: clientSessionId  // 🆕 Session kontrolü için
+                    })
+                });
+                
+                // 🆕 Session geçersizse (başka cihazdan giriş) - logout yap
+                if (userResponse.status === 401) {
+                    const errorData = await userResponse.json();
+                    if (errorData.reason === 'logged_in_elsewhere') {
+                        showToast('⚠️ ' + errorData.message, true);
+                        setTimeout(() => {
+                            logout();
+                        }, 2000);
+                        return;
+                    }
+                }
+                
+                if (userResponse.ok) {
+                    const userData = await userResponse.json();
+                    currentUser = userData.user;
+                    activeMiningSession = userData.activeMiningSession || null;
+                    localStorage.setItem('currentUser', JSON.stringify(userData.user));
+                    
+                    dailyRewardAvailable = userData.user.dailyRewardAvailable || false;
+                    
+                    const totalRefs = (userData.user.referrals || []).length;
+                    const activeRefsCount = userData.activeReferralsCount || 0;
+                    
+                    localStorage.setItem('totalReferralsCount_' + currentUser.email, totalRefs);
+                    localStorage.setItem('activeReferralsCount_' + currentUser.email, activeRefsCount);
+                    
+                    console.log(`📊 Referrals: ${activeRefsCount}/${totalRefs} aktif`);
+                    
+                    if (userData.activeMiningSession) {
+                        const session = userData.activeMiningSession;
+                        const endTime = session.endTime._seconds ? session.endTime._seconds * 1000 : session.endTime;
+                        const startTime = session.startTime._seconds ? session.startTime._seconds * 1000 : session.startTime;
+                        localStorage.setItem('miningEndTime_' + currentUser.email, endTime);
+                        localStorage.setItem('miningStartTime_' + currentUser.email, startTime);
+                        localStorage.setItem('currentSessionId_' + currentUser.email, session.sessionId);
+                    }
+                    
+                    console.log('✅ Fresh data loaded!');
+                    console.log('   - dailyRewardAvailable:', dailyRewardAvailable);
+                    console.log('   - pendingLevelUp:', userData.user.pendingLevelUp);
+                    console.log('   - pendingReferralEarnings:', userData.user.pendingReferralEarnings);
+                }
             }
             
-            // Process Active Referrals
-            if (activeRefResponse && activeRefResponse.ok) {
-                const activeRefData = await activeRefResponse.json();
-                localStorage.setItem('activeReferralsCount_' + currentUser.email, activeRefData.activeCount || 0);
-                console.log('✅ Active referrals yüklendi');
-            }
-            
-            console.log('✅ TÜM BACKEND VERİLER YÜKLENDİ (paralel)!');
+            console.log('✅ KRİTİK VERİLER YÜKLENDİ - App başlatılıyor!');
             
         } catch (error) {
             console.error('❌ Backend veri çekme hatası:', error);
@@ -3641,7 +3809,7 @@ async function startMiningOnBackend() {
                 console.error('Backend error:', error);
             }
         }
-        function completeMine() {
+        async function completeMine() {
             d.mining = false;
             d.timeLeft = 0;
             localStorage.removeItem('miningEndTime_' + currentUser.email);
@@ -3656,19 +3824,61 @@ async function startMiningOnBackend() {
                 }
             } catch(e) {}
 
-            // Update displayed rate after clearing ad boost (referral bonus stays dynamic)
-            d.activeRefs = calculateActiveRefs();
+            // 🆕 CLAIM ÖNCESĐ SON GÜNCELLEME - Garanti doğru hesaplama
+            showToast('⏳ Calculating final reward...');
+            
+            try {
+                // Backend'den güncel aktif referans sayısını al
+                const activeRefResponse = await fetch(API_ENDPOINTS.getActiveReferrals + '?userId=' + currentUser.userId);
+                if (activeRefResponse.ok) {
+                    const activeRefData = await activeRefResponse.json();
+                    const finalActiveCount = activeRefData.activeCount || 0;
+                    
+                    // localStorage ve d.activeRefs güncelle
+                    localStorage.setItem('activeReferralsCount_' + currentUser.email, finalActiveCount);
+                    d.activeRefs = finalActiveCount;
+                    
+                    console.log(`✅ Final active referrals: ${finalActiveCount}`);
+                }
+            } catch (err) {
+                console.error('Failed to get final active count:', err);
+                // Hata olursa localStorage'daki değeri kullan
+                d.activeRefs = calculateActiveRefs();
+            }
+
+            // Final rate hesaplama
             let adBonus = 0;
             if (activeMiningSession && activeMiningSession.adBoostActive) {
                 const boostCount = activeMiningSession.adBoostCount || 1;
-                adBonus = boostCount * 0.25;  // Cumulative
+                adBonus = boostCount * 0.25;
             }
-            d.rate = (currentUser.rate || 0.25) + (d.activeRefs * 0.05) + adBonus;
+            
+            const baseRate = currentUser.rate || 0.25;
+            const refBonus = d.activeRefs * 0.05;
+            const finalRate = baseRate + refBonus + adBonus;
+            d.rate = finalRate;
+            
+            console.log(`📊 Final Rate: ${finalRate} MR (Base: ${baseRate}, Ref: ${refBonus}, Ad: ${adBonus})`);
 
-const reward = d.rate * 24;
-            claimRewardFromBackend(reward);
+            const reward = finalRate * 24;
+            
+            // 🆕 Mining bitti - UI'ı güncelle
+            render();
+            
+            // Backend'e claim gönder
+            await claimRewardFromBackend(reward);
         }
         async function claimRewardFromBackend(reward) {
+            // 🆕 OPTİMİSTİC UPDATE - Hemen güncelle (UX için)
+            d.balance += reward;
+            d.miningDays++;
+            dailyRewardAvailable = true;
+            save();
+            render();  // UI'ı anında güncelle
+            
+            // 🆕 Başarı mesajı hemen göster
+            showToast(`✅ Claimed ${reward.toFixed(2)} ARC!`);
+            
             try {
                 const response = await fetch(API_ENDPOINTS.claimReward, {
                     method: 'POST',
@@ -3681,16 +3891,22 @@ const reward = d.rate * 24;
                 });
 
                 if (response.ok) {
-                    d.balance += reward;
-                    d.miningDays++;
-                    dailyRewardAvailable = true;
-                    save();
+                    // Backend başarılı - zaten güncelledik
                     checkLevelUp();
-                    render();
                     sendMiningCompleteNotification();
+                } else {
+                    // Backend hatası - geri al
+                    d.balance -= reward;
+                    d.miningDays--;
+                    dailyRewardAvailable = false;
+                    save();
+                    render();
+                    showToast('❌ Failed to claim reward. Please try again.', true);
                 }
             } catch (error) {
                 console.error('Backend error:', error);
+                // Network hatası - veriyi koruyalım, backend retry edebilir
+                showToast('⚠️ Network error. Your reward is saved locally.', true);
             }
         }
         function claimDailyReward() {
@@ -3892,8 +4108,6 @@ const reward = d.rate * 24;
             if (timerStarted) return; // Prevent multiple timers
             timerStarted = true;
             
-            let lastRefreshTime = Date.now();
-            
             setInterval(function() {
                 if (d.mining && d.timeLeft > 0) {
                     d.timeLeft--;
@@ -3902,50 +4116,7 @@ const reward = d.rate * 24;
                     }
                     render();
                 }
-                
-                // 🆕 Update active referrals from backend every 5 minutes
-                const now = Date.now();
-                if (now - lastRefreshTime >= 300000) { // 5 minutes
-                    lastRefreshTime = now;
-                    updateActiveReferralsCount();
-                }
             }, 1000);
-        }
-        
-        // 🆕 Update active referrals count from backend
-        async function updateActiveReferralsCount() {
-            try {
-                const activeRefResponse = await fetch(API_ENDPOINTS.getActiveReferrals + '?userId=' + currentUser.userId);
-                if (activeRefResponse.ok) {
-                    const activeRefData = await activeRefResponse.json();
-                    const newCount = activeRefData.activeCount || 0;
-                    
-                    // Update localStorage
-                    localStorage.setItem('activeReferralsCount_' + currentUser.email, newCount);
-                    
-                    // Update d.activeRefs
-                    const oldCount = d.activeRefs;
-                    d.activeRefs = newCount;
-                    
-                    // Recalculate rate
-                    const baseRate = currentUser.rate || 0.25;
-                    const refBonus = d.activeRefs * 0.05;
-                    let adBonus = 0;
-                    if (activeMiningSession && activeMiningSession.adBoostActive) {
-                        const boostCount = activeMiningSession.adBoostCount || 1;
-                        adBonus = boostCount * 0.25;
-                    }
-                    d.rate = baseRate + refBonus + adBonus;
-                    
-                    // Re-render if count changed
-                    if (oldCount !== newCount) {
-                        console.log(`🔄 Active referrals updated: ${oldCount} → ${newCount}`);
-                        render();
-                    }
-                }
-            } catch (err) {
-                console.error('Failed to update active referrals:', err);
-            }
         }
         
         function createParticles() {
@@ -4999,10 +5170,21 @@ const reward = d.rate * 24;
             }
         }
         
+        // 🆕 Leaderboard cache - uygulama açıkken tek seferlik yükleme  
+        let leaderboardCache = null;
+        
         async function getLeaderboardPageContent() {
+            // Cache varsa kullan (uygulama kapanana kadar aynı veri)
+            if (leaderboardCache) {
+                console.log('✅ Leaderboard loaded from cache');
+                return leaderboardCache;
+            }
+            
             let leaderboardData = [];
             
             try {
+                console.log('🔄 Loading leaderboard from backend...');
+                
                 // Fetch from backend
                 const response = await fetch(API_ENDPOINTS.getLeaderboard);
                 const data = await response.json();
@@ -5384,7 +5566,16 @@ if (response.ok && data.leaderboard) {
             return html;
         }
         
+        // 🆕 Referrals cache - uygulama açıkken tek seferlik yükleme
+        let referralsCache = null;
+        
         async function getReferralsPageContent() {
+            // Cache varsa kullan (uygulama kapanana kadar aynı veri)
+            if (referralsCache) {
+                console.log('✅ Referrals loaded from cache');
+                return referralsCache;
+            }
+            
             // Get current user from backend
             const users = JSON.parse(localStorage.getItem('users') || '{}');
             const currentEmail = localStorage.getItem('currentUser');
@@ -5395,6 +5586,8 @@ if (response.ok && data.leaderboard) {
     let inactiveRefs = [];
     
     try {
+        console.log('🔄 Loading referrals from backend...');
+        
         // Get all referrals with active status (backend now includes isActive for each referral)
         const refResponse = await fetch(API_ENDPOINTS.getReferrals + '?userId=' + currentUser.userId);
         const refData = await refResponse.json();
@@ -5419,7 +5612,7 @@ if (response.ok && data.leaderboard) {
             const lastNotifTime = parseInt(localStorage.getItem('lastReferralNotif_' + currentEmail) || '0');
             const canSendNotif = (now - lastNotifTime) > (5 * 60 * 1000);
             
-            return `
+            const htmlContent = `
                 <!-- Referral Code Section -->
                 <div class="card" style="margin-bottom: 20px;">
                     <div style="text-align: center; margin-bottom: 15px;">
