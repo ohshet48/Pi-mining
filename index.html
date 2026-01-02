@@ -6,6 +6,8 @@
     <meta name="theme-color" content="#5b21b6">
     <!-- Version 2.0.1 - Leaderboard Fix -->
     <title>Arc Astra</title>
+    <!-- Web3.js for Boost Wallet -->
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
     <style>
         * { 
             margin: 0; 
@@ -3166,16 +3168,30 @@ window.__resetEmail = email;
         let boostWeb3, boostAccount, boostChainId;
         
         async function connectBoostWallet() {
+            console.log('🔗 Connect Boost Wallet clicked!');
+            console.log('Web3 available?', typeof Web3);
+            console.log('window.ethereum?', typeof window.ethereum);
+            
             try {
                 if (typeof window.ethereum === 'undefined') {
-                    alert('❌ Web3 cüzdan bulunamadı!\n\n✅ Bu sayfayı şurada aç:\n• Trust Wallet → DApp Browser\n• MetaMask → Browser\n• Binance Wallet → DApp');
+                    alert(`❌ Web3 cüzdan bulunamadı!
+
+✅ Bu sayfayı şurada aç:
+• Trust Wallet → DApp Browser
+• MetaMask → Browser
+• Binance Wallet → DApp`);
                     return;
                 }
                 
+                console.log('Requesting accounts...');
                 const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+                console.log('Accounts:', accounts);
+                
                 boostAccount = accounts[0];
                 boostWeb3 = new Web3(window.ethereum);
                 boostChainId = await boostWeb3.eth.getChainId();
+                
+                console.log('Connected!', boostAccount, 'Chain:', boostChainId);
                 
                 const walletName = window.ethereum.isMetaMask ? 'MetaMask' : 
                                   window.ethereum.isTrust ? 'Trust Wallet' : 'Wallet';
@@ -3187,7 +3203,8 @@ window.__resetEmail = email;
                 
                 await loadPurchasedBoosts();
             } catch (error) {
-                alert('❌ Bağlantı hatası: ' + error.message);
+                console.error('Connection error:', error);
+                alert(`❌ Bağlantı hatası: ${error.message}`);
             }
         }
         
@@ -3228,7 +3245,7 @@ window.__resetEmail = email;
         
         async function buyBoostInApp(boostId, priceUSD, mrBoost) {
             if (!boostAccount) {
-                alert('Önce cüzdanını bağla!');
+                alert(`Önce cüzdanını bağla!`);
                 return;
             }
             
@@ -3237,7 +3254,7 @@ window.__resetEmail = email;
             try {
                 const usdtAddress = USDT_CONTRACTS[boostChainId];
                 if (!usdtAddress) {
-                    alert('Lütfen BSC, Polygon veya Ethereum network\'üne geç');
+                    alert(`Lütfen BSC, Polygon veya Ethereum network'üne geç`);
                     return;
                 }
                 
@@ -7083,8 +7100,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-    <!-- Web3.js for Boost Wallet -->
-    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
 </body>
 </html>
 
