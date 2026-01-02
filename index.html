@@ -5388,7 +5388,9 @@ async function startMiningOnBackend() {
                 console.log('🔄 Loading leaderboard from backend...');
                 
                 // Fetch from backend
-                const response = await fetch(API_ENDPOINTS.getLeaderboard);
+                const response = await fetch(API_ENDPOINTS.getLeaderboard, {
+                    headers: getApiHeaders()
+                });
                 const data = await response.json();
                 
                 
