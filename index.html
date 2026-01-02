@@ -3871,13 +3871,16 @@ ${(() => {const miningDuration = localStorage.getItem('miningDuration_' + curren
         
 async function startMiningOnBackend() {
             try {
+                const clientSessionId = localStorage.getItem('deviceSessionId');
+                
                 // 🆕 apiCall wrapper kullan
                 const response = await apiCall(API_ENDPOINTS.startMining, {
                     method: 'POST',
                     headers: getApiHeaders(),
                     body: JSON.stringify({
                         userId: currentUser.userId,
-                        level: d.level
+                        level: d.level,
+                        clientSessionId: clientSessionId
                     })
                 });
 
@@ -3960,6 +3963,8 @@ async function startMiningOnBackend() {
             showToast(`✅ Claimed ${reward.toFixed(2)} ARC!`);
             
             try {
+                const clientSessionId = localStorage.getItem('deviceSessionId');
+                
                 // 🆕 apiCall wrapper kullan - session kontrolü otomatik
                 const response = await apiCall(API_ENDPOINTS.claimReward, {
                     method: 'POST',
@@ -3967,7 +3972,8 @@ async function startMiningOnBackend() {
                     body: JSON.stringify({
                         userId: currentUser.userId,
                         sessionId: localStorage.getItem('currentSessionId_' + currentUser.email),
-                        reward: reward
+                        reward: reward,
+                        clientSessionId: clientSessionId
                     })
                 });
 
