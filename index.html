@@ -3102,6 +3102,41 @@ window.__resetEmail = email;
                 notification.close();
             };
         }
+        // SESSION CHECK - Menu açılışlarında ve sayfa değişimlerinde
+        async function checkSession() {
+            const clientSessionId = localStorage.getItem('deviceSessionId');
+            const userId = localStorage.getItem('userId');
+            
+            if (!clientSessionId || !userId) return true; // Session yok, geç
+            
+            try {
+                const response = await fetch(API_ENDPOINTS.getUserData, {
+                    method: 'POST',
+                    headers: getApiHeaders(),
+                    body: JSON.stringify({ 
+                        userId: userId,
+                        clientSessionId: clientSessionId
+                    })
+                });
+                
+                if (response.status === 401) {
+                    const errorData = await response.json();
+                    if (errorData.reason === 'logged_in_elsewhere') {
+                        showToast('⚠️ Your account is logged in on another device', true);
+                        setTimeout(() => {
+                            localStorage.clear();
+                            window.location.reload();
+                        }, 2000);
+                        return false;
+                    }
+                }
+                return true;
+            } catch (error) {
+                console.error('Session check error:', error);
+                return true; // Network hatalarında devam et
+            }
+        }
+
         async function initApp() {
     hideLoginLoading();
     const appEl = document.getElementById('app');
@@ -4132,12 +4167,15 @@ async function startMiningOnBackend() {
                 // Call backend to apply boost
                 try {
                     // 🆕 apiCall wrapper kullan - session kontrolü otomatik
+                    const clientSessionId = localStorage.getItem('deviceSessionId');
+                    
                     const response = await apiCall(API_ENDPOINTS.applyAdBoost, {
                         method: 'POST',
                         headers: getApiHeaders(),
                         body: JSON.stringify({ 
                             sessionId: sessionId,
-                            watchDuration: watchDuration
+                            watchDuration: watchDuration,
+                            clientSessionId: clientSessionId
                         })
                     });
                     
