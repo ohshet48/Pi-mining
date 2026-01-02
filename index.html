@@ -5512,9 +5512,8 @@ if (response.ok && data.leaderboard) {
                 <div style="display: flex; flex-direction: column; gap: 6px;">
             `;
             
-            // Current user card - SADECE top 100'de DEĞİLSE göster (yoksa listede zaten var)
-            if (currentUserRank > 100 && currentUserData) {
-                // Calculate current user progress
+            // CURRENT USER CARD - ALWAYS AT TOP
+            if (currentUserData) {
                 const userCurrentReq = levelRequirements[currentUserData.level] || 0;
                 const userNextReq = levelRequirements[currentUserData.level + 1];
                 let userProgressPercent = 0;
@@ -5526,14 +5525,14 @@ if (response.ok && data.leaderboard) {
                 }
                 
                 html += `
-                    <div style="background: rgba(255, 215, 0, 0.1); border: 1px solid #fbbf24; border-radius: 10px; padding: 10px; margin-bottom: 6px;">
+                    <div style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(0, 255, 255, 0.15)); border: 2px solid; border-image: linear-gradient(135deg, #fbbf24, #00ffff) 1; border-radius: 12px; padding: 12px; margin-bottom: 10px; box-shadow: 0 0 20px rgba(251, 191, 36, 0.3);">
                         <div style="display: flex; align-items: center; justify-content: space-between;">
                             <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
-                                <div style="color: #fbbf24; width: 30px; text-align: center; font-weight: 800; font-size: 14px;">
+                                <div style="color: #fbbf24; width: 32px; text-align: center; font-weight: 900; font-size: 15px;">
                                     #${currentUserRank}
                                 </div>
                                 <div style="flex: 1;">
-                                    <div style="color: #fbbf24; font-weight: 700; font-size: 14px;">${getCountryFlag(currentUserData.country || 'Turkey')} You</div>
+                                    <div style="color: #fbbf24; font-weight: 800; font-size: 15px;">${getCountryFlag(currentUserData.country || 'Turkey')} You</div>
                                 </div>
                             </div>
                             <div style="display: flex; align-items: center; gap: 6px;">
@@ -5544,7 +5543,7 @@ if (response.ok && data.leaderboard) {
                                     </div>
                                 </div>
                                 <div style="text-align: right;">
-                                    <div style="color: #00ffff; font-weight: 800; font-size: 14px;">Lvl ${currentUserData.level}</div>
+                                    <div style="color: #00ffff; font-weight: 900; font-size: 15px;">Lvl ${currentUserData.level}</div>
                                 </div>
                             </div>
                         </div>
@@ -5552,10 +5551,16 @@ if (response.ok && data.leaderboard) {
                 `;
             }
             
-            // Top 100 list
-            leaderboardData.forEach((user, index) => {
+            // Top 100 list (kullanıcı hariç - çünkü zaten üstte gösteriyoruz)
+            leaderboardData.slice(0, 100).forEach((user, index) => {
                 const rank = index + 1;
                 const isCurrentUser = user.email === currentEmail;
+                
+                // Skip current user in list - already shown at top
+                if (isCurrentUser) {
+                    return;
+                }
+                
                 const isMedal = rank <= 3;
                 
                 let medalSVG = '';
