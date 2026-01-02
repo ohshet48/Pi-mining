@@ -5552,16 +5552,10 @@ if (response.ok && data.leaderboard) {
                 `;
             }
             
-            // Top 100 list (kullanıcı hariç - çünkü zaten üstte gösteriyoruz)
+            // Top 100 list
             leaderboardData.slice(0, 100).forEach((user, index) => {
                 const rank = index + 1;
                 const isCurrentUser = user.email === currentEmail;
-                
-                // Skip current user in list - already shown at top
-                if (isCurrentUser) {
-                    return;
-                }
-                
                 const isMedal = rank <= 3;
                 
                 let medalSVG = '';
