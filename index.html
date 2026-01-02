@@ -5409,7 +5409,8 @@ if (response.ok && data.leaderboard) {
             }
             
             // Find current user's rank
-            const currentEmail = localStorage.getItem('currentUser');
+            const currentUserObj = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const currentEmail = currentUserObj.email;
             const currentUserRank = leaderboardData.findIndex(u => u.email === currentEmail) + 1;
             const currentUserData = leaderboardData.find(u => u.email === currentEmail);
             
@@ -5525,14 +5526,14 @@ if (response.ok && data.leaderboard) {
                 }
                 
                 html += `
-                    <div style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(0, 255, 255, 0.15)); border: 2px solid; border-image: linear-gradient(135deg, #fbbf24, #00ffff) 1; border-radius: 12px; padding: 12px; margin-bottom: 10px; box-shadow: 0 0 20px rgba(251, 191, 36, 0.3);">
+                    <div style="background: rgba(0, 0, 0, 0.4); border: 2px solid; border-image-source: linear-gradient(90deg, #ff8c00, #00ffff); border-image-slice: 1; padding: 12px; margin-bottom: 10px;">
                         <div style="display: flex; align-items: center; justify-content: space-between;">
                             <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
-                                <div style="color: #fbbf24; width: 32px; text-align: center; font-weight: 900; font-size: 15px;">
+                                <div style="color: #ff8c00; width: 32px; text-align: center; font-weight: 900; font-size: 16px;">
                                     #${currentUserRank}
                                 </div>
                                 <div style="flex: 1;">
-                                    <div style="color: #fbbf24; font-weight: 800; font-size: 15px;">${getCountryFlag(currentUserData.country || 'Turkey')} You</div>
+                                    <div style="color: #ff8c00; font-weight: 800; font-size: 15px;">${getCountryFlag(currentUserData.country || 'Turkey')} You</div>
                                 </div>
                             </div>
                             <div style="display: flex; align-items: center; gap: 6px;">
@@ -5543,7 +5544,7 @@ if (response.ok && data.leaderboard) {
                                     </div>
                                 </div>
                                 <div style="text-align: right;">
-                                    <div style="color: #00ffff; font-weight: 900; font-size: 15px;">Lvl ${currentUserData.level}</div>
+                                    <div style="color: #ff8c00; font-weight: 900; font-size: 15px;">Lvl ${currentUserData.level}</div>
                                 </div>
                             </div>
                         </div>
