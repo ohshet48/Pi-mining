@@ -1925,7 +1925,7 @@ const API_ENDPOINTS = {
 };
 
 // API Key for mobile app security
-const API_KEY = 'arc_astra_mobile_2024_x7K9mP3qR8wL5nF2';
+const API_KEY = 'Mamicik48.';
 
 // Helper function to add API key to headers
 function getApiHeaders(additionalHeaders = {}) {
@@ -4851,12 +4851,26 @@ async function startMiningOnBackend() {
                     break;
                 case 'announcements':
                     pageTitle.textContent = 'Announcements';
-                    pageContent.innerHTML = '<div style="text-align: center; padding: 60px 20px;"><div class="loading-spinner"></div><p style="color: #8b5cf6; margin-top: 20px;">Loading...</p></div>';
+                    pageContent.innerHTML = `
+                        <div style="display: flex; align-items: center; justify-content: center; min-height: 400px; padding: 20px;">
+                            <div style="text-align: center;">
+                                <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
+                                <p style="color: #8b5cf6; font-size: 16px;">Loading announcements...</p>
+                            </div>
+                        </div>
+                    `;
                     getAnnouncementsPageContent().then(html => pageContent.innerHTML = html);
                     break;
                 case 'airdrop':
                     pageTitle.textContent = 'Airdrop';
-                    pageContent.innerHTML = '<div style="text-align: center; padding: 60px 20px;"><div class="loading-spinner"></div><p style="color: #8b5cf6; margin-top: 20px;">Loading...</p></div>';
+                    pageContent.innerHTML = `
+                        <div style="display: flex; align-items: center; justify-content: center; min-height: 400px; padding: 20px;">
+                            <div style="text-align: center;">
+                                <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
+                                <p style="color: #8b5cf6; font-size: 16px;">Loading airdrops...</p>
+                            </div>
+                        </div>
+                    `;
                     getAirdropPageContent().then(html => pageContent.innerHTML = html);
                     break;
                 case 'leaderboard':
@@ -5078,10 +5092,12 @@ async function startMiningOnBackend() {
             
             if (announcements.length === 0) {
                 return `
-                    <div style="text-align: center; padding: 60px 20px;">
-                        <div style="font-size: 64px; margin-bottom: 20px;">📢</div>
-                        <h2 style="color: white; font-size: 24px; font-weight: 800; margin-bottom: 12px;">No Announcements Yet</h2>
-                        <p style="color: #8b5cf6; font-size: 15px; line-height: 1.6;">Stay tuned for important updates and news from Arc Astra.</p>
+                    <div style="display: flex; align-items: center; justify-content: center; min-height: 400px; padding: 20px;">
+                        <div style="background: rgba(0, 0, 0, 0.5); border: 2px solid rgba(100, 100, 100, 0.4); border-radius: 20px; padding: 40px 30px; max-width: 340px; width: 100%; text-align: center; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
+                            <div style="font-size: 64px; margin-bottom: 20px;">📢</div>
+                            <h2 style="color: white; font-size: 24px; font-weight: 800; margin-bottom: 12px;">No Announcements Yet</h2>
+                            <p style="color: #8b5cf6; font-size: 15px; line-height: 1.6;">Stay tuned for important updates and news from Arc Astra.</p>
+                        </div>
                     </div>
                 `;
             }
@@ -5090,17 +5106,9 @@ async function startMiningOnBackend() {
             let html = '<div style="display: flex; flex-direction: column; gap: 16px;">';
             
             announcements.forEach(announcement => {
-                const priorityColor = announcement.priority === 'high' ? '#ef4444' : 
-                                     announcement.priority === 'medium' ? '#f59e0b' : '#3b82f6';
-                const priorityBadge = announcement.priority === 'high' ? '🔴 Important' : 
-                                     announcement.priority === 'medium' ? '🟡 Notice' : '🔵 Info';
-                
                 html += `
                     <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);">
-                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
-                            <h3 style="color: white; font-size: 18px; font-weight: 800; margin: 0; flex: 1;">${announcement.title}</h3>
-                            <span style="background: ${priorityColor}20; color: ${priorityColor}; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; white-space: nowrap; margin-left: 12px;">${priorityBadge}</span>
-                        </div>
+                        <h3 style="color: white; font-size: 18px; font-weight: 800; margin: 0 0 12px 0;">${announcement.title}</h3>
                         <div style="color: #8b5cf6; font-size: 13px; margin-bottom: 12px; font-weight: 600;">
                             📅 ${formatAnnouncementDate(announcement.createdAt || announcement.date)}
                         </div>
@@ -5122,6 +5130,53 @@ async function startMiningOnBackend() {
         }
         
         async function getAirdropPageContent() {
+            // ✅ Eğer bildirim yoksa backend'e sorma
+            if (!hasPendingAirdrops) {
+                return `
+                    <div style="display: flex; align-items: center; justify-content: center; min-height: 400px; padding: 20px;">
+                        <div style="background: rgba(0, 0, 0, 0.5); border: 2px solid rgba(100, 100, 100, 0.4); border-radius: 20px; padding: 40px 30px; max-width: 340px; width: 100%; text-align: center; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
+                            <!-- Icon -->
+                            <div style="background: rgba(100, 100, 100, 0.2); border: 2px solid rgba(100, 100, 100, 0.3); border-radius: 16px; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 40px;">
+                                📦
+                            </div>
+                            
+                            <!-- Title -->
+                            <h2 style="color: rgba(255, 255, 255, 0.6); font-size: 22px; font-weight: 900; margin-bottom: 12px; letter-spacing: 0.5px;">
+                                No Airdrops
+                            </h2>
+                            
+                            <!-- Description -->
+                            <p style="color: rgba(139, 92, 246, 0.7); font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
+                                Airdrops will appear here when available for you to claim
+                            </p>
+                            
+                            <!-- Info box -->
+                            <div style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 10px; padding: 12px; font-size: 13px; color: rgba(255, 255, 255, 0.5); line-height: 1.5;">
+                                💡 Check back regularly for new airdrop rewards
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Loading spinner
+            const loadingHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; min-height: 400px; padding: 20px;">
+                    <div style="text-align: center;">
+                        <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
+                        <p style="color: #8b5cf6; font-size: 16px;">Loading airdrops...</p>
+                    </div>
+                </div>
+            `;
+            
+            // Show loading temporarily
+            setTimeout(() => {
+                const pageContent = document.getElementById('pageContent');
+                if (pageContent && pageContent.innerHTML.includes('Loading airdrops')) {
+                    // Still loading, keep spinner visible
+                }
+            }, 100);
+            
             // 🆕 Backend'den airdrops çek
             let pendingAirdrops = [];
             
