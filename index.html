@@ -5291,28 +5291,9 @@ async function startMiningOnBackend() {
                     <div style="font-size: 11px; color: rgba(255, 255, 255, 0.4); text-align: center; margin-bottom: 15px;">
                         Trust Wallet, MetaMask, Binance vb. browser'ında aç
                     </div>
-                    <button class="boost-buy-btn" id="connectWalletBtn">
+                    <button class="boost-buy-btn" id="connectWalletBtn" onclick="connectBoostWallet(); return false;">
                         🔗 Cüzdan Bağla
                     </button>
-                    <script>
-                    // Event listener - daha güvenilir
-                    setTimeout(() => {
-                        const btn = document.getElementById('connectWalletBtn');
-                        if (btn) {
-                            btn.addEventListener('click', async function(e) {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                console.log('Button clicked via event listener!');
-                                await connectBoostWallet();
-                            });
-                            btn.addEventListener('touchend', async function(e) {
-                                e.preventDefault();
-                                console.log('Button touched!');
-                                await connectBoostWallet();
-                            });
-                        }
-                    }, 500);
-                    </script>
                     <div id="walletInfoBoost" style="margin-top: 12px; text-align: center; font-size: 12px; color: #00ffff;"></div>
                 </div>
                 
