@@ -4851,11 +4851,13 @@ async function startMiningOnBackend() {
                     break;
                 case 'announcements':
                     pageTitle.textContent = 'Announcements';
-                    pageContent.innerHTML = getAnnouncementsPageContent();
+                    pageContent.innerHTML = '<div style="text-align: center; padding: 60px 20px;"><div class="loading-spinner"></div><p style="color: #8b5cf6; margin-top: 20px;">Loading...</p></div>';
+                    getAnnouncementsPageContent().then(html => pageContent.innerHTML = html);
                     break;
                 case 'airdrop':
                     pageTitle.textContent = 'Airdrop';
-                    pageContent.innerHTML = getAirdropPageContent();
+                    pageContent.innerHTML = '<div style="text-align: center; padding: 60px 20px;"><div class="loading-spinner"></div><p style="color: #8b5cf6; margin-top: 20px;">Loading...</p></div>';
+                    getAirdropPageContent().then(html => pageContent.innerHTML = html);
                     break;
                 case 'leaderboard':
                     pageTitle.textContent = 'Leaderboard';
