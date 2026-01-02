@@ -5513,7 +5513,7 @@ if (response.ok && data.leaderboard) {
                 <div style="display: flex; flex-direction: column; gap: 6px;">
             `;
             
-            // CURRENT USER CARD - ALWAYS AT TOP
+            // CURRENT USER CARD - SEPARATE SECTION AT TOP (BEFORE LEADERBOARD LIST)
             if (currentUserData) {
                 const userCurrentReq = levelRequirements[currentUserData.level] || 0;
                 const userNextReq = levelRequirements[currentUserData.level + 1];
@@ -5526,14 +5526,14 @@ if (response.ok && data.leaderboard) {
                 }
                 
                 html += `
-                    <div style="background: rgba(0, 0, 0, 0.4); border: 2px solid; border-image-source: linear-gradient(90deg, #ff8c00, #00ffff); border-image-slice: 1; padding: 12px; margin-bottom: 10px;">
+                    <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid #fbbf24; border-radius: 10px; padding: 10px; margin-bottom: 12px;">
                         <div style="display: flex; align-items: center; justify-content: space-between;">
                             <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
-                                <div style="color: #ff8c00; width: 32px; text-align: center; font-weight: 900; font-size: 16px;">
+                                <div style="color: rgba(255, 255, 255, 0.6); width: 30px; text-align: center; font-weight: 800; font-size: 14px;">
                                     #${currentUserRank}
                                 </div>
                                 <div style="flex: 1;">
-                                    <div style="color: #ff8c00; font-weight: 800; font-size: 15px;">${getCountryFlag(currentUserData.country || 'Turkey')} You</div>
+                                    <div style="color: #fbbf24; font-weight: 700; font-size: 14px;">${getCountryFlag(currentUserData.country || 'Turkey')} You</div>
                                 </div>
                             </div>
                             <div style="display: flex; align-items: center; gap: 6px;">
@@ -5544,7 +5544,7 @@ if (response.ok && data.leaderboard) {
                                     </div>
                                 </div>
                                 <div style="text-align: right;">
-                                    <div style="color: #ff8c00; font-weight: 900; font-size: 15px;">Lvl ${currentUserData.level}</div>
+                                    <div style="color: #00ffff; font-weight: 800; font-size: 14px;">Lvl ${currentUserData.level}</div>
                                 </div>
                             </div>
                         </div>
