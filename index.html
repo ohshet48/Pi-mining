@@ -2705,6 +2705,13 @@ function hideLoginLoading() {
         });
         const data = await response.json();
 
+        // 403 = Already logged in
+        if (response.status === 403 && data.reason === 'already_logged_in') {
+            hideLoginLoading();
+            showError(data.message || 'Account is already logged in on another device');
+            return;
+        }
+
         if (response.ok) {
 window.__resetEmail = email;
             console.log('RESET EMAIL SET:', window.__resetEmail);
@@ -4136,9 +4143,13 @@ async function startMiningOnBackend() {
             const adStartTime = Date.now();
             
             // Update button countdown
+            let countdownInterval = null;
             const updateButton = () => {
                 const btn = document.getElementById('watchAdButton');
-                if (!btn || btn.getAttribute('data-locked') !== 'true') return;
+                if (!btn) {
+                    if (countdownInterval) clearInterval(countdownInterval);
+                    return;
+                }
                 
                 const now = Date.now();
                 const remaining = Math.max(0, Math.ceil((cooldownEnd - now) / 1000));
@@ -4150,7 +4161,12 @@ async function startMiningOnBackend() {
                     btn.style.background = 'rgba(0, 255, 255, 0.1)';
                     btn.style.border = '1px solid rgba(0, 255, 255, 0.3)';
                     btn.style.color = 'rgba(255, 255, 255, 0.4)';
-                    btn.textContent = `⏳ Wait for reward ${remaining}s`;
+                    btn.textContent = `⏳ Wait ${remaining}s`;
+                } else {
+                    if (countdownInterval) {
+                        clearInterval(countdownInterval);
+                        countdownInterval = null;
+                    }
                 }
             };
             
@@ -4158,7 +4174,7 @@ async function startMiningOnBackend() {
             updateButton();
             
             // Update every second
-            const countdownInterval = setInterval(updateButton, 1000);
+            countdownInterval = setInterval(updateButton, 1000);
             
             // Call backend after 35 seconds (so rate updates by 40th second)
             setTimeout(async () => {
