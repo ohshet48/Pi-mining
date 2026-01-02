@@ -6,7 +6,8 @@
     <meta name="theme-color" content="#5b21b6">
     <!-- Version 2.0.1 - Leaderboard Fix -->
     <title>Arc Astra</title>
-    <!-- Web3.js for Boost Wallet -->
+    <!-- WalletConnect v2 -->
+    <script src="https://unpkg.com/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
     <style>
         * { 
@@ -3154,7 +3155,7 @@ window.__resetEmail = email;
 
         
         // ========================
-        // BOOST WALLET FUNCTIONS
+        // BOOST WALLET FUNCTIONS (WalletConnect)
         // ========================
         
         const USDT_CONTRACTS = {
@@ -3165,46 +3166,66 @@ window.__resetEmail = email;
         
         const PAYMENT_ADDRESS = '0x7271deE618B40417ECbD4e046d8f294cA648Dce1'; // BSC/BEP20 USDT
         
-        let boostWeb3, boostAccount, boostChainId;
+        let boostWeb3, boostAccount, boostChainId, walletConnectProvider;
         
         async function connectBoostWallet() {
             console.log('🔗 Connect Boost Wallet clicked!');
-            console.log('Web3 available?', typeof Web3);
-            console.log('window.ethereum?', typeof window.ethereum);
             
             try {
-                if (typeof window.ethereum === 'undefined') {
-                    alert(`❌ Web3 cüzdan bulunamadı!
-
-✅ Bu sayfayı şurada aç:
-• Trust Wallet → DApp Browser
-• MetaMask → Browser
-• Binance Wallet → DApp`);
-                    return;
-                }
+                // WalletConnect Provider
+                const WalletConnectProvider = window.WalletConnectProvider.default;
                 
-                console.log('Requesting accounts...');
-                const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-                console.log('Accounts:', accounts);
+                walletConnectProvider = new WalletConnectProvider({
+                    rpc: {
+                        56: "https://bsc-dataseed.binance.org/",
+                        137: "https://polygon-rpc.com/",
+                        1: "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"
+                    },
+                    chainId: 56, // Default BSC
+                    qrcodeModalOptions: {
+                        mobileLinks: [
+                            "rainbow",
+                            "metamask",
+                            "argent",
+                            "trust",
+                            "imtoken",
+                            "pillar",
+                        ],
+                        desktopLinks: [
+                            "encrypted ink",
+                        ],
+                    },
+                });
                 
+                console.log('Enabling WalletConnect...');
+                await walletConnectProvider.enable();
+                
+                boostWeb3 = new Web3(walletConnectProvider);
+                const accounts = await boostWeb3.eth.getAccounts();
                 boostAccount = accounts[0];
-                boostWeb3 = new Web3(window.ethereum);
                 boostChainId = await boostWeb3.eth.getChainId();
                 
                 console.log('Connected!', boostAccount, 'Chain:', boostChainId);
                 
-                const walletName = window.ethereum.isMetaMask ? 'MetaMask' : 
-                                  window.ethereum.isTrust ? 'Trust Wallet' : 'Wallet';
-                
-                document.getElementById('walletInfoBoost').innerHTML = `✅ ${walletName}<br>${boostAccount.substring(0, 8)}...${boostAccount.substring(36)}`;
-                document.getElementById('connectWalletBtn').textContent = '✓ Bağlandı';
+                document.getElementById('walletInfoBoost').innerHTML = `✅ Connected<br>${boostAccount.substring(0, 8)}...${boostAccount.substring(36)}`;
+                document.getElementById('connectWalletBtn').textContent = '✓ Connected';
                 document.getElementById('connectWalletBtn').disabled = true;
-                document.getElementById('boostsListSection').style.display = 'block';
                 
                 await loadPurchasedBoosts();
+                
+                // Listen for disconnect
+                walletConnectProvider.on("disconnect", (code, reason) => {
+                    console.log('WalletConnect disconnected', code, reason);
+                    location.reload();
+                });
+                
             } catch (error) {
-                console.error('Connection error:', error);
-                alert(`❌ Bağlantı hatası: ${error.message}`);
+                console.error('WalletConnect error:', error);
+                if (error.message.includes('User closed modal')) {
+                    showToast('Connection cancelled');
+                } else {
+                    alert(`❌ Connection error: ${error.message}`);
+                }
             }
         }
         
@@ -3234,27 +3255,38 @@ window.__resetEmail = email;
             const card = document.getElementById(cardId);
             if (card) {
                 card.classList.add('purchased');
-                card.innerHTML = '<div class="boost-badge">✓ SATIN ALINDI</div>' + card.innerHTML;
+                card.innerHTML = '<div class="boost-badge">✓ PURCHASED</div>' + card.innerHTML;
                 const btn = card.querySelector('.boost-buy-btn');
                 if (btn) {
                     btn.disabled = true;
-                    btn.textContent = 'Satın Alındı';
+                    btn.textContent = 'Already Purchased';
                 }
             }
         }
         
         async function buyBoostInApp(boostId, priceUSD, mrBoost) {
+            // Check if wallet connected
             if (!boostAccount) {
-                alert(`Önce cüzdanını bağla!`);
-                return;
+                showToast('Connecting wallet...', false);
+                try {
+                    await connectBoostWallet();
+                    // After connection, retry purchase
+                    if (boostAccount) {
+                        await buyBoostInApp(boostId, priceUSD, mrBoost);
+                    }
+                    return;
+                } catch (error) {
+                    showToast('Please connect wallet first', true);
+                    return;
+                }
             }
             
-            showToast('İşlem hazırlanıyor...', false);
+            showToast('Preparing transaction...', false);
             
             try {
                 const usdtAddress = USDT_CONTRACTS[boostChainId];
                 if (!usdtAddress) {
-                    alert(`Lütfen BSC, Polygon veya Ethereum network'üne geç`);
+                    alert(`Please switch to BSC, Polygon, or Ethereum network`);
                     return;
                 }
                 
@@ -3269,10 +3301,10 @@ window.__resetEmail = email;
                 
                 const usdtContract = new boostWeb3.eth.Contract(usdtABI, usdtAddress);
                 
-                showToast('Cüzdanda onayla...', false);
+                showToast('Confirm in wallet...', false);
                 const tx = await usdtContract.methods.transfer(PAYMENT_ADDRESS, amount).send({ from: boostAccount });
                 
-                showToast('Boost aktifleştiriliyor...', false);
+                showToast('Activating boost...', false);
                 const response = await fetch(API_ENDPOINTS.confirmBoostPayment, {
                     method: 'POST',
                     headers: getApiHeaders(),
@@ -3285,13 +3317,13 @@ window.__resetEmail = email;
                 });
                 
                 if (response.ok) {
-                    showToast('✅ Boost başarıyla aktifleştirildi!');
+                    showToast('✅ Boost activated successfully!');
                     setTimeout(() => location.reload(), 2000);
                 } else {
-                    alert('Ödeme gönderildi ama aktivasyon başarısız. Destek: ' + tx.transactionHash);
+                    alert(`Payment sent but activation failed. Support: ${tx.transactionHash}`);
                 }
             } catch (error) {
-                showToast('❌ Hata: ' + error.message, true);
+                showToast(`❌ Error: ${error.message}`, true);
             }
         }
 
@@ -5233,7 +5265,7 @@ async function startMiningOnBackend() {
                         border: 1px solid rgba(0, 255, 255, 0.2);
                         border-radius: 16px;
                         padding: 20px;
-                        margin-bottom: 20px;
+                        margin-top: 20px;
                         backdrop-filter: blur(10px);
                     }
                     
@@ -5277,6 +5309,12 @@ async function startMiningOnBackend() {
                         touch-action: manipulation;
                         user-select: none;
                         -webkit-user-select: none;
+                        transition: all 0.2s;
+                    }
+                    
+                    .boost-buy-btn:active {
+                        transform: scale(0.95);
+                        background: linear-gradient(135deg, #00d4d4, #0080d4);
                     }
                     
                     .boost-buy-btn:disabled {
@@ -5285,40 +5323,28 @@ async function startMiningOnBackend() {
                     }
                 </style>
                 
-                <!-- Wallet Connect -->
-                <div class="boost-wallet-card" id="walletSection">
-                    <div style="font-size: 15px; font-weight: 700; color: #00ffff; margin-bottom: 12px; text-align: center;">Cüzdanını Bağla</div>
-                    <div style="font-size: 11px; color: rgba(255, 255, 255, 0.4); text-align: center; margin-bottom: 15px;">
-                        Trust Wallet, MetaMask, Binance vb. browser'ında aç
-                    </div>
-                    <button class="boost-buy-btn" id="connectWalletBtn" onclick="connectBoostWallet(); return false;">
-                        🔗 Cüzdan Bağla
-                    </button>
-                    <div id="walletInfoBoost" style="margin-top: 12px; text-align: center; font-size: 12px; color: #00ffff;"></div>
-                </div>
-                
-                <!-- Boosts -->
-                <div id="boostsListSection" style="display: none;">
+                <!-- Boosts (Always visible) -->
+                <div id="boostsListSection">
                     <!-- Boost 1 -->
                     <div class="boost-card" id="boost-card-1">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                             <div style="font-size: 22px; font-weight: 900; color: #00ffff;">+1.00 MR</div>
                             <div style="font-size: 18px; font-weight: 800; color: #fff;">$1.99</div>
                         </div>
-                        <div style="color: rgba(255, 255, 255, 0.5); font-size: 12px; margin-bottom: 10px;">Başlangıç paketi</div>
+                        <div style="color: rgba(255, 255, 255, 0.5); font-size: 12px; margin-bottom: 10px;">Starter package</div>
                         <div style="margin-bottom: 12px;">
                             <div style="display: flex; align-items: center; margin-bottom: 6px; font-size: 12px; color: rgba(255, 255, 255, 0.7);">
-                                <span style="color: #00ffff; margin-right: 8px; font-weight: 900;">✓</span> Kalıcı +1.00 mining rate
+                                <span style="color: #00ffff; margin-right: 8px; font-weight: 900;">✓</span> Permanent +1.00 mining rate
                             </div>
                             <div style="display: flex; align-items: center; margin-bottom: 6px; font-size: 12px; color: rgba(255, 255, 255, 0.7);">
-                                <span style="color: #00ffff; margin-right: 8px; font-weight: 900;">✓</span> Tek seferlik satın alım
+                                <span style="color: #00ffff; margin-right: 8px; font-weight: 900;">✓</span> One-time purchase
                             </div>
                             <div style="display: flex; align-items: center; margin-bottom: 6px; font-size: 12px; color: rgba(255, 255, 255, 0.7);">
-                                <span style="color: #00ffff; margin-right: 8px; font-weight: 900;">✓</span> Anında aktivasyon
+                                <span style="color: #00ffff; margin-right: 8px; font-weight: 900;">✓</span> Instant activation
                             </div>
                         </div>
                         <button class="boost-buy-btn" onclick="buyBoostInApp('boost1', 1.99, 1.00)">
-                            Satın Al - $1.99 USDT
+                            Buy Now - $1.99 USDT
                         </button>
                     </div>
                     
@@ -5328,20 +5354,20 @@ async function startMiningOnBackend() {
                             <div style="font-size: 22px; font-weight: 900; color: #00ffff;">+3.00 MR</div>
                             <div style="font-size: 18px; font-weight: 800; color: #fff;">$5.99</div>
                         </div>
-                        <div style="color: rgba(255, 255, 255, 0.5); font-size: 12px; margin-bottom: 10px;">En avantajlı paket</div>
+                        <div style="color: rgba(255, 255, 255, 0.5); font-size: 12px; margin-bottom: 10px;">Best value package</div>
                         <div style="margin-bottom: 12px;">
                             <div style="display: flex; align-items: center; margin-bottom: 6px; font-size: 12px; color: rgba(255, 255, 255, 0.7);">
-                                <span style="color: #00ffff; margin-right: 8px; font-weight: 900;">✓</span> Kalıcı +3.00 mining rate
+                                <span style="color: #00ffff; margin-right: 8px; font-weight: 900;">✓</span> Permanent +3.00 mining rate
                             </div>
                             <div style="display: flex; align-items: center; margin-bottom: 6px; font-size: 12px; color: rgba(255, 255, 255, 0.7);">
-                                <span style="color: #00ffff; margin-right: 8px; font-weight: 900;">✓</span> 3x hızlı kazanç
+                                <span style="color: #00ffff; margin-right: 8px; font-weight: 900;">✓</span> 3x faster earnings
                             </div>
                             <div style="display: flex; align-items: center; margin-bottom: 6px; font-size: 12px; color: rgba(255, 255, 255, 0.7);">
-                                <span style="color: #00ffff; margin-right: 8px; font-weight: 900;">✓</span> Anında aktivasyon
+                                <span style="color: #00ffff; margin-right: 8px; font-weight: 900;">✓</span> Instant activation
                             </div>
                         </div>
                         <button class="boost-buy-btn" onclick="buyBoostInApp('boost2', 5.99, 3.00)">
-                            Satın Al - $5.99 USDT
+                            Buy Now - $5.99 USDT
                         </button>
                     </div>
                     
@@ -5351,48 +5377,60 @@ async function startMiningOnBackend() {
                             <div style="font-size: 22px; font-weight: 900; color: #00ffff;">+5.00 MR</div>
                             <div style="font-size: 18px; font-weight: 800; color: #fff;">$9.99</div>
                         </div>
-                        <div style="color: rgba(255, 255, 255, 0.5); font-size: 12px; margin-bottom: 10px;">Maximum güç paketi</div>
+                        <div style="color: rgba(255, 255, 255, 0.5); font-size: 12px; margin-bottom: 10px;">Maximum power package</div>
                         <div style="margin-bottom: 12px;">
                             <div style="display: flex; align-items: center; margin-bottom: 6px; font-size: 12px; color: rgba(255, 255, 255, 0.7);">
-                                <span style="color: #00ffff; margin-right: 8px; font-weight: 900;">✓</span> Kalıcı +5.00 mining rate
+                                <span style="color: #00ffff; margin-right: 8px; font-weight: 900;">✓</span> Permanent +5.00 mining rate
                             </div>
                             <div style="display: flex; align-items: center; margin-bottom: 6px; font-size: 12px; color: rgba(255, 255, 255, 0.7);">
-                                <span style="color: #00ffff; margin-right: 8px; font-weight: 900;">✓</span> 5x hızlı kazanç
+                                <span style="color: #00ffff; margin-right: 8px; font-weight: 900;">✓</span> 5x faster earnings
                             </div>
                             <div style="display: flex; align-items: center; margin-bottom: 6px; font-size: 12px; color: rgba(255, 255, 255, 0.7);">
-                                <span style="color: #00ffff; margin-right: 8px; font-weight: 900;">✓</span> Premium destek
+                                <span style="color: #00ffff; margin-right: 8px; font-weight: 900;">✓</span> Premium support
                             </div>
                         </div>
                         <button class="boost-buy-btn" onclick="buyBoostInApp('boost3', 9.99, 5.00)">
-                            Satın Al - $9.99 USDT
+                            Buy Now - $9.99 USDT
                         </button>
                     </div>
                     
                     <!-- Info -->
-                    <div style="background: rgba(0, 255, 255, 0.05); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 16px; padding: 16px; margin-top: 20px;">
-                        <div style="color: #00ffff; font-size: 14px; font-weight: 800; margin-bottom: 10px;">Nasıl Satın Alınır?</div>
+                    <div style="background: rgba(0, 255, 255, 0.05); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 16px; padding: 16px; margin-bottom: 15px;">
+                        <div style="color: #00ffff; font-size: 14px; font-weight: 800; margin-bottom: 10px;">How to Purchase</div>
                         <ul style="list-style: none; padding: 0; margin: 0;">
                             <li style="font-size: 11px; color: rgba(255, 255, 255, 0.5); margin-bottom: 6px; padding-left: 12px; position: relative;">
                                 <span style="position: absolute; left: 0; color: #00ffff;">•</span>
-                                Wallet app browser'ında bu sayfayı aç
+                                Click "Buy Now" on any package
                             </li>
                             <li style="font-size: 11px; color: rgba(255, 255, 255, 0.5); margin-bottom: 6px; padding-left: 12px; position: relative;">
                                 <span style="position: absolute; left: 0; color: #00ffff;">•</span>
-                                Cüzdan bağla → Tek dokunuş
+                                Select your wallet (Trust, MetaMask, Binance, etc.)
                             </li>
                             <li style="font-size: 11px; color: rgba(255, 255, 255, 0.5); margin-bottom: 6px; padding-left: 12px; position: relative;">
                                 <span style="position: absolute; left: 0; color: #00ffff;">•</span>
-                                Satın Al → Cüzdanda onayla
+                                Approve connection in wallet app
                             </li>
                             <li style="font-size: 11px; color: rgba(255, 255, 255, 0.5); margin-bottom: 6px; padding-left: 12px; position: relative;">
                                 <span style="position: absolute; left: 0; color: #00ffff;">•</span>
-                                Boost anında aktif!
+                                Confirm payment transaction
                             </li>
                             <li style="font-size: 11px; color: rgba(255, 255, 255, 0.5); padding-left: 12px; position: relative;">
                                 <span style="position: absolute; left: 0; color: #00ffff;">•</span>
-                                USDT: BSC, Polygon, Ethereum
+                                Boost activates automatically!
                             </li>
                         </ul>
+                    </div>
+                    
+                    <!-- Wallet Connect Card (Bottom) -->
+                    <div class="boost-wallet-card">
+                        <div style="font-size: 15px; font-weight: 700; color: #00ffff; margin-bottom: 12px; text-align: center;">Connect Wallet</div>
+                        <div style="font-size: 11px; color: rgba(255, 255, 255, 0.4); text-align: center; margin-bottom: 15px;">
+                            Trust Wallet, MetaMask, Binance Wallet, etc.
+                        </div>
+                        <button class="boost-buy-btn" id="connectWalletBtn" onclick="connectBoostWallet(); return false;">
+                            🔗 Connect Wallet
+                        </button>
+                        <div id="walletInfoBoost" style="margin-top: 12px; text-align: center; font-size: 12px; color: #00ffff;"></div>
                     </div>
                 </div>
             `;
