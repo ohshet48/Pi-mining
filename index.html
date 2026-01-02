@@ -6,8 +6,7 @@
     <meta name="theme-color" content="#5b21b6">
     <!-- Version 2.0.1 - Leaderboard Fix -->
     <title>Arc Astra</title>
-    <!-- WalletConnect v2 -->
-    <script src="https://unpkg.com/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
+    <!-- Web3.js -->
     <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
     <style>
         * { 
@@ -3155,7 +3154,7 @@ window.__resetEmail = email;
 
         
         // ========================
-        // BOOST WALLET FUNCTIONS (WalletConnect)
+        // BOOST WALLET FUNCTIONS (Mobile Deeplink + Injected)
         // ========================
         
         const USDT_CONTRACTS = {
@@ -3166,67 +3165,135 @@ window.__resetEmail = email;
         
         const PAYMENT_ADDRESS = '0x7271deE618B40417ECbD4e046d8f294cA648Dce1'; // BSC/BEP20 USDT
         
-        let boostWeb3, boostAccount, boostChainId, walletConnectProvider;
+        let boostWeb3, boostAccount, boostChainId;
+        
+        // Detect mobile wallets
+        function detectMobileWallets() {
+            const wallets = [];
+            
+            // Check injected providers
+            if (window.ethereum) {
+                if (window.ethereum.isTrust) wallets.push({ name: 'Trust Wallet', provider: window.ethereum, type: 'injected' });
+                else if (window.ethereum.isMetaMask) wallets.push({ name: 'MetaMask', provider: window.ethereum, type: 'injected' });
+                else if (window.ethereum.isBinance) wallets.push({ name: 'Binance Wallet', provider: window.ethereum, type: 'injected' });
+                else wallets.push({ name: 'Wallet', provider: window.ethereum, type: 'injected' });
+            }
+            
+            // Always show deeplink options on mobile
+            if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                wallets.push(
+                    { name: 'Trust Wallet', deeplink: 'trust://wc', type: 'deeplink' },
+                    { name: 'MetaMask', deeplink: 'metamask://wc', type: 'deeplink' },
+                    { name: 'Binance Wallet', deeplink: 'bnc://app.binance.com/cedefi/wc', type: 'deeplink' }
+                );
+            }
+            
+            return wallets;
+        }
+        
+        // Show wallet selection modal
+        function showWalletSelectionModal() {
+            const wallets = detectMobileWallets();
+            
+            let html = `
+                <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; display: flex; align-items: center; justify-content: center;" id="walletModal">
+                    <div style="background: linear-gradient(135deg, #0a1929, #001e3c); border: 2px solid #00ffff; border-radius: 20px; padding: 20px; max-width: 400px; width: 90%;">
+                        <h3 style="color: #00ffff; text-align: center; margin-bottom: 20px;">Select Wallet</h3>
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+            `;
+            
+            wallets.forEach((wallet, index) => {
+                html += `
+                    <button onclick="selectWallet(${index})" style="width: 100%; padding: 16px; background: rgba(0, 255, 255, 0.1); border: 1px solid rgba(0, 255, 255, 0.3); border-radius: 12px; color: white; font-size: 16px; font-weight: 700; cursor: pointer; text-align: left;">
+                        🔗 ${wallet.name}
+                    </button>
+                `;
+            });
+            
+            html += `
+                        </div>
+                        <button onclick="closeWalletModal()" style="width: 100%; margin-top: 16px; padding: 14px; background: rgba(255, 0, 0, 0.2); border: 1px solid rgba(255, 0, 0, 0.4); border-radius: 12px; color: white; font-weight: 700;">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', html);
+            window.availableWallets = wallets;
+        }
+        
+        window.selectWallet = async function(index) {
+            const wallet = window.availableWallets[index];
+            closeWalletModal();
+            
+            if (wallet.type === 'injected') {
+                // Use injected provider
+                try {
+                    const accounts = await wallet.provider.request({ method: 'eth_requestAccounts' });
+                    boostAccount = accounts[0];
+                    boostWeb3 = new Web3(wallet.provider);
+                    boostChainId = await boostWeb3.eth.getChainId();
+                    
+                    document.getElementById('walletInfoBoost').innerHTML = `✅ ${wallet.name}<br>${boostAccount.substring(0, 8)}...${boostAccount.substring(36)}`;
+                    document.getElementById('connectWalletBtn').textContent = '✓ Connected';
+                    document.getElementById('connectWalletBtn').disabled = true;
+                    
+                    await loadPurchasedBoosts();
+                    showToast(`Connected to ${wallet.name}`);
+                } catch (error) {
+                    alert('Connection failed: ' + error.message);
+                }
+            } else {
+                // Use deeplink
+                showToast('Opening ' + wallet.name + '...');
+                window.location.href = wallet.deeplink;
+                
+                // Listen for app returning
+                setTimeout(() => {
+                    if (window.ethereum) {
+                        connectBoostWallet();
+                    } else {
+                        alert('Please open this page in ' + wallet.name + ' browser');
+                    }
+                }, 3000);
+            }
+        };
+        
+        window.closeWalletModal = function() {
+            const modal = document.getElementById('walletModal');
+            if (modal) modal.remove();
+        };
         
         async function connectBoostWallet() {
             console.log('🔗 Connect Boost Wallet clicked!');
             
-            try {
-                // WalletConnect Provider
-                const WalletConnectProvider = window.WalletConnectProvider.default;
-                
-                walletConnectProvider = new WalletConnectProvider({
-                    rpc: {
-                        56: "https://bsc-dataseed.binance.org/",
-                        137: "https://polygon-rpc.com/",
-                        1: "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"
-                    },
-                    chainId: 56, // Default BSC
-                    qrcodeModalOptions: {
-                        mobileLinks: [
-                            "rainbow",
-                            "metamask",
-                            "argent",
-                            "trust",
-                            "imtoken",
-                            "pillar",
-                        ],
-                        desktopLinks: [
-                            "encrypted ink",
-                        ],
-                    },
-                });
-                
-                console.log('Enabling WalletConnect...');
-                await walletConnectProvider.enable();
-                
-                boostWeb3 = new Web3(walletConnectProvider);
-                const accounts = await boostWeb3.eth.getAccounts();
-                boostAccount = accounts[0];
-                boostChainId = await boostWeb3.eth.getChainId();
-                
-                console.log('Connected!', boostAccount, 'Chain:', boostChainId);
-                
-                document.getElementById('walletInfoBoost').innerHTML = `✅ Connected<br>${boostAccount.substring(0, 8)}...${boostAccount.substring(36)}`;
-                document.getElementById('connectWalletBtn').textContent = '✓ Connected';
-                document.getElementById('connectWalletBtn').disabled = true;
-                
-                await loadPurchasedBoosts();
-                
-                // Listen for disconnect
-                walletConnectProvider.on("disconnect", (code, reason) => {
-                    console.log('WalletConnect disconnected', code, reason);
-                    location.reload();
-                });
-                
-            } catch (error) {
-                console.error('WalletConnect error:', error);
-                if (error.message.includes('User closed modal')) {
-                    showToast('Connection cancelled');
-                } else {
-                    alert(`❌ Connection error: ${error.message}`);
+            // If already injected (in wallet browser), use it directly
+            if (window.ethereum) {
+                try {
+                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    boostAccount = accounts[0];
+                    boostWeb3 = new Web3(window.ethereum);
+                    boostChainId = await boostWeb3.eth.getChainId();
+                    
+                    const walletName = window.ethereum.isTrust ? 'Trust Wallet' :
+                                      window.ethereum.isMetaMask ? 'MetaMask' :
+                                      window.ethereum.isBinance ? 'Binance Wallet' : 'Wallet';
+                    
+                    document.getElementById('walletInfoBoost').innerHTML = `✅ ${walletName}<br>${boostAccount.substring(0, 8)}...${boostAccount.substring(36)}`;
+                    document.getElementById('connectWalletBtn').textContent = '✓ Connected';
+                    document.getElementById('connectWalletBtn').disabled = true;
+                    
+                    await loadPurchasedBoosts();
+                    showToast('Connected to ' + walletName);
+                    return;
+                } catch (error) {
+                    console.error('Injected wallet error:', error);
                 }
             }
+            
+            // Show wallet selection modal
+            showWalletSelectionModal();
         }
         
         async function loadPurchasedBoosts() {
