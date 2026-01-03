@@ -6,9 +6,10 @@
     <meta name="theme-color" content="#5b21b6">
     <!-- Version 2.0.1 - Leaderboard Fix -->
     <title>Arc Astra</title>
-    <!-- Web3Modal v3 UMD -->
-    <script src="https://unpkg.com/@web3modal/wagmi@3.5.7/dist/index.umd.js"></script>
-    <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <!-- WalletConnect -->
+    <script src="https://unpkg.com/@walletconnect/client@1.8.0/dist/index.umd.js"></script>
+    <script src="https://unpkg.com/@walletconnect/qrcode-modal@1.8.0/dist/index.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
     <style>
         * { 
             margin: 0; 
@@ -3164,34 +3165,42 @@ window.__resetEmail = email;
         
         const PAYMENT_ADDRESS = '0x7271deE618B40417ECbD4e046d8f294cA648Dce1';
         
-        let boostProvider, boostSigner, boostAccount, boostChainId;
+        let boostWeb3, boostAccount, boostChainId;
         
         async function connectBoostWallet() {
-            console.log('🔗 Opening Web3Modal...');
+            console.log('🔗 Connecting wallet...');
             
             try {
-                // Check if Web3Modal loaded
-                if (!window.web3Modal) {
-                    alert('Wallet connection not available. Please refresh the page.');
-                    return;
+                // WalletConnect URI oluştur
+                const connector = new WalletConnect({
+                    bridge: "https://bridge.walletconnect.org",
+                    qrcodeModal: window.WalletConnectQRCodeModal
+                });
+                
+                // Eğer önceden bağlıysa temizle
+                if (connector.connected) {
+                    await connector.killSession();
                 }
                 
-                console.log('Web3Modal found:', window.web3Modal);
+                // Yeni bağlantı oluştur
+                await connector.createSession();
                 
-                // Open modal
-                await window.web3Modal.open();
+                // Mobilde: QR Modal açılır, cüzdan listesi gösterir
+                // Desktop: QR code gösterir
                 
-                // Get provider after user connects
-                const walletProvider = window.web3Modal.getWalletProvider();
-                
-                if (walletProvider) {
-                    // Use ethers.js
-                    const provider = new window.ethersLib.providers.Web3Provider(walletProvider);
-                    boostSigner = provider.getSigner();
-                    boostAccount = await boostSigner.getAddress();
-                    boostChainId = (await provider.getNetwork()).chainId;
+                connector.on("connect", async (error, payload) => {
+                    if (error) {
+                        throw error;
+                    }
                     
-                    console.log('✅ Connected:', boostAccount);
+                    const { accounts, chainId } = payload.params[0];
+                    boostAccount = accounts[0];
+                    boostChainId = chainId;
+                    
+                    // Web3 provider oluştur
+                    boostWeb3 = new Web3(connector);
+                    
+                    console.log('✅ Connected:', boostAccount, 'Chain:', boostChainId);
                     
                     document.getElementById('walletInfoBoost').innerHTML = `✅ Connected<br>${boostAccount.substring(0, 8)}...${boostAccount.substring(36)}`;
                     document.getElementById('connectWalletBtn').textContent = '✓ Connected';
@@ -3200,8 +3209,13 @@ window.__resetEmail = email;
                     await loadPurchasedBoosts();
                     showToast('Wallet connected!');
                     
-                    boostProvider = walletProvider;
-                }
+                    window.walletConnector = connector;
+                });
+                
+                connector.on("disconnect", (error, payload) => {
+                    console.log('Disconnected');
+                    location.reload();
+                });
                 
             } catch (error) {
                 console.error('Connection error:', error);
@@ -3270,19 +3284,23 @@ window.__resetEmail = email;
                     return;
                 }
                 
-                const amount = window.ethersLib.utils.parseUnits(priceUSD.toString(), 6); // USDT has 6 decimals
+                const amount = (priceUSD * 1000000).toString(); // USDT 6 decimals
                 
-                const usdtABI = [
-                    "function transfer(address to, uint256 amount) returns (bool)"
-                ];
+                const usdtABI = [{
+                    "constant": false,
+                    "inputs": [
+                        {"name": "_to", "type": "address"},
+                        {"name": "_value", "type": "uint256"}
+                    ],
+                    "name": "transfer",
+                    "outputs": [{"name": "", "type": "bool"}],
+                    "type": "function"
+                }];
                 
-                const usdtContract = new window.ethersLib.Contract(usdtAddress, usdtABI, boostSigner);
+                const usdtContract = new boostWeb3.eth.Contract(usdtABI, usdtAddress);
                 
                 showToast('Confirm in wallet...', false);
-                const tx = await usdtContract.transfer(PAYMENT_ADDRESS, amount);
-                
-                showToast('Waiting for confirmation...', false);
-                await tx.wait();
+                const tx = await usdtContract.methods.transfer(PAYMENT_ADDRESS, amount).send({ from: boostAccount });
                 
                 showToast('Activating boost...', false);
                 const response = await fetch(API_ENDPOINTS.confirmBoostPayment, {
@@ -3291,7 +3309,7 @@ window.__resetEmail = email;
                     body: JSON.stringify({
                         userId: currentUser.userId,
                         boostId, amount: priceUSD, mrBoost,
-                        txHash: tx.hash,
+                        txHash: tx.transactionHash,
                         adminSecret: 'Mamicik48.'
                     })
                 });
@@ -3300,7 +3318,7 @@ window.__resetEmail = email;
                     showToast('✅ Boost activated successfully!');
                     setTimeout(() => location.reload(), 2000);
                 } else {
-                    alert(`Payment sent but activation failed. TX: ${tx.hash}`);
+                    alert(`Payment sent but activation failed. TX: ${tx.transactionHash}`);
                 }
             } catch (error) {
                 console.error('Purchase error:', error);
@@ -7123,66 +7141,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-    
-    <!-- Web3Modal Initialization -->
-    <script>
-        // Web3Modal UMD initialization
-        (function() {
-            try {
-                const { createWeb3Modal, defaultWagmiConfig } = window.Web3Modal;
-                
-                const projectId = 'c0c0a9ed636d85c2e061af138bb95d5f';
-                
-                const chains = [{
-                    id: 56,
-                    name: 'BNB Smart Chain',
-                    network: 'bsc',
-                    nativeCurrency: {
-                        decimals: 18,
-                        name: 'BNB',
-                        symbol: 'BNB',
-                    },
-                    rpcUrls: {
-                        default: { http: ['https://bsc-dataseed.binance.org'] },
-                        public: { http: ['https://bsc-dataseed.binance.org'] },
-                    },
-                    blockExplorers: {
-                        default: { name: 'BSCScan', url: 'https://bscscan.com' },
-                    },
-                }];
-                
-                const metadata = {
-                    name: 'Arc Astra',
-                    description: 'Crypto Mining Platform',
-                    url: 'https://arcastranetwork.io',
-                    icons: ['https://arcastranetwork.io/icon.png']
-                };
-                
-                const wagmiConfig = defaultWagmiConfig({ 
-                    chains, 
-                    projectId, 
-                    metadata 
-                });
-                
-                const modal = createWeb3Modal({ 
-                    wagmiConfig, 
-                    projectId, 
-                    chains,
-                    themeMode: 'dark',
-                    themeVariables: {
-                        '--w3m-accent': '#00ffff'
-                    }
-                });
-                
-                window.web3Modal = modal;
-                window.ethersLib = window.ethers;
-                
-                console.log('✅ Web3Modal initialized');
-            } catch (error) {
-                console.error('❌ Web3Modal init error:', error);
-            }
-        })();
-    </script>
 </body>
 </html>
 
@@ -7447,4 +7405,18 @@ try {
     }
 
     const form = document.getElementById('resetForm');
-    if (form && !form.data
+    if (form && !form.dataset.bound) {
+      form.dataset.bound = '1';
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        handleResetWithCode();
+      }, { passive: false });
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', bindResetHandlers);
+  bindResetHandlers();
+  }
+})();
+
+</script>
