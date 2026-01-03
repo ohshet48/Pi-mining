@@ -3169,6 +3169,21 @@ window.__resetEmail = email;
             console.log('🔗 Opening Web3Modal...');
             
             try {
+                // Wait for Web3Modal to load
+                if (!window.web3Modal) {
+                    showToast('Loading wallet connection...', false);
+                    
+                    // Wait max 5 seconds for Web3Modal to load
+                    for (let i = 0; i < 50; i++) {
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        if (window.web3Modal) break;
+                    }
+                    
+                    if (!window.web3Modal) {
+                        throw new Error('Web3Modal failed to load. Please refresh the page.');
+                    }
+                }
+                
                 // Open modal - shows ALL installed wallets
                 await window.web3Modal.open();
                 
