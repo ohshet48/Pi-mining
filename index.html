@@ -6,8 +6,9 @@
     <meta name="theme-color" content="#5b21b6">
     <!-- Version 2.0.1 - Leaderboard Fix -->
     <title>Arc Astra</title>
-    <!-- Web3Modal v3 -->
-    <script type="module" src="https://esm.sh/@web3modal/ethers5@latest"></script>
+    <!-- Web3Modal v3 UMD -->
+    <script src="https://unpkg.com/@web3modal/wagmi@3.5.7/dist/index.umd.js"></script>
+    <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <style>
         * { 
             margin: 0; 
@@ -3169,39 +3170,29 @@ window.__resetEmail = email;
             console.log('🔗 Opening Web3Modal...');
             
             try {
-                // Wait for Web3Modal to load
+                // Check if Web3Modal loaded
                 if (!window.web3Modal) {
-                    showToast('Loading wallet connection...', false);
-                    
-                    // Wait max 5 seconds for Web3Modal to load
-                    for (let i = 0; i < 50; i++) {
-                        await new Promise(resolve => setTimeout(resolve, 100));
-                        if (window.web3Modal) break;
-                    }
-                    
-                    if (!window.web3Modal) {
-                        throw new Error('Web3Modal failed to load. Please refresh the page.');
-                    }
+                    alert('Wallet connection not available. Please refresh the page.');
+                    return;
                 }
                 
-                // Open modal - shows ALL installed wallets
+                console.log('Web3Modal found:', window.web3Modal);
+                
+                // Open modal
                 await window.web3Modal.open();
                 
-                // Wait for connection
-                const provider = await window.web3Modal.getWalletProvider();
+                // Get provider after user connects
+                const walletProvider = window.web3Modal.getWalletProvider();
                 
-                if (provider) {
-                    // Create ethers provider
-                    const ethersProvider = new window.ethers.providers.Web3Provider(provider);
-                    boostSigner = ethersProvider.getSigner();
+                if (walletProvider) {
+                    // Use ethers.js
+                    const provider = new window.ethersLib.providers.Web3Provider(walletProvider);
+                    boostSigner = provider.getSigner();
                     boostAccount = await boostSigner.getAddress();
+                    boostChainId = (await provider.getNetwork()).chainId;
                     
-                    const network = await ethersProvider.getNetwork();
-                    boostChainId = network.chainId;
+                    console.log('✅ Connected:', boostAccount);
                     
-                    console.log('✅ Connected:', boostAccount, 'Chain:', boostChainId);
-                    
-                    // Update UI
                     document.getElementById('walletInfoBoost').innerHTML = `✅ Connected<br>${boostAccount.substring(0, 8)}...${boostAccount.substring(36)}`;
                     document.getElementById('connectWalletBtn').textContent = '✓ Connected';
                     document.getElementById('connectWalletBtn').disabled = true;
@@ -3209,9 +3200,7 @@ window.__resetEmail = email;
                     await loadPurchasedBoosts();
                     showToast('Wallet connected!');
                     
-                    boostProvider = provider;
-                } else {
-                    showToast('Connection cancelled');
+                    boostProvider = walletProvider;
                 }
                 
             } catch (error) {
@@ -3281,13 +3270,13 @@ window.__resetEmail = email;
                     return;
                 }
                 
-                const amount = window.ethers.utils.parseUnits(priceUSD.toString(), 6); // USDT has 6 decimals
+                const amount = window.ethersLib.utils.parseUnits(priceUSD.toString(), 6); // USDT has 6 decimals
                 
                 const usdtABI = [
                     "function transfer(address to, uint256 amount) returns (bool)"
                 ];
                 
-                const usdtContract = new window.ethers.Contract(usdtAddress, usdtABI, boostSigner);
+                const usdtContract = new window.ethersLib.Contract(usdtAddress, usdtABI, boostSigner);
                 
                 showToast('Confirm in wallet...', false);
                 const tx = await usdtContract.transfer(PAYMENT_ADDRESS, amount);
@@ -7135,47 +7124,64 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
     
-    <!-- Web3Modal v3 Initialization -->
-    <script type="module">
-        import { createWeb3Modal, defaultConfig } from 'https://esm.sh/@web3modal/ethers5@latest';
-        import { ethers } from 'https://esm.sh/ethers@5.7.2';
-        
-        // Project ID
-        const projectId = 'c0c0a9ed636d85c2e061af138bb95d5f';
-        
-        // BSC Network
-        const bscMainnet = {
-            chainId: 56,
-            name: 'BNB Smart Chain',
-            currency: 'BNB',
-            explorerUrl: 'https://bscscan.com',
-            rpcUrl: 'https://bsc-dataseed.binance.org'
-        };
-        
-        // Metadata
-        const metadata = {
-            name: 'Arc Astra',
-            description: 'Crypto Mining Platform',
-            url: 'https://arcastranetwork.io',
-            icons: ['https://arcastranetwork.io/icon.png']
-        };
-        
-        // Create modal
-        const ethersConfig = defaultConfig({ metadata });
-        const web3Modal = createWeb3Modal({
-            ethersConfig,
-            chains: [bscMainnet],
-            projectId,
-            themeMode: 'dark',
-            themeVariables: {
-                '--w3m-accent': '#00ffff',
-                '--w3m-background-color': '#0a1929'
+    <!-- Web3Modal Initialization -->
+    <script>
+        // Web3Modal UMD initialization
+        (function() {
+            try {
+                const { createWeb3Modal, defaultWagmiConfig } = window.Web3Modal;
+                
+                const projectId = 'c0c0a9ed636d85c2e061af138bb95d5f';
+                
+                const chains = [{
+                    id: 56,
+                    name: 'BNB Smart Chain',
+                    network: 'bsc',
+                    nativeCurrency: {
+                        decimals: 18,
+                        name: 'BNB',
+                        symbol: 'BNB',
+                    },
+                    rpcUrls: {
+                        default: { http: ['https://bsc-dataseed.binance.org'] },
+                        public: { http: ['https://bsc-dataseed.binance.org'] },
+                    },
+                    blockExplorers: {
+                        default: { name: 'BSCScan', url: 'https://bscscan.com' },
+                    },
+                }];
+                
+                const metadata = {
+                    name: 'Arc Astra',
+                    description: 'Crypto Mining Platform',
+                    url: 'https://arcastranetwork.io',
+                    icons: ['https://arcastranetwork.io/icon.png']
+                };
+                
+                const wagmiConfig = defaultWagmiConfig({ 
+                    chains, 
+                    projectId, 
+                    metadata 
+                });
+                
+                const modal = createWeb3Modal({ 
+                    wagmiConfig, 
+                    projectId, 
+                    chains,
+                    themeMode: 'dark',
+                    themeVariables: {
+                        '--w3m-accent': '#00ffff'
+                    }
+                });
+                
+                window.web3Modal = modal;
+                window.ethersLib = window.ethers;
+                
+                console.log('✅ Web3Modal initialized');
+            } catch (error) {
+                console.error('❌ Web3Modal init error:', error);
             }
-        });
-        
-        // Make modal global
-        window.web3Modal = web3Modal;
-        window.ethers = ethers;
+        })();
     </script>
 </body>
 </html>
@@ -7441,18 +7447,4 @@ try {
     }
 
     const form = document.getElementById('resetForm');
-    if (form && !form.dataset.bound) {
-      form.dataset.bound = '1';
-      form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        handleResetWithCode();
-      }, { passive: false });
-    }
-  }
-
-  document.addEventListener('DOMContentLoaded', bindResetHandlers);
-  bindResetHandlers();
-  }
-})();
-
-</script>
+    if (form && !form.data
