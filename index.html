@@ -2203,7 +2203,7 @@ function showLoginLoading() {
     const el = document.getElementById('loadingScreen');
     if (el) el.style.display = 'flex';
 }
-function 
+function hideLoginLoading() {
     const el = document.getElementById('loadingScreen');
     if (el) el.style.display = 'none';
 }
@@ -6620,5 +6620,6 @@ window.__doConfirmReset = __doConfirmReset;
 
   document.addEventListener('DOMContentLoaded', bindResetHandlers);
   bindResetHandlers();
-)();
+  }
+})();
 </script>
