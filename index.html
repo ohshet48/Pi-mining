@@ -6,9 +6,8 @@
     <meta name="theme-color" content="#5b21b6">
     <!-- Version 2.0.1 - Leaderboard Fix -->
     <title>Arc Astra</title>
-    <!-- WalletConnect Provider -->
-    <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <!-- Web3Modal v3 -->
+    <script type="module" src="https://esm.sh/@web3modal/ethers5@latest"></script>
     <style>
         * { 
             margin: 0; 
@@ -3155,69 +3154,54 @@ window.__resetEmail = email;
 
         
         // ========================
-        // BOOST WALLET - WALLETCONNECT
+        // BOOST WALLET - WEB3MODAL V3
         // ========================
         
         const USDT_CONTRACTS = {
-            56: '0x55d398326f99059fF775485246999027B3197955', // BSC
-            137: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F', // Polygon
-            1: '0xdAC17F958D2ee523a2206206994597C13D831ec7' // Ethereum
+            56: '0x55d398326f99059fF775485246999027B3197955',
         };
         
         const PAYMENT_ADDRESS = '0x7271deE618B40417ECbD4e046d8f294cA648Dce1';
         
-        let boostWeb3, boostAccount, boostChainId, walletProvider;
+        let boostProvider, boostSigner, boostAccount, boostChainId;
         
         async function connectBoostWallet() {
-            console.log('🔗 Connecting wallet...');
+            console.log('🔗 Opening Web3Modal...');
             
             try {
-                // Create WalletConnect Provider
-                const WalletConnectProvider = window.WalletConnectProvider.default;
+                // Open modal - shows ALL installed wallets
+                await window.web3Modal.open();
                 
-                walletProvider = new WalletConnectProvider({
-                    rpc: {
-                        56: "https://bsc-dataseed.binance.org/",
-                        137: "https://polygon-rpc.com/",
-                        1: "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"
-                    },
-                    chainId: 56,
-                    qrcode: true, // Auto QR code + mobile wallets list
-                });
+                // Wait for connection
+                const provider = await window.web3Modal.getWalletProvider();
                 
-                // Enable = Opens wallet selection
-                console.log('Opening wallet selection...');
-                await walletProvider.enable();
-                
-                // Create Web3 instance
-                boostWeb3 = new Web3(walletProvider);
-                const accounts = await boostWeb3.eth.getAccounts();
-                boostAccount = accounts[0];
-                boostChainId = await boostWeb3.eth.getChainId();
-                
-                console.log('✅ Connected:', boostAccount, 'Chain:', boostChainId);
-                
-                // Update UI
-                document.getElementById('walletInfoBoost').innerHTML = `✅ Connected<br>${boostAccount.substring(0, 8)}...${boostAccount.substring(36)}`;
-                document.getElementById('connectWalletBtn').textContent = '✓ Connected';
-                document.getElementById('connectWalletBtn').disabled = true;
-                
-                await loadPurchasedBoosts();
-                showToast('Wallet connected successfully!');
-                
-                // Listen for disconnect
-                walletProvider.on("disconnect", () => {
-                    console.log('Wallet disconnected');
-                    location.reload();
-                });
+                if (provider) {
+                    // Create ethers provider
+                    const ethersProvider = new window.ethers.providers.Web3Provider(provider);
+                    boostSigner = ethersProvider.getSigner();
+                    boostAccount = await boostSigner.getAddress();
+                    
+                    const network = await ethersProvider.getNetwork();
+                    boostChainId = network.chainId;
+                    
+                    console.log('✅ Connected:', boostAccount, 'Chain:', boostChainId);
+                    
+                    // Update UI
+                    document.getElementById('walletInfoBoost').innerHTML = `✅ Connected<br>${boostAccount.substring(0, 8)}...${boostAccount.substring(36)}`;
+                    document.getElementById('connectWalletBtn').textContent = '✓ Connected';
+                    document.getElementById('connectWalletBtn').disabled = true;
+                    
+                    await loadPurchasedBoosts();
+                    showToast('Wallet connected!');
+                    
+                    boostProvider = provider;
+                } else {
+                    showToast('Connection cancelled');
+                }
                 
             } catch (error) {
                 console.error('Connection error:', error);
-                if (error.message && error.message.includes('User closed modal')) {
-                    showToast('Connection cancelled');
-                } else {
-                    alert('Connection failed: ' + (error.message || 'Unknown error'));
-                }
+                showToast('Connection failed: ' + error.message, true);
             }
         }
         
@@ -3278,23 +3262,23 @@ window.__resetEmail = email;
             try {
                 const usdtAddress = USDT_CONTRACTS[boostChainId];
                 if (!usdtAddress) {
-                    alert(`Please switch to BSC, Polygon, or Ethereum network`);
+                    alert(`Please switch to BSC network`);
                     return;
                 }
                 
-                const amount = Math.floor(priceUSD * 1000000);
-                const usdtABI = [{
-                    "constant": false,
-                    "inputs": [{"name": "_to", "type": "address"}, {"name": "_value", "type": "uint256"}],
-                    "name": "transfer",
-                    "outputs": [{"name": "", "type": "bool"}],
-                    "type": "function"
-                }];
+                const amount = window.ethers.utils.parseUnits(priceUSD.toString(), 6); // USDT has 6 decimals
                 
-                const usdtContract = new boostWeb3.eth.Contract(usdtABI, usdtAddress);
+                const usdtABI = [
+                    "function transfer(address to, uint256 amount) returns (bool)"
+                ];
+                
+                const usdtContract = new window.ethers.Contract(usdtAddress, usdtABI, boostSigner);
                 
                 showToast('Confirm in wallet...', false);
-                const tx = await usdtContract.methods.transfer(PAYMENT_ADDRESS, amount).send({ from: boostAccount });
+                const tx = await usdtContract.transfer(PAYMENT_ADDRESS, amount);
+                
+                showToast('Waiting for confirmation...', false);
+                await tx.wait();
                 
                 showToast('Activating boost...', false);
                 const response = await fetch(API_ENDPOINTS.confirmBoostPayment, {
@@ -3303,7 +3287,7 @@ window.__resetEmail = email;
                     body: JSON.stringify({
                         userId: currentUser.userId,
                         boostId, amount: priceUSD, mrBoost,
-                        txHash: tx.transactionHash,
+                        txHash: tx.hash,
                         adminSecret: 'Mamicik48.'
                     })
                 });
@@ -3312,9 +3296,10 @@ window.__resetEmail = email;
                     showToast('✅ Boost activated successfully!');
                     setTimeout(() => location.reload(), 2000);
                 } else {
-                    alert(`Payment sent but activation failed. Support: ${tx.transactionHash}`);
+                    alert(`Payment sent but activation failed. TX: ${tx.hash}`);
                 }
             } catch (error) {
+                console.error('Purchase error:', error);
                 showToast(`❌ Error: ${error.message}`, true);
             }
         }
@@ -7134,6 +7119,49 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
+    
+    <!-- Web3Modal v3 Initialization -->
+    <script type="module">
+        import { createWeb3Modal, defaultConfig } from 'https://esm.sh/@web3modal/ethers5@latest';
+        import { ethers } from 'https://esm.sh/ethers@5.7.2';
+        
+        // Project ID
+        const projectId = 'c0c0a9ed636d85c2e061af138bb95d5f';
+        
+        // BSC Network
+        const bscMainnet = {
+            chainId: 56,
+            name: 'BNB Smart Chain',
+            currency: 'BNB',
+            explorerUrl: 'https://bscscan.com',
+            rpcUrl: 'https://bsc-dataseed.binance.org'
+        };
+        
+        // Metadata
+        const metadata = {
+            name: 'Arc Astra',
+            description: 'Crypto Mining Platform',
+            url: 'https://arcastranetwork.io',
+            icons: ['https://arcastranetwork.io/icon.png']
+        };
+        
+        // Create modal
+        const ethersConfig = defaultConfig({ metadata });
+        const web3Modal = createWeb3Modal({
+            ethersConfig,
+            chains: [bscMainnet],
+            projectId,
+            themeMode: 'dark',
+            themeVariables: {
+                '--w3m-accent': '#00ffff',
+                '--w3m-background-color': '#0a1929'
+            }
+        });
+        
+        // Make modal global
+        window.web3Modal = web3Modal;
+        window.ethers = ethers;
+    </script>
 </body>
 </html>
 
