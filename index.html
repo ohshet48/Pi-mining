@@ -1968,14 +1968,7 @@ async function apiCall(endpoint, options = {}) {
   if (response.status === 401) {
     try {
       const errorData = await response.json();
-      if (errorData.reason === 'logged_in_elsewhere') {
-        // Başka cihazdan giriş yapılmış!
-        showToast('⚠️ Your account is logged in on another device', true);
-        setTimeout(() => {
-          logout();
-        }, 2000);
-        throw new Error('Session expired - logged in elsewhere');
-      }
+      throw new Error('Session expired - logged in elsewhere');
     } catch (e) {
       // JSON parse hatası - normal 401
       throw e;
@@ -1994,15 +1987,9 @@ async function apiCall(endpoint, options = {}) {
     
     const isLoggedIn = localStorage.getItem('isLoggedIn');
     const userId = localStorage.getItem('userId');
-    const storedUser = localStorage.getItem('currentUser');
     
-    if (isLoggedIn === 'true' && userId && storedUser) {
-        currentUser = JSON.parse(storedUser);
-        if (!currentUser.username && currentUser.email) {
-            currentUser.username = currentUser.email.split('@')[0];
-        }
-        
-        console.log('✅ User found - pre-fetching data...');
+    if (isLoggedIn === 'true' && userId) {
+        console.log('✅ User ID found - pre-fetching data...');
         
         // 🆕 VERİ ÇEKİMİNİ HEMEN BAŞLAT (DOM hazır olmadan)
         if (typeof fetch !== 'undefined') {
@@ -2019,12 +2006,6 @@ async function apiCall(endpoint, options = {}) {
                 // 🆕 401 kontrolü (başka cihazdan giriş)
                 if (r.status === 401) {
                     return r.json().then(data => {
-                        if (data.reason === 'logged_in_elsewhere') {
-                            // Session geçersiz - logout gerekli
-                            console.log('⚠️ Session invalid - logged in elsewhere');
-                            return null;
-                        }
-                        return data;
                     });
                 }
                 return r.json();
@@ -2050,14 +2031,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const isLoggedIn = localStorage.getItem('isLoggedIn');
     const userId = localStorage.getItem('userId');
-    const storedUser = localStorage.getItem('currentUser');
     
-    if (isLoggedIn === 'true' && userId && storedUser) {
-        currentUser = JSON.parse(storedUser);
-        if (!currentUser.username && currentUser.email) {
-            currentUser.username = currentUser.email.split('@')[0];
-        }
-        
+    if (isLoggedIn === 'true' && userId) {
         console.log('🔄 Calling initApp...');
         
         // Direkt initApp çağır - veri zaten çekilmeye başladı
@@ -2728,7 +2703,7 @@ window.__resetEmail = email;
             localStorage.setItem('userId', user.uid);
             localStorage.setItem('userEmail', user.email);
             localStorage.setItem('isLoggedIn', 'true');
-            localStorage.setItem('currentUser', JSON.stringify(data.user));
+            // currentUser memory'de tutuluyor - localStorage'a kaydetme
             
             // 🆕 Yeni session ID kaydet
             if (data.sessionId) {
@@ -2890,7 +2865,7 @@ window.__resetEmail = email;
             localStorage.setItem('userId', user.uid);
             localStorage.setItem('userEmail', user.email);
             localStorage.setItem('isLoggedIn', 'true');
-            localStorage.setItem('currentUser', JSON.stringify(data.user));
+            // currentUser memory'de tutuluyor - localStorage'a kaydetme
             
             // 🆕 Session ID kaydet
             if (data.sessionId) {
@@ -3018,7 +2993,7 @@ window.__resetEmail = email;
         
         let d = {};
         let balanceVisible = true;
-        let dailyRewardAvailable = localStorage.getItem('dailyRewardAvailable_' + (currentUser?.email || '')) === 'true';
+        let dailyRewardAvailable = false;  // Backend'den gelecek
         let hasPendingAirdrops = false;
         let activeMiningSession = null; // Store active session for ad boost check
         
@@ -3135,15 +3110,8 @@ window.__resetEmail = email;
                 });
                 
                 if (response.status === 401) {
-                    const errorData = await response.json();
-                    if (errorData.reason === 'logged_in_elsewhere') {
-                        showToast('⚠️ Your account is logged in on another device', true);
-                        setTimeout(() => {
-                            localStorage.clear();
-                            window.location.reload();
-                        }, 2000);
-                        return false;
-                    }
+                    // Session expired - sadece error at
+                    return false;
                 }
                 return true;
             } catch (error) {
@@ -3159,17 +3127,9 @@ window.__resetEmail = email;
     hideLoginLoading();
     const appEl = document.getElementById('app');
     if (appEl) appEl.style.display = 'block';
-    // localStorage'dan currentUser'ı oku
-    const storedUser = localStorage.getItem('currentUser');
-    const userId = localStorage.getItem('userId');
     
-    if (storedUser) {
-        currentUser = JSON.parse(storedUser);
-        // Username yoksa email'den oluştur
-        if (!currentUser.username && currentUser.email) {
-            currentUser.username = currentUser.email.split('@')[0];
-        }
-    }
+    // Sadece userId kontrolü - currentUser backend'den gelecek
+    const userId = localStorage.getItem('userId');
     
     // Backend'den TÜM verileri çek - PARALEL (3x hızlı!)
     if (userId) {
@@ -3190,18 +3150,15 @@ window.__resetEmail = email;
                         
                         currentUser = userData.user;
                         activeMiningSession = userData.activeMiningSession || null;
-                        localStorage.setItem('currentUser', JSON.stringify(userData.user));
+                        // currentUser memory'de tutuluyor - localStorage'a kaydetme
                         
-                        // ❌ Backend'den gelen dailyRewardAvailable kullanma!
-                        // dailyRewardAvailable zaten localStorage'dan okundu
-                        // Sadece manuel claim yapınca localStorage'a kaydedilir
+                        // ✅ Backend'den gelen dailyRewardAvailable kullan
+                        dailyRewardAvailable = userData.user.dailyRewardAvailable || false;
                         
                         // Referans sayıları
                         const totalRefs = (userData.user.referrals || []).length;
                         const activeRefsCount = userData.activeReferralsCount || 0;
                         
-                        localStorage.setItem('totalReferralsCount_' + currentUser.email, totalRefs);
-                        localStorage.setItem('activeReferralsCount_' + currentUser.email, activeRefsCount);
                         
                         console.log(`📊 Referrals: ${activeRefsCount}/${totalRefs} aktif`);
                         
@@ -3247,31 +3204,23 @@ window.__resetEmail = email;
                     })
                 });
                 
-                // 🆕 Session geçersizse (başka cihazdan giriş) - logout yap
+                // Session kontrolü (multi-device kaldırıldı)
                 if (userResponse.status === 401) {
-                    const errorData = await userResponse.json();
-                    if (errorData.reason === 'logged_in_elsewhere') {
-                        showToast('⚠️ ' + errorData.message, true);
-                        setTimeout(() => {
-                            logout();
-                        }, 2000);
-                        return;
-                    }
+                    console.log('Session expired - 401');
                 }
                 
                 if (userResponse.ok) {
                     const userData = await userResponse.json();
                     currentUser = userData.user;
                     activeMiningSession = userData.activeMiningSession || null;
-                    localStorage.setItem('currentUser', JSON.stringify(userData.user));
+                    // currentUser memory'de tutuluyor - localStorage'a kaydetme
                     
-                    // ❌ Backend dailyRewardAvailable kullanma
+                    // ✅ Backend'den dailyRewardAvailable al
+                    dailyRewardAvailable = userData.user.dailyRewardAvailable || false;
                     
                     const totalRefs = (userData.user.referrals || []).length;
                     const activeRefsCount = userData.activeReferralsCount || 0;
                     
-                    localStorage.setItem('totalReferralsCount_' + currentUser.email, totalRefs);
-                    localStorage.setItem('activeReferralsCount_' + currentUser.email, activeRefsCount);
                     
                     console.log(`📊 Referrals: ${activeRefsCount}/${totalRefs} aktif`);
                     
@@ -3296,13 +3245,13 @@ window.__resetEmail = email;
         } catch (error) {
             console.error('❌ Backend veri çekme hatası:', error);
         }
-    }
-    
+        
+        // currentUser backend'den geldiyse d objesini doldur
+        if (currentUser) {
             d = {
                 balance: currentUser.balance || 0,
                 level: currentUser.level || 1,
                 refs: currentUser.referrals?.length || 0,
-                activeRefs: parseInt(localStorage.getItem('activeReferralsCount_' + currentUser.email)) || 0,
                 streak: currentUser.streak || 0,
                 lastDate: currentUser.lastDate || null,
                 refCode: currentUser.referralCode || currentUser.refCode,
@@ -3319,8 +3268,7 @@ window.__resetEmail = email;
             // Calculate active mining referrals
             d.activeRefs = calculateActiveRefs();
             
-            // Calculate dynamic rate: base rate + referral bonus + ad boost
-            // Base rate includes level bonuses only (permanent)
+            // Calculate dynamic rate
             const baseRate = currentUser.rate || 0.25;
             const refBonus = d.activeRefs * 0.05;
             
@@ -3328,39 +3276,18 @@ window.__resetEmail = email;
             let adBonus = 0;
             if (activeMiningSession && activeMiningSession.adBoostActive) {
                 const boostCount = activeMiningSession.adBoostCount || 1;
-                adBonus = boostCount * 0.25;  // Cumulative: each ad adds 0.25
+                adBonus = boostCount * 0.25;
             }
             
             d.rate = baseRate + refBonus + adBonus;
             
-            // Check for pending airdrops
-            hasPendingAirdrops = (currentUser.pendingAirdrops && currentUser.pendingAirdrops.length > 0) || false;
-            
-            dailyRewardAvailable = currentUser.dailyRewardAvailable || false;
-            
-            // Load balance visibility preference
-            const savedBalanceVisible = localStorage.getItem('balanceVisible_' + currentUser.email);
-            if (savedBalanceVisible !== null) {
-                balanceVisible = savedBalanceVisible === 'true';
-            }
-            
-            // Request notification permission
-            requestNotificationPermission();
-          document.getElementById('authScreen').style.display = 'none';
-           // Hide loading screen
-          document.getElementById('app').style.display = 'block';  
-            checkMining();
-            render();
-            startTimer();
-            
-            // 🆕 TÜM VERİLER YÜKLENDİ - SPLASH SCREEN'İ KAPAT
-            console.log('✅ App initialized - hiding splash screen');
-            hideSplashScreen();
+            console.log('✅ d objesi dolduruldu:', d);
         }
+    }
+    
         
         function calculateActiveRefs() {
             // Backend'den gelen active referrals count'u kullan
-            return parseInt(localStorage.getItem('activeReferralsCount_' + currentUser.email)) || 0;
         }
 
         function save() {
@@ -3392,7 +3319,7 @@ window.__resetEmail = email;
                 currentUser.pendingReferralEarnings = d.pendingReferralEarnings;
                 
                 // 🆕 localStorage'daki currentUser object'ini de güncelleyelim
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                // currentUser memory'de tutuluyor - localStorage'a kaydetme
             }
         }
         
@@ -3489,7 +3416,7 @@ window.__resetEmail = email;
                     .then(data => {
                         if (data.user) {
                             currentUser = data.user;
-                            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                            // currentUser memory'de tutuluyor - localStorage'a kaydetme
                         }
                     })
                     .catch(err => console.error('Failed to refresh user:', err));
@@ -3981,7 +3908,6 @@ async function startMiningOnBackend() {
                     const finalActiveCount = activeRefData.activeCount || 0;
                     
                     // localStorage ve d.activeRefs güncelle
-                    localStorage.setItem('activeReferralsCount_' + currentUser.email, finalActiveCount);
                     d.activeRefs = finalActiveCount;
                     
                     console.log(`✅ Final active referrals: ${finalActiveCount}`);
@@ -4042,8 +3968,7 @@ async function startMiningOnBackend() {
 
                     if (res.ok && data.reward) {
                         d.balance += data.reward;
-                        dailyRewardAvailable = false;
-                        localStorage.removeItem('dailyRewardAvailable_' + currentUser.email);
+                        dailyRewardAvailable = false;  // Local flag - backend zaten temizliyor
                         save();
                         showToast('✓ Claimed +5 Coins daily reward!');
                         render();
@@ -4655,7 +4580,7 @@ async function startMiningOnBackend() {
             
             setUsers(users);
             currentUser.email = newEmail;
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            // currentUser memory'de tutuluyor - localStorage'a kaydetme
             
             closeChangeEmail();
             showToast('✓ Email changed successfully!');
@@ -5372,7 +5297,7 @@ async function startMiningOnBackend() {
                     }
                     
                     // Save to localStorage
-                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    // currentUser memory'de tutuluyor - localStorage'a kaydetme
                     save();
                     
                     // Show success message
@@ -6029,7 +5954,7 @@ if (response.ok && data.leaderboard) {
                           d.balance += data.earnings;
                           d.pendingReferralEarnings = 0;
                           currentUser.pendingReferralEarnings = 0;
-                          localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                          // currentUser memory'de tutuluyor - localStorage'a kaydetme
                           save();
                           showToast(`✓ Claimed ${data.earnings} Coins from referrals!`);
                           render();
@@ -6564,6 +6489,96 @@ async function sendPasswordReset() {
                 button.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
             }
         }
+// ===========================
+// MINING AUTO-COMPLETE & BALANCE UPDATE
+// ===========================
+let isAutoClaimingMining = false;  // Flag to prevent double claim
+
+setInterval(async () => {
+    if (!currentUser || !currentUser.userId) return;
+    if (isAutoClaimingMining) return;  // Zaten claim ediliyor
+    
+    const miningEndTime = localStorage.getItem('miningEndTime_' + currentUser.email);
+    const currentSessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
+    
+    if (!miningEndTime || !currentSessionId) return;
+    
+    const endTime = parseInt(miningEndTime);
+    const now = Date.now();
+    
+    // Mining bitti mi?
+    if (now >= endTime) {
+        isAutoClaimingMining = true;  // Lock
+        console.log('⛏️ Mining complete - sending notification first...');
+        
+        // 1. ÖNCE BİLDİRİM GÖNDER (claim öncesi)
+        try {
+            await fetch(API_ENDPOINTS.sendMiningNotification, {
+                method: 'POST',
+                headers: getApiHeaders(),
+                body: JSON.stringify({
+                    userId: currentUser.userId,
+                    sessionId: currentSessionId
+                })
+            });
+            console.log('📱 Mining complete notification sent');
+        } catch (notifError) {
+            console.error('Notification error:', notifError);
+        }
+        
+        // 2. SONRA OTOMATİK CLAIM
+        try {
+            // Backend'den reward'ı claim et (otomatik)
+            const response = await fetch(API_ENDPOINTS.claimReward, {
+                method: 'POST',
+                headers: getApiHeaders(),
+                body: JSON.stringify({
+                    userId: currentUser.userId,
+                    sessionId: currentSessionId,
+                    clientSessionId: localStorage.getItem('deviceSessionId')
+                })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const reward = data.reward;
+                const newBalance = data.newBalance;
+                
+                console.log(`✅ Auto-claimed: ${reward.toFixed(2)} ARCASTRA`);
+                console.log(`💰 New balance: ${newBalance.toFixed(2)}`);
+                
+                // LocalStorage'ı temizle
+                localStorage.removeItem('miningEndTime_' + currentUser.email);
+                localStorage.removeItem('miningStartTime_' + currentUser.email);
+                localStorage.removeItem('currentSessionId_' + currentUser.email);
+                
+                // ✅ Daily reward backend'de set edilecek - localStorage'a kaydetme
+                // dailyRewardAvailable = true;  // Backend getUserData'da gelecek
+                
+                // currentUser güncelle
+                currentUser.balance = newBalance;
+                // currentUser memory'de tutuluyor - localStorage'a kaydetme
+                
+                // Toast göster
+                showToast(`⛏️ Mining Complete! +${reward.toFixed(2)} ARCASTRA`);
+                
+                // Sayfa yenile
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                console.error('Auto-claim failed:', await response.text());
+                isAutoClaimingMining = false;  // Unlock - tekrar deneyebilir
+            }
+        } catch (error) {
+            console.error('Auto-claim error:', error);
+            isAutoClaimingMining = false;  // Unlock
+        }
+        
+        // Polling'i durdur
+        clearInterval(window.miningCompleteInterval);
+    }
+}, 5000);
+
+</script>
     </script>
 
 <!-- Forgot Password Modal -->
@@ -7018,93 +7033,3 @@ try {
   }
 })();
 
-// ===========================
-// MINING AUTO-COMPLETE & BALANCE UPDATE
-// ===========================
-let isAutoClaimingMining = false;  // Flag to prevent double claim
-
-setInterval(async () => {
-    if (!currentUser || !currentUser.userId) return;
-    if (isAutoClaimingMining) return;  // Zaten claim ediliyor
-    
-    const miningEndTime = localStorage.getItem('miningEndTime_' + currentUser.email);
-    const currentSessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
-    
-    if (!miningEndTime || !currentSessionId) return;
-    
-    const endTime = parseInt(miningEndTime);
-    const now = Date.now();
-    
-    // Mining bitti mi?
-    if (now >= endTime) {
-        isAutoClaimingMining = true;  // Lock
-        console.log('⛏️ Mining complete - sending notification first...');
-        
-        // 1. ÖNCE BİLDİRİM GÖNDER (claim öncesi)
-        try {
-            await fetch(API_ENDPOINTS.sendMiningNotification, {
-                method: 'POST',
-                headers: getApiHeaders(),
-                body: JSON.stringify({
-                    userId: currentUser.userId,
-                    sessionId: currentSessionId
-                })
-            });
-            console.log('📱 Mining complete notification sent');
-        } catch (notifError) {
-            console.error('Notification error:', notifError);
-        }
-        
-        // 2. SONRA OTOMATİK CLAIM
-        try {
-            // Backend'den reward'ı claim et (otomatik)
-            const response = await fetch(API_ENDPOINTS.claimReward, {
-                method: 'POST',
-                headers: getApiHeaders(),
-                body: JSON.stringify({
-                    userId: currentUser.userId,
-                    sessionId: currentSessionId,
-                    clientSessionId: localStorage.getItem('deviceSessionId')
-                })
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                const reward = data.reward;
-                const newBalance = data.newBalance;
-                
-                console.log(`✅ Auto-claimed: ${reward.toFixed(2)} ARCASTRA`);
-                console.log(`💰 New balance: ${newBalance.toFixed(2)}`);
-                
-                // LocalStorage'ı temizle
-                localStorage.removeItem('miningEndTime_' + currentUser.email);
-                localStorage.removeItem('miningStartTime_' + currentUser.email);
-                localStorage.removeItem('currentSessionId_' + currentUser.email);
-                
-                // ✅ Daily reward artık alınabilir - localStorage'a kaydet
-                localStorage.setItem('dailyRewardAvailable_' + currentUser.email, 'true');
-                
-                // currentUser güncelle
-                currentUser.balance = newBalance;
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                
-                // Toast göster
-                showToast(`⛏️ Mining Complete! +${reward.toFixed(2)} ARCASTRA`);
-                
-                // Sayfa yenile
-                setTimeout(() => location.reload(), 1500);
-            } else {
-                console.error('Auto-claim failed:', await response.text());
-                isAutoClaimingMining = false;  // Unlock - tekrar deneyebilir
-            }
-        } catch (error) {
-            console.error('Auto-claim error:', error);
-            isAutoClaimingMining = false;  // Unlock
-        }
-        
-        // Polling'i durdur
-        clearInterval(window.miningCompleteInterval);
-    }
-}, 5000);
-
-</script>
