@@ -3192,7 +3192,9 @@ window.__resetEmail = email;
                         activeMiningSession = userData.activeMiningSession || null;
                         localStorage.setItem('currentUser', JSON.stringify(userData.user));
                         
-                        dailyRewardAvailable = userData.user.dailyRewardAvailable || false;
+                        // ❌ Backend'den gelen dailyRewardAvailable kullanma!
+                        // dailyRewardAvailable zaten localStorage'dan okundu
+                        // Sadece manuel claim yapınca localStorage'a kaydedilir
                         
                         // Referans sayıları
                         const totalRefs = (userData.user.referrals || []).length;
@@ -3263,7 +3265,7 @@ window.__resetEmail = email;
                     activeMiningSession = userData.activeMiningSession || null;
                     localStorage.setItem('currentUser', JSON.stringify(userData.user));
                     
-                    dailyRewardAvailable = userData.user.dailyRewardAvailable || false;
+                    // ❌ Backend dailyRewardAvailable kullanma
                     
                     const totalRefs = (userData.user.referrals || []).length;
                     const activeRefsCount = userData.activeReferralsCount || 0;
@@ -3419,7 +3421,7 @@ window.__resetEmail = email;
             }
         }
         
-        function claimLevelReward() {
+        async function claimLevelReward() {
             // Prevent double-claiming
             if (isClaimingLevel) return;
             if (!d.pendingLevelUp) return;
@@ -3432,10 +3434,29 @@ window.__resetEmail = email;
             isClaimingLevel = true;
             
             try {
+                // Backend'e claim isteği gönder
+                const response = await fetch(API_ENDPOINTS.updateLevel, {
+                    method: 'POST',
+                    headers: getApiHeaders(),
+                    body: JSON.stringify({
+                        userId: currentUser.userId,
+                        newLevel: d.pendingLevelUp,
+                        coinsReward: reward.coins,
+                        newRate: newBaseRate
+                    })
+                });
+                
+                if (!response.ok) {
+                    showToast('❌ Failed to claim. Try again.', true);
+                    return;
+                }
+                
+                // Backend başarılı - artık local update yap
                 d.balance += reward.coins;
                 const claimedLevel = d.pendingLevelUp;
                 d.level = d.pendingLevelUp;
-                d.pendingLevelUp = null;
+                d.pendingLevelUp = null; // ✅ Artık temizle
+                
                 // Calculate new rate
             const baseRate = 0.25;
             const levelBonus = (claimedLevel - 1) * 0.05;
@@ -3461,18 +3482,6 @@ window.__resetEmail = email;
                 }
                 
                 save();
-                
-                // Update backend asynchronously
-                fetch(API_ENDPOINTS.updateLevel, {
-                    method: 'POST',
-                    headers: getApiHeaders(),
-                    body: JSON.stringify({
-                        userId: currentUser.userId,
-                        newLevel: claimedLevel,
-                        coinsReward: reward.coins,
-                        newRate: newBaseRate
-                    })
-                }).catch(err => console.error('Backend update failed:', err));
                 
                 // Refresh currentUser from backend
                 fetch(API_ENDPOINTS.getUserData + '?userId=' + currentUser.userId)
@@ -3999,62 +4008,8 @@ async function startMiningOnBackend() {
 
             const reward = finalRate * 24;
             
-            // 🆕 Mining bitti - UI'ı güncelle
+            // Mining UI render ediliyor
             render();
-            
-            // Backend'e claim gönder
-            await claimRewardFromBackend(reward);
-        }
-        async function claimRewardFromBackend(reward) {
-            // 🆕 OPTİMİSTİC UPDATE - Hemen güncelle (UX için)
-            d.balance += reward;
-            d.miningDays++;
-            dailyRewardAvailable = true;
-            localStorage.setItem('dailyRewardAvailable_' + currentUser.email, 'true');
-            save();
-            render();
-            
-            showToast(`✅ Claimed ${reward.toFixed(2)} ARC!`);
-            
-            try {
-                const clientSessionId = localStorage.getItem('deviceSessionId');
-                
-                // 🆕 apiCall wrapper kullan - session kontrolü otomatik
-                const response = await apiCall(API_ENDPOINTS.claimReward, {
-                    method: 'POST',
-                    headers: getApiHeaders(),
-                    body: JSON.stringify({
-                        userId: currentUser.userId,
-                        sessionId: localStorage.getItem('currentSessionId_' + currentUser.email),
-                        reward: reward,
-                        clientSessionId: clientSessionId
-                    })
-                });
-
-                if (response.ok) {
-                    checkLevelUp();
-                    sendMiningCompleteNotification();
-                } else {
-                    // Backend hatası - geri al
-                    d.balance -= reward;
-                    d.miningDays--;
-                    dailyRewardAvailable = false;
-                    save();
-                    render();
-                    showToast('❌ Failed to claim reward. Please try again.', true);
-                }
-            } catch (error) {
-                console.error('Backend error:', error);
-                // Session hatası yakalandı - apiCall içinde logout yapılacak
-                if (error.message && error.message.includes('Session expired')) {
-                    d.balance -= reward;
-                    d.miningDays--;
-                    dailyRewardAvailable = false;
-                    save();
-                } else {
-                    showToast('⚠️ Network error. Your reward is saved locally.', true);
-                }
-            }
         }
         function claimDailyReward() {
             // Prevent double-claiming
@@ -7064,78 +7019,92 @@ try {
 })();
 
 // ===========================
-// MINING COMPLETE AUTO-UPDATE
+// MINING AUTO-COMPLETE & BALANCE UPDATE
 // ===========================
+let isAutoClaimingMining = false;  // Flag to prevent double claim
+
 setInterval(async () => {
     if (!currentUser || !currentUser.userId) return;
+    if (isAutoClaimingMining) return;  // Zaten claim ediliyor
     
     const miningEndTime = localStorage.getItem('miningEndTime_' + currentUser.email);
-    if (!miningEndTime) return;
+    const currentSessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
+    
+    if (!miningEndTime || !currentSessionId) return;
     
     const endTime = parseInt(miningEndTime);
     const now = Date.now();
     
     // Mining bitti mi?
     if (now >= endTime) {
-        console.log('⛏️ Mining complete detected - refreshing balance...');
+        isAutoClaimingMining = true;  // Lock
+        console.log('⛏️ Mining complete - sending notification first...');
         
+        // 1. ÖNCE BİLDİRİM GÖNDER (claim öncesi)
         try {
-            // Backend'den güncel balance al
-            const response = await fetch(API_ENDPOINTS.getUserData, {
+            await fetch(API_ENDPOINTS.sendMiningNotification, {
                 method: 'POST',
                 headers: getApiHeaders(),
-                body: JSON.stringify({ userId: currentUser.userId })
+                body: JSON.stringify({
+                    userId: currentUser.userId,
+                    sessionId: currentSessionId
+                })
+            });
+            console.log('📱 Mining complete notification sent');
+        } catch (notifError) {
+            console.error('Notification error:', notifError);
+        }
+        
+        // 2. SONRA OTOMATİK CLAIM
+        try {
+            // Backend'den reward'ı claim et (otomatik)
+            const response = await fetch(API_ENDPOINTS.claimReward, {
+                method: 'POST',
+                headers: getApiHeaders(),
+                body: JSON.stringify({
+                    userId: currentUser.userId,
+                    sessionId: currentSessionId,
+                    clientSessionId: localStorage.getItem('deviceSessionId')
+                })
             });
             
             if (response.ok) {
                 const data = await response.json();
-                const newBalance = data.user.balance;
-                const oldBalance = currentUser.balance;
+                const reward = data.reward;
+                const newBalance = data.newBalance;
                 
-                if (newBalance !== oldBalance) {
-                    console.log(`💰 Balance updated: ${oldBalance} → ${newBalance}`);
-                    
-                    // currentUser güncelle
-                    currentUser.balance = newBalance;
-                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                    
-                    // UI güncelle
-                    const balanceEl = document.getElementById('balance');
-                    if (balanceEl) {
-                        balanceEl.textContent = newBalance.toFixed(2);
-                    }
-                    
-                    // BİLDİRİM GÖNDER
-                    const sessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
-                    if (sessionId) {
-                        try {
-                            await fetch(API_ENDPOINTS.sendMiningNotification, {
-                                method: 'POST',
-                                headers: getApiHeaders(),
-                                body: JSON.stringify({
-                                    userId: currentUser.userId,
-                                    sessionId: sessionId
-                                })
-                            });
-                            console.log('📱 Mining complete notification sent');
-                        } catch (notifError) {
-                            console.error('Notification error:', notifError);
-                        }
-                    }
-                    
-                    // Mining session temizle
-                    localStorage.removeItem('miningEndTime_' + currentUser.email);
-                    localStorage.removeItem('miningStartTime_' + currentUser.email);
-                    localStorage.removeItem('currentSessionId_' + currentUser.email);
-                    
-                    // Sayfa yenile (mining card güncellemek için)
-                    location.reload();
-                }
+                console.log(`✅ Auto-claimed: ${reward.toFixed(2)} ARCASTRA`);
+                console.log(`💰 New balance: ${newBalance.toFixed(2)}`);
+                
+                // LocalStorage'ı temizle
+                localStorage.removeItem('miningEndTime_' + currentUser.email);
+                localStorage.removeItem('miningStartTime_' + currentUser.email);
+                localStorage.removeItem('currentSessionId_' + currentUser.email);
+                
+                // ✅ Daily reward artık alınabilir - localStorage'a kaydet
+                localStorage.setItem('dailyRewardAvailable_' + currentUser.email, 'true');
+                
+                // currentUser güncelle
+                currentUser.balance = newBalance;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                
+                // Toast göster
+                showToast(`⛏️ Mining Complete! +${reward.toFixed(2)} ARCASTRA`);
+                
+                // Sayfa yenile
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                console.error('Auto-claim failed:', await response.text());
+                isAutoClaimingMining = false;  // Unlock - tekrar deneyebilir
             }
         } catch (error) {
-            console.error('Balance update error:', error);
+            console.error('Auto-claim error:', error);
+            isAutoClaimingMining = false;  // Unlock
         }
+        
+        // Polling'i durdur
+        clearInterval(window.miningCompleteInterval);
     }
-}, 5000); // Her 5 saniyede kontrol et
+}, 5000);
 
 </script>
