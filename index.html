@@ -6,9 +6,7 @@
     <meta name="theme-color" content="#5b21b6">
     <!-- Version 2.0.1 - Leaderboard Fix -->
     <title>Arc Astra</title>
-    <!-- WalletConnect -->
-    <script src="https://unpkg.com/@walletconnect/client@1.8.0/dist/index.umd.js"></script>
-    <script src="https://unpkg.com/@walletconnect/qrcode-modal@1.8.0/dist/index.umd.js"></script>
+    <!-- Web3.js only -->
     <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
     <style>
         * { 
@@ -3168,59 +3166,47 @@ window.__resetEmail = email;
         let boostWeb3, boostAccount, boostChainId;
         
         async function connectBoostWallet() {
-            console.log('🔗 Connecting wallet...');
+            console.log('🔗 Opening wallet app...');
             
-            try {
-                // WalletConnect URI oluştur
-                const connector = new WalletConnect({
-                    bridge: "https://bridge.walletconnect.org",
-                    qrcodeModal: window.WalletConnectQRCodeModal
-                });
+            // Generate WalletConnect URI
+            const wcUri = `wc:${generateRandomId()}@1?bridge=https%3A%2F%2Fbridge.walletconnect.org&key=${generateRandomKey()}`;
+            
+            // Try opening Trust Wallet
+            const trustDeepLink = `https://link.trustwallet.com/wc?uri=${encodeURIComponent(wcUri)}`;
+            
+            // For Android APK - use intent
+            if (navigator.userAgent.includes('Android')) {
+                window.location.href = `intent://wc?uri=${encodeURIComponent(wcUri)}#Intent;package=com.wallet.crypto.trustapp;scheme=wc;end`;
                 
-                // Eğer önceden bağlıysa temizle
-                if (connector.connected) {
-                    await connector.killSession();
-                }
-                
-                // Yeni bağlantı oluştur
-                await connector.createSession();
-                
-                // Mobilde: QR Modal açılır, cüzdan listesi gösterir
-                // Desktop: QR code gösterir
-                
-                connector.on("connect", async (error, payload) => {
-                    if (error) {
-                        throw error;
-                    }
-                    
-                    const { accounts, chainId } = payload.params[0];
-                    boostAccount = accounts[0];
-                    boostChainId = chainId;
-                    
-                    // Web3 provider oluştur
-                    boostWeb3 = new Web3(connector);
-                    
-                    console.log('✅ Connected:', boostAccount, 'Chain:', boostChainId);
-                    
-                    document.getElementById('walletInfoBoost').innerHTML = `✅ Connected<br>${boostAccount.substring(0, 8)}...${boostAccount.substring(36)}`;
-                    document.getElementById('connectWalletBtn').textContent = '✓ Connected';
-                    document.getElementById('connectWalletBtn').disabled = true;
-                    
-                    await loadPurchasedBoosts();
-                    showToast('Wallet connected!');
-                    
-                    window.walletConnector = connector;
-                });
-                
-                connector.on("disconnect", (error, payload) => {
-                    console.log('Disconnected');
-                    location.reload();
-                });
-                
-            } catch (error) {
-                console.error('Connection error:', error);
-                showToast('Connection failed: ' + error.message, true);
+                // Fallback to Trust Wallet universal link
+                setTimeout(() => {
+                    window.location.href = trustDeepLink;
+                }, 500);
+            } else {
+                // iOS
+                window.location.href = `trust://wc?uri=${encodeURIComponent(wcUri)}`;
             }
+            
+            showToast('Opening wallet app...', false);
+            
+            // Listen for return to app
+            setTimeout(() => {
+                if (document.visibilityState === 'visible') {
+                    showToast('Please complete connection in wallet app');
+                }
+            }, 2000);
+        }
+        
+        function generateRandomId() {
+            return Array.from({length: 16}, () => 
+                Math.floor(Math.random() * 16).toString(16)
+            ).join('');
+        }
+        
+        function generateRandomKey() {
+            return Array.from({length: 64}, () => 
+                Math.floor(Math.random() * 16).toString(16)
+            ).join('');
         }
         
         async function loadPurchasedBoosts() {
@@ -5399,23 +5385,23 @@ async function startMiningOnBackend() {
                         <ul style="list-style: none; padding: 0; margin: 0;">
                             <li style="font-size: 11px; color: rgba(255, 255, 255, 0.5); margin-bottom: 6px; padding-left: 12px; position: relative;">
                                 <span style="position: absolute; left: 0; color: #00ffff;">•</span>
-                                Click "Buy Now" on any package
+                                Open this page in wallet browser (Trust Wallet, MetaMask, Binance)
                             </li>
                             <li style="font-size: 11px; color: rgba(255, 255, 255, 0.5); margin-bottom: 6px; padding-left: 12px; position: relative;">
                                 <span style="position: absolute; left: 0; color: #00ffff;">•</span>
-                                Select your wallet (Trust, MetaMask, Binance, etc.)
+                                Click "Buy Now" - wallet connects automatically
                             </li>
                             <li style="font-size: 11px; color: rgba(255, 255, 255, 0.5); margin-bottom: 6px; padding-left: 12px; position: relative;">
                                 <span style="position: absolute; left: 0; color: #00ffff;">•</span>
-                                Approve connection in wallet app
+                                Approve connection
                             </li>
                             <li style="font-size: 11px; color: rgba(255, 255, 255, 0.5); margin-bottom: 6px; padding-left: 12px; position: relative;">
                                 <span style="position: absolute; left: 0; color: #00ffff;">•</span>
-                                Confirm payment transaction
+                                Confirm USDT payment (BSC network)
                             </li>
                             <li style="font-size: 11px; color: rgba(255, 255, 255, 0.5); padding-left: 12px; position: relative;">
                                 <span style="position: absolute; left: 0; color: #00ffff;">•</span>
-                                Boost activates automatically!
+                                Boost activates instantly!
                             </li>
                         </ul>
                     </div>
