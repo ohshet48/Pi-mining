@@ -6,7 +6,9 @@
     <meta name="theme-color" content="#5b21b6">
     <!-- Version 2.0.1 - Leaderboard Fix -->
     <title>Arc Astra</title>
-    <!-- Web3.js only -->
+    <!-- QR Code Generator -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <!-- Web3.js -->
     <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
     <style>
         * { 
@@ -1927,6 +1929,8 @@ const API_ENDPOINTS = {
   getAnnouncements: `${FUNCTIONS_BASE_URL}/getAnnouncements`, // 🆕
   getUserBoosts: `${FUNCTIONS_BASE_URL}/getUserBoosts`,       // 🆕 Boost
   confirmBoostPayment: `${FUNCTIONS_BASE_URL}/confirmBoostPayment`, // 🆕 Boost
+  createBoostPayment: `${FUNCTIONS_BASE_URL}/createBoostPayment`,   // 🆕 Boost Manual
+  checkBoostPayment: `${FUNCTIONS_BASE_URL}/checkBoostPayment`,     // 🆕 Boost Check
 };
 
 // API Key for mobile app security
@@ -3166,37 +3170,26 @@ window.__resetEmail = email;
         let boostWeb3, boostAccount, boostChainId;
         
         async function connectBoostWallet() {
-            console.log('🔗 Opening wallet app...');
+            console.log('🔗 Wallet connection requested');
             
-            // Generate WalletConnect URI
-            const wcUri = `wc:${generateRandomId()}@1?bridge=https%3A%2F%2Fbridge.walletconnect.org&key=${generateRandomKey()}`;
+            // Web app içinde cüzdan bağlanamaz - native özellik gerekli
+            const message = `
+⚠️ BOOST PURCHASE COMING SOON
+
+Currently, boost purchases are being integrated with native wallet support.
+
+For now, you can:
+• Use in-app ad boosts (+0.25 MR)
+• Earn through referrals
+• Complete daily rewards
+
+Native wallet integration will be available in the next update!
+            `.trim();
             
-            // Try opening Trust Wallet
-            const trustDeepLink = `https://link.trustwallet.com/wc?uri=${encodeURIComponent(wcUri)}`;
-            
-            // For Android APK - use intent
-            if (navigator.userAgent.includes('Android')) {
-                window.location.href = `intent://wc?uri=${encodeURIComponent(wcUri)}#Intent;package=com.wallet.crypto.trustapp;scheme=wc;end`;
-                
-                // Fallback to Trust Wallet universal link
-                setTimeout(() => {
-                    window.location.href = trustDeepLink;
-                }, 500);
-            } else {
-                // iOS
-                window.location.href = `trust://wc?uri=${encodeURIComponent(wcUri)}`;
-            }
-            
-            showToast('Opening wallet app...', false);
-            
-            // Listen for return to app
-            setTimeout(() => {
-                if (document.visibilityState === 'visible') {
-                    showToast('Please complete connection in wallet app');
-                }
-            }, 2000);
+            alert(message);
         }
         
+        // Helper functions
         function generateRandomId() {
             return Array.from({length: 16}, () => 
                 Math.floor(Math.random() * 16).toString(16)
@@ -3245,71 +3238,186 @@ window.__resetEmail = email;
         }
         
         async function buyBoostInApp(boostId, priceUSD, mrBoost) {
-            // Check if wallet connected
-            if (!boostAccount) {
-                showToast('Connecting wallet...', false);
-                try {
-                    await connectBoostWallet();
-                    // After connection, retry purchase
-                    if (boostAccount) {
-                        await buyBoostInApp(boostId, priceUSD, mrBoost);
-                    }
-                    return;
-                } catch (error) {
-                    showToast('Please connect wallet first', true);
-                    return;
-                }
-            }
+            // Check if wallet connected - artık gerek yok, manuel gönderim
             
-            showToast('Preparing transaction...', false);
+            showToast('Preparing payment...', false);
             
             try {
-                const usdtAddress = USDT_CONTRACTS[boostChainId];
-                if (!usdtAddress) {
-                    alert(`Please switch to BSC network`);
+                // 1. Kullanıcıdan cüzdan adresini al
+                const walletAddress = prompt('Enter your wallet address (BSC/BEP20):\n\nExample: 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb');
+                
+                if (!walletAddress || !walletAddress.startsWith('0x') || walletAddress.length !== 42) {
+                    showToast('Invalid wallet address', true);
                     return;
                 }
                 
-                const amount = (priceUSD * 1000000).toString(); // USDT 6 decimals
-                
-                const usdtABI = [{
-                    "constant": false,
-                    "inputs": [
-                        {"name": "_to", "type": "address"},
-                        {"name": "_value", "type": "uint256"}
-                    ],
-                    "name": "transfer",
-                    "outputs": [{"name": "", "type": "bool"}],
-                    "type": "function"
-                }];
-                
-                const usdtContract = new boostWeb3.eth.Contract(usdtABI, usdtAddress);
-                
-                showToast('Confirm in wallet...', false);
-                const tx = await usdtContract.methods.transfer(PAYMENT_ADDRESS, amount).send({ from: boostAccount });
-                
-                showToast('Activating boost...', false);
-                const response = await fetch(API_ENDPOINTS.confirmBoostPayment, {
+                // 2. Pending payment oluştur
+                const response = await fetch(API_ENDPOINTS.createBoostPayment, {
                     method: 'POST',
                     headers: getApiHeaders(),
                     body: JSON.stringify({
                         userId: currentUser.userId,
-                        boostId, amount: priceUSD, mrBoost,
-                        txHash: tx.transactionHash,
+                        boostId,
+                        amount: priceUSD,
+                        mrBoost,
+                        walletAddress,
                         adminSecret: 'Mamicik48.'
                     })
                 });
                 
-                if (response.ok) {
-                    showToast('✅ Boost activated successfully!');
-                    setTimeout(() => location.reload(), 2000);
+                const data = await response.json();
+                
+                if (data.success) {
+                    // 3. Payment ekranını göster
+                    showPaymentScreen(data);
                 } else {
-                    alert(`Payment sent but activation failed. TX: ${tx.transactionHash}`);
+                    showToast('Failed to create payment', true);
                 }
+                
             } catch (error) {
-                console.error('Purchase error:', error);
-                showToast(`❌ Error: ${error.message}`, true);
+                console.error('Payment creation error:', error);
+                showToast('Error: ' + error.message, true);
             }
+        }
+        
+        function showPaymentScreen(paymentData) {
+            const { paymentAddress, amount, network, referenceId, qrCodeUrl } = paymentData;
+            
+            const modal = document.createElement('div');
+            modal.id = 'paymentModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.95);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: linear-gradient(135deg, #0a1929, #001e3c); border: 2px solid #00ffff; border-radius: 20px; padding: 30px; max-width: 400px; width: 100%; max-height: 90vh; overflow-y: auto;">
+                    <h2 style="color: #00ffff; text-align: center; margin-bottom: 20px; font-size: 22px;">💰 Send Payment</h2>
+                    
+                    <!-- QR Code -->
+                    <div style="background: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px;">
+                        <div id="qrcode" style="display: flex; justify-content: center;"></div>
+                    </div>
+                    
+                    <!-- Payment Details -->
+                    <div style="background: rgba(0, 255, 255, 0.05); border: 1px solid rgba(0, 255, 255, 0.2); border-radius: 12px; padding: 15px; margin-bottom: 15px;">
+                        <div style="color: rgba(255, 255, 255, 0.6); font-size: 12px; margin-bottom: 8px;">NETWORK</div>
+                        <div style="color: white; font-weight: 700; font-size: 16px; margin-bottom: 15px;">${network}</div>
+                        
+                        <div style="color: rgba(255, 255, 255, 0.6); font-size: 12px; margin-bottom: 8px;">WALLET ADDRESS</div>
+                        <div style="color: white; font-size: 13px; word-break: break-all; margin-bottom: 10px; font-family: monospace;">${paymentAddress}</div>
+                        <button onclick="copyToClipboard('${paymentAddress}')" style="width: 100%; padding: 10px; background: rgba(0, 255, 255, 0.2); border: 1px solid #00ffff; border-radius: 8px; color: #00ffff; font-weight: 700; cursor: pointer; margin-bottom: 15px;">
+                            📋 Copy Address
+                        </button>
+                        
+                        <div style="color: rgba(255, 255, 255, 0.6); font-size: 12px; margin-bottom: 8px;">AMOUNT TO SEND</div>
+                        <div style="color: #00ffff; font-weight: 900; font-size: 24px; margin-bottom: 10px;">${amount} USDT</div>
+                        <button onclick="copyToClipboard('${amount}')" style="width: 100%; padding: 10px; background: rgba(0, 255, 255, 0.2); border: 1px solid #00ffff; border-radius: 8px; color: #00ffff; font-weight: 700; cursor: pointer; margin-bottom: 15px;">
+                            📋 Copy Amount
+                        </button>
+                        
+                        <div style="color: rgba(255, 255, 255, 0.6); font-size: 12px; margin-bottom: 8px;">REFERENCE ID</div>
+                        <div style="color: #8b5cf6; font-weight: 700; font-size: 16px; margin-bottom: 5px;">#${referenceId}</div>
+                        <div style="color: rgba(255, 255, 255, 0.4); font-size: 10px;">Save this for support</div>
+                    </div>
+                    
+                    <!-- Instructions -->
+                    <div style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
+                        <div style="color: #8b5cf6; font-weight: 700; margin-bottom: 10px; font-size: 14px;">📱 How to Send</div>
+                        <ol style="margin: 0; padding-left: 20px; color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.8;">
+                            <li>Open Trust Wallet or MetaMask</li>
+                            <li>Select USDT (BEP20)</li>
+                            <li>Scan QR or paste address</li>
+                            <li>Enter exact amount: ${amount}</li>
+                            <li>Confirm transaction</li>
+                            <li>Wait 30-60 seconds</li>
+                        </ol>
+                    </div>
+                    
+                    <!-- Status -->
+                    <div id="paymentStatus" style="text-align: center; color: #00ffff; font-size: 13px; margin-bottom: 15px;">
+                        ⏳ Waiting for payment...
+                    </div>
+                    
+                    <!-- Close -->
+                    <button onclick="closePaymentModal()" style="width: 100%; padding: 14px; background: rgba(255, 0, 0, 0.2); border: 1px solid rgba(255, 0, 0, 0.4); border-radius: 12px; color: white; font-weight: 700; cursor: pointer;">
+                        Close
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Generate QR code
+            new QRCode(document.getElementById('qrcode'), {
+                text: paymentAddress,
+                width: 200,
+                height: 200
+            });
+            
+            // Start checking payment status
+            startPaymentStatusCheck(referenceId);
+        }
+        
+        window.copyToClipboard = function(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Copied!');
+            });
+        };
+        
+        window.closePaymentModal = function() {
+            const modal = document.getElementById('paymentModal');
+            if (modal) modal.remove();
+            if (window.paymentCheckInterval) {
+                clearInterval(window.paymentCheckInterval);
+            }
+        };
+        
+        function startPaymentStatusCheck(referenceId) {
+            let attempts = 0;
+            const maxAttempts = 120; // 60 minutes (30 sec * 120)
+            
+            window.paymentCheckInterval = setInterval(async () => {
+                attempts++;
+                
+                try {
+                    const response = await fetch(API_ENDPOINTS.checkBoostPayment, {
+                        method: 'POST',
+                        headers: getApiHeaders(),
+                        body: JSON.stringify({
+                            referenceId,
+                            userId: currentUser.userId
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.status === 'completed') {
+                        clearInterval(window.paymentCheckInterval);
+                        document.getElementById('paymentStatus').innerHTML = '✅ Payment received! Activating boost...';
+                        
+                        setTimeout(() => {
+                            closePaymentModal();
+                            showToast('🎉 Boost activated successfully!');
+                            location.reload();
+                        }, 2000);
+                    } else if (attempts >= maxAttempts) {
+                        clearInterval(window.paymentCheckInterval);
+                        document.getElementById('paymentStatus').innerHTML = '⚠️ Payment timeout. Contact support with Reference ID.';
+                    }
+                } catch (error) {
+                    console.error('Payment check error:', error);
+                }
+            }, 30000); // Check every 30 seconds
         }
 
         async function initApp() {
