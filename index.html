@@ -3158,267 +3158,6 @@ window.__resetEmail = email;
 
         
         // ========================
-        // BOOST WALLET - WEB3MODAL V3
-        // ========================
-        
-        const USDT_CONTRACTS = {
-            56: '0x55d398326f99059fF775485246999027B3197955',
-        };
-        
-        const PAYMENT_ADDRESS = '0x7271deE618B40417ECbD4e046d8f294cA648Dce1';
-        
-        let boostWeb3, boostAccount, boostChainId;
-        
-        async function connectBoostWallet() {
-            console.log('🔗 Wallet connection requested');
-            
-            // Web app içinde cüzdan bağlanamaz - native özellik gerekli
-            const message = `
-⚠️ BOOST PURCHASE COMING SOON
-
-Currently, boost purchases are being integrated with native wallet support.
-
-For now, you can:
-• Use in-app ad boosts (+0.25 MR)
-• Earn through referrals
-• Complete daily rewards
-
-Native wallet integration will be available in the next update!
-            `.trim();
-            
-            alert(message);
-        }
-        
-        // Helper functions
-        function generateRandomId() {
-            return Array.from({length: 16}, () => 
-                Math.floor(Math.random() * 16).toString(16)
-            ).join('');
-        }
-        
-        function generateRandomKey() {
-            return Array.from({length: 64}, () => 
-                Math.floor(Math.random() * 16).toString(16)
-            ).join('');
-        }
-        
-        async function loadPurchasedBoosts() {
-            const userId = localStorage.getItem('userId');
-            if (!userId) return;
-            
-            try {
-                const response = await fetch(API_ENDPOINTS.getUserBoosts, {
-                    method: 'POST',
-                    headers: getApiHeaders(),
-                    body: JSON.stringify({ userId })
-                });
-                
-                const data = await response.json();
-                if (data.boosts) {
-                    if (data.boosts.boost1) markBoostPurchased('boost-card-1');
-                    if (data.boosts.boost2) markBoostPurchased('boost-card-2');
-                    if (data.boosts.boost3) markBoostPurchased('boost-card-3');
-                }
-            } catch (error) {
-                console.error('Load boosts error:', error);
-            }
-        }
-        
-        function markBoostPurchased(cardId) {
-            const card = document.getElementById(cardId);
-            if (card) {
-                card.classList.add('purchased');
-                card.innerHTML = '<div class="boost-badge">✓ PURCHASED</div>' + card.innerHTML;
-                const btn = card.querySelector('.boost-buy-btn');
-                if (btn) {
-                    btn.disabled = true;
-                    btn.textContent = 'Already Purchased';
-                }
-            }
-        }
-        
-        async function buyBoostInApp(boostId, priceUSD, mrBoost) {
-            // Check if wallet connected - artık gerek yok, manuel gönderim
-            
-            showToast('Preparing payment...', false);
-            
-            try {
-                // 1. Kullanıcıdan cüzdan adresini al
-                const walletAddress = prompt('Enter your wallet address (BSC/BEP20):\n\nExample: 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb');
-                
-                if (!walletAddress || !walletAddress.startsWith('0x') || walletAddress.length !== 42) {
-                    showToast('Invalid wallet address', true);
-                    return;
-                }
-                
-                // 2. Pending payment oluştur
-                const response = await fetch(API_ENDPOINTS.createBoostPayment, {
-                    method: 'POST',
-                    headers: getApiHeaders(),
-                    body: JSON.stringify({
-                        userId: currentUser.userId,
-                        boostId,
-                        amount: priceUSD,
-                        mrBoost,
-                        walletAddress,
-                        adminSecret: 'Mamicik48.'
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    // 3. Payment ekranını göster
-                    showPaymentScreen(data);
-                } else {
-                    showToast('Failed to create payment', true);
-                }
-                
-            } catch (error) {
-                console.error('Payment creation error:', error);
-                showToast('Error: ' + error.message, true);
-            }
-        }
-        
-        function showPaymentScreen(paymentData) {
-            const { paymentAddress, amount, network, referenceId, qrCodeUrl } = paymentData;
-            
-            const modal = document.createElement('div');
-            modal.id = 'paymentModal';
-            modal.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.95);
-                z-index: 10000;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 20px;
-            `;
-            
-            modal.innerHTML = `
-                <div style="background: linear-gradient(135deg, #0a1929, #001e3c); border: 2px solid #00ffff; border-radius: 20px; padding: 30px; max-width: 400px; width: 100%; max-height: 90vh; overflow-y: auto;">
-                    <h2 style="color: #00ffff; text-align: center; margin-bottom: 20px; font-size: 22px;">💰 Send Payment</h2>
-                    
-                    <!-- QR Code -->
-                    <div style="background: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px;">
-                        <div id="qrcode" style="display: flex; justify-content: center;"></div>
-                    </div>
-                    
-                    <!-- Payment Details -->
-                    <div style="background: rgba(0, 255, 255, 0.05); border: 1px solid rgba(0, 255, 255, 0.2); border-radius: 12px; padding: 15px; margin-bottom: 15px;">
-                        <div style="color: rgba(255, 255, 255, 0.6); font-size: 12px; margin-bottom: 8px;">NETWORK</div>
-                        <div style="color: white; font-weight: 700; font-size: 16px; margin-bottom: 15px;">${network}</div>
-                        
-                        <div style="color: rgba(255, 255, 255, 0.6); font-size: 12px; margin-bottom: 8px;">WALLET ADDRESS</div>
-                        <div style="color: white; font-size: 13px; word-break: break-all; margin-bottom: 10px; font-family: monospace;">${paymentAddress}</div>
-                        <button onclick="copyToClipboard('${paymentAddress}')" style="width: 100%; padding: 10px; background: rgba(0, 255, 255, 0.2); border: 1px solid #00ffff; border-radius: 8px; color: #00ffff; font-weight: 700; cursor: pointer; margin-bottom: 15px;">
-                            📋 Copy Address
-                        </button>
-                        
-                        <div style="color: rgba(255, 255, 255, 0.6); font-size: 12px; margin-bottom: 8px;">AMOUNT TO SEND</div>
-                        <div style="color: #00ffff; font-weight: 900; font-size: 24px; margin-bottom: 10px;">${amount} USDT</div>
-                        <button onclick="copyToClipboard('${amount}')" style="width: 100%; padding: 10px; background: rgba(0, 255, 255, 0.2); border: 1px solid #00ffff; border-radius: 8px; color: #00ffff; font-weight: 700; cursor: pointer; margin-bottom: 15px;">
-                            📋 Copy Amount
-                        </button>
-                        
-                        <div style="color: rgba(255, 255, 255, 0.6); font-size: 12px; margin-bottom: 8px;">REFERENCE ID</div>
-                        <div style="color: #8b5cf6; font-weight: 700; font-size: 16px; margin-bottom: 5px;">#${referenceId}</div>
-                        <div style="color: rgba(255, 255, 255, 0.4); font-size: 10px;">Save this for support</div>
-                    </div>
-                    
-                    <!-- Instructions -->
-                    <div style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
-                        <div style="color: #8b5cf6; font-weight: 700; margin-bottom: 10px; font-size: 14px;">📱 How to Send</div>
-                        <ol style="margin: 0; padding-left: 20px; color: rgba(255, 255, 255, 0.6); font-size: 12px; line-height: 1.8;">
-                            <li>Open Trust Wallet or MetaMask</li>
-                            <li>Select USDT (BEP20)</li>
-                            <li>Scan QR or paste address</li>
-                            <li>Enter exact amount: ${amount}</li>
-                            <li>Confirm transaction</li>
-                            <li>Wait 30-60 seconds</li>
-                        </ol>
-                    </div>
-                    
-                    <!-- Status -->
-                    <div id="paymentStatus" style="text-align: center; color: #00ffff; font-size: 13px; margin-bottom: 15px;">
-                        ⏳ Waiting for payment...
-                    </div>
-                    
-                    <!-- Close -->
-                    <button onclick="closePaymentModal()" style="width: 100%; padding: 14px; background: rgba(255, 0, 0, 0.2); border: 1px solid rgba(255, 0, 0, 0.4); border-radius: 12px; color: white; font-weight: 700; cursor: pointer;">
-                        Close
-                    </button>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-            
-            // Generate QR code
-            new QRCode(document.getElementById('qrcode'), {
-                text: paymentAddress,
-                width: 200,
-                height: 200
-            });
-            
-            // Start checking payment status
-            startPaymentStatusCheck(referenceId);
-        }
-        
-        window.copyToClipboard = function(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                showToast('Copied!');
-            });
-        };
-        
-        window.closePaymentModal = function() {
-            const modal = document.getElementById('paymentModal');
-            if (modal) modal.remove();
-            if (window.paymentCheckInterval) {
-                clearInterval(window.paymentCheckInterval);
-            }
-        };
-        
-        function startPaymentStatusCheck(referenceId) {
-            let attempts = 0;
-            const maxAttempts = 120; // 60 minutes (30 sec * 120)
-            
-            window.paymentCheckInterval = setInterval(async () => {
-                attempts++;
-                
-                try {
-                    const response = await fetch(API_ENDPOINTS.checkBoostPayment, {
-                        method: 'POST',
-                        headers: getApiHeaders(),
-                        body: JSON.stringify({
-                            referenceId,
-                            userId: currentUser.userId
-                        })
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (data.status === 'completed') {
-                        clearInterval(window.paymentCheckInterval);
-                        document.getElementById('paymentStatus').innerHTML = '✅ Payment received! Activating boost...';
-                        
-                        setTimeout(() => {
-                            closePaymentModal();
-                            showToast('🎉 Boost activated successfully!');
-                            location.reload();
-                        }, 2000);
-                    } else if (attempts >= maxAttempts) {
-                        clearInterval(window.paymentCheckInterval);
-                        document.getElementById('paymentStatus').innerHTML = '⚠️ Payment timeout. Contact support with Reference ID.';
-                    }
-                } catch (error) {
-                    console.error('Payment check error:', error);
-                }
-            }, 30000); // Check every 30 seconds
-        }
 
         async function initApp() {
     hideLoginLoading();
@@ -5290,10 +5029,6 @@ async function startMiningOnBackend() {
                     pageTitle.textContent = 'Settings';
                     pageContent.innerHTML = getSettingsPageContent();
                     break;
-                case 'boost':
-                    pageTitle.textContent = '⚡ Mining Boost';
-                    pageContent.innerHTML = getBoostPageContent();
-                    break;
                 case 'menu5':
                     pageTitle.textContent = 'Menü 5';
                     pageContent.innerHTML = '<div class="card"><h2 style="color: white; text-align: center;">Menü 5 İçeriği</h2><p style="color: #c4b5fd; text-align: center; margin-top: 10px;">Bu sayfa için içerik yakında eklenecek.</p></div>';
@@ -5347,187 +5082,6 @@ async function startMiningOnBackend() {
         }
         
         
-        function getBoostPageContent() {
-            // Load purchased boosts
-            setTimeout(() => loadPurchasedBoosts(), 100);
-            
-            return `
-                <style>
-                    .boost-wallet-card {
-                        background: rgba(0, 0, 0, 0.3);
-                        border: 1px solid rgba(0, 255, 255, 0.2);
-                        border-radius: 16px;
-                        padding: 20px;
-                        margin-top: 20px;
-                        backdrop-filter: blur(10px);
-                    }
-                    
-                    .boost-card {
-                        background: rgba(0, 0, 0, 0.3);
-                        border: 1px solid rgba(0, 255, 255, 0.15);
-                        border-radius: 16px;
-                        padding: 18px;
-                        margin-bottom: 12px;
-                        position: relative;
-                        backdrop-filter: blur(10px);
-                    }
-                    
-                    .boost-card.purchased {
-                        opacity: 0.5;
-                        border-color: rgba(139, 92, 246, 0.3);
-                    }
-                    
-                    .boost-badge {
-                        position: absolute;
-                        top: 12px;
-                        right: 12px;
-                        background: #8b5cf6;
-                        padding: 4px 10px;
-                        border-radius: 8px;
-                        font-size: 10px;
-                        font-weight: 800;
-                    }
-                    
-                    .boost-buy-btn {
-                        width: 100%;
-                        padding: 18px;
-                        background: linear-gradient(135deg, #00ffff, #0096ff);
-                        border: none;
-                        border-radius: 12px;
-                        font-size: 16px;
-                        font-weight: 800;
-                        color: #000;
-                        cursor: pointer;
-                        -webkit-tap-highlight-color: rgba(0, 255, 255, 0.3);
-                        touch-action: manipulation;
-                        user-select: none;
-                        -webkit-user-select: none;
-                        transition: all 0.2s;
-                    }
-                    
-                    .boost-buy-btn:active {
-                        transform: scale(0.95);
-                        background: linear-gradient(135deg, #00d4d4, #0080d4);
-                    }
-                    
-                    .boost-buy-btn:disabled {
-                        background: rgba(139, 92, 246, 0.3);
-                        color: rgba(255, 255, 255, 0.3);
-                    }
-                </style>
-                
-                <!-- Boosts (Always visible) -->
-                <div id="boostsListSection">
-                    <!-- Boost 1 -->
-                    <div class="boost-card" id="boost-card-1">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <div style="font-size: 22px; font-weight: 900; color: #00ffff;">+1.00 MR</div>
-                            <div style="font-size: 18px; font-weight: 800; color: #fff;">$1.99</div>
-                        </div>
-                        <div style="color: rgba(255, 255, 255, 0.5); font-size: 12px; margin-bottom: 10px;">Starter package</div>
-                        <div style="margin-bottom: 12px;">
-                            <div style="display: flex; align-items: center; margin-bottom: 6px; font-size: 12px; color: rgba(255, 255, 255, 0.7);">
-                                <span style="color: #00ffff; margin-right: 8px; font-weight: 900;">✓</span> Permanent +1.00 mining rate
-                            </div>
-                            <div style="display: flex; align-items: center; margin-bottom: 6px; font-size: 12px; color: rgba(255, 255, 255, 0.7);">
-                                <span style="color: #00ffff; margin-right: 8px; font-weight: 900;">✓</span> One-time purchase
-                            </div>
-                            <div style="display: flex; align-items: center; margin-bottom: 6px; font-size: 12px; color: rgba(255, 255, 255, 0.7);">
-                                <span style="color: #00ffff; margin-right: 8px; font-weight: 900;">✓</span> Instant activation
-                            </div>
-                        </div>
-                        <button class="boost-buy-btn" onclick="buyBoostInApp('boost1', 1.99, 1.00)">
-                            Buy Now - $1.99 USDT
-                        </button>
-                    </div>
-                    
-                    <!-- Boost 2 -->
-                    <div class="boost-card" id="boost-card-2">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <div style="font-size: 22px; font-weight: 900; color: #00ffff;">+3.00 MR</div>
-                            <div style="font-size: 18px; font-weight: 800; color: #fff;">$5.99</div>
-                        </div>
-                        <div style="color: rgba(255, 255, 255, 0.5); font-size: 12px; margin-bottom: 10px;">Best value package</div>
-                        <div style="margin-bottom: 12px;">
-                            <div style="display: flex; align-items: center; margin-bottom: 6px; font-size: 12px; color: rgba(255, 255, 255, 0.7);">
-                                <span style="color: #00ffff; margin-right: 8px; font-weight: 900;">✓</span> Permanent +3.00 mining rate
-                            </div>
-                            <div style="display: flex; align-items: center; margin-bottom: 6px; font-size: 12px; color: rgba(255, 255, 255, 0.7);">
-                                <span style="color: #00ffff; margin-right: 8px; font-weight: 900;">✓</span> 3x faster earnings
-                            </div>
-                            <div style="display: flex; align-items: center; margin-bottom: 6px; font-size: 12px; color: rgba(255, 255, 255, 0.7);">
-                                <span style="color: #00ffff; margin-right: 8px; font-weight: 900;">✓</span> Instant activation
-                            </div>
-                        </div>
-                        <button class="boost-buy-btn" onclick="buyBoostInApp('boost2', 5.99, 3.00)">
-                            Buy Now - $5.99 USDT
-                        </button>
-                    </div>
-                    
-                    <!-- Boost 3 -->
-                    <div class="boost-card" id="boost-card-3">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <div style="font-size: 22px; font-weight: 900; color: #00ffff;">+5.00 MR</div>
-                            <div style="font-size: 18px; font-weight: 800; color: #fff;">$9.99</div>
-                        </div>
-                        <div style="color: rgba(255, 255, 255, 0.5); font-size: 12px; margin-bottom: 10px;">Maximum power package</div>
-                        <div style="margin-bottom: 12px;">
-                            <div style="display: flex; align-items: center; margin-bottom: 6px; font-size: 12px; color: rgba(255, 255, 255, 0.7);">
-                                <span style="color: #00ffff; margin-right: 8px; font-weight: 900;">✓</span> Permanent +5.00 mining rate
-                            </div>
-                            <div style="display: flex; align-items: center; margin-bottom: 6px; font-size: 12px; color: rgba(255, 255, 255, 0.7);">
-                                <span style="color: #00ffff; margin-right: 8px; font-weight: 900;">✓</span> 5x faster earnings
-                            </div>
-                            <div style="display: flex; align-items: center; margin-bottom: 6px; font-size: 12px; color: rgba(255, 255, 255, 0.7);">
-                                <span style="color: #00ffff; margin-right: 8px; font-weight: 900;">✓</span> Premium support
-                            </div>
-                        </div>
-                        <button class="boost-buy-btn" onclick="buyBoostInApp('boost3', 9.99, 5.00)">
-                            Buy Now - $9.99 USDT
-                        </button>
-                    </div>
-                    
-                    <!-- Info -->
-                    <div style="background: rgba(0, 255, 255, 0.05); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 16px; padding: 16px; margin-bottom: 15px;">
-                        <div style="color: #00ffff; font-size: 14px; font-weight: 800; margin-bottom: 10px;">How to Purchase</div>
-                        <ul style="list-style: none; padding: 0; margin: 0;">
-                            <li style="font-size: 11px; color: rgba(255, 255, 255, 0.5); margin-bottom: 6px; padding-left: 12px; position: relative;">
-                                <span style="position: absolute; left: 0; color: #00ffff;">•</span>
-                                Open this page in wallet browser (Trust Wallet, MetaMask, Binance)
-                            </li>
-                            <li style="font-size: 11px; color: rgba(255, 255, 255, 0.5); margin-bottom: 6px; padding-left: 12px; position: relative;">
-                                <span style="position: absolute; left: 0; color: #00ffff;">•</span>
-                                Click "Buy Now" - wallet connects automatically
-                            </li>
-                            <li style="font-size: 11px; color: rgba(255, 255, 255, 0.5); margin-bottom: 6px; padding-left: 12px; position: relative;">
-                                <span style="position: absolute; left: 0; color: #00ffff;">•</span>
-                                Approve connection
-                            </li>
-                            <li style="font-size: 11px; color: rgba(255, 255, 255, 0.5); margin-bottom: 6px; padding-left: 12px; position: relative;">
-                                <span style="position: absolute; left: 0; color: #00ffff;">•</span>
-                                Confirm USDT payment (BSC network)
-                            </li>
-                            <li style="font-size: 11px; color: rgba(255, 255, 255, 0.5); padding-left: 12px; position: relative;">
-                                <span style="position: absolute; left: 0; color: #00ffff;">•</span>
-                                Boost activates instantly!
-                            </li>
-                        </ul>
-                    </div>
-                    
-                    <!-- Wallet Connect Card (Bottom) -->
-                    <div class="boost-wallet-card">
-                        <div style="font-size: 15px; font-weight: 700; color: #00ffff; margin-bottom: 12px; text-align: center;">Connect Wallet</div>
-                        <div style="font-size: 11px; color: rgba(255, 255, 255, 0.4); text-align: center; margin-bottom: 15px;">
-                            Trust Wallet, MetaMask, Binance Wallet, etc.
-                        </div>
-                        <button class="boost-buy-btn" id="connectWalletBtn" onclick="connectBoostWallet(); return false;">
-                            🔗 Connect Wallet
-                        </button>
-                        <div id="walletInfoBoost" style="margin-top: 12px; text-align: center; font-size: 12px; color: #00ffff;"></div>
-                    </div>
-                </div>
-            `;
-        }
         
         function getSettingsPageContent() {
             // Get current settings from localStorage
@@ -7512,5 +7066,80 @@ try {
   bindResetHandlers();
   }
 })();
+
+// ===========================
+// MINING COMPLETE AUTO-UPDATE
+// ===========================
+setInterval(async () => {
+    if (!currentUser || !currentUser.userId) return;
+    
+    const miningEndTime = localStorage.getItem('miningEndTime_' + currentUser.email);
+    if (!miningEndTime) return;
+    
+    const endTime = parseInt(miningEndTime);
+    const now = Date.now();
+    
+    // Mining bitti mi?
+    if (now >= endTime) {
+        console.log('⛏️ Mining complete detected - refreshing balance...');
+        
+        try {
+            // Backend'den güncel balance al
+            const response = await fetch(API_ENDPOINTS.getUserData, {
+                method: 'POST',
+                headers: getApiHeaders(),
+                body: JSON.stringify({ userId: currentUser.userId })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const newBalance = data.user.balance;
+                const oldBalance = currentUser.balance;
+                
+                if (newBalance !== oldBalance) {
+                    console.log(`💰 Balance updated: ${oldBalance} → ${newBalance}`);
+                    
+                    // currentUser güncelle
+                    currentUser.balance = newBalance;
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    
+                    // UI güncelle
+                    const balanceEl = document.getElementById('balance');
+                    if (balanceEl) {
+                        balanceEl.textContent = newBalance.toFixed(2);
+                    }
+                    
+                    // BİLDİRİM GÖNDER
+                    const sessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
+                    if (sessionId) {
+                        try {
+                            await fetch(API_ENDPOINTS.sendMiningNotification, {
+                                method: 'POST',
+                                headers: getApiHeaders(),
+                                body: JSON.stringify({
+                                    userId: currentUser.userId,
+                                    sessionId: sessionId
+                                })
+                            });
+                            console.log('📱 Mining complete notification sent');
+                        } catch (notifError) {
+                            console.error('Notification error:', notifError);
+                        }
+                    }
+                    
+                    // Mining session temizle
+                    localStorage.removeItem('miningEndTime_' + currentUser.email);
+                    localStorage.removeItem('miningStartTime_' + currentUser.email);
+                    localStorage.removeItem('currentSessionId_' + currentUser.email);
+                    
+                    // Sayfa yenile (mining card güncellemek için)
+                    location.reload();
+                }
+            }
+        } catch (error) {
+            console.error('Balance update error:', error);
+        }
+    }
+}, 5000); // Her 5 saniyede kontrol et
 
 </script>
