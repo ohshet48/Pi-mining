@@ -2784,14 +2784,16 @@ window.__resetEmail = email;
             
             // Get FCM token immediately after login - CRITICAL for notifications!
             console.log('🔔 [LOGIN] Requesting FCM token after successful login...');
-            requestNotificationPermission().catch(err => {
+            try {
+                requestNotificationPermission();
+            } catch (err) {
                 console.error('❌ [LOGIN] FCM token request failed:', err);
-            });
+            }
             
             showSuccess('Login successful! ');
             
             setTimeout(() => {
-                // After login: show  instead of blank background
+                // After login: show app instead of blank background
                 document.getElementById('authScreen').style.display = 'none';
                 document.getElementById('app').style.display = 'none';
                 
@@ -2801,6 +2803,9 @@ window.__resetEmail = email;
     } catch (error) {
         console.error('Login error:', error);
         showError('Invalid email or password');
+        
+        // CRITICAL: Hide loading on error
+        if (typeof hideLoginLoading === 'function') hideLoginLoading();
     }
 }
         
@@ -3301,6 +3306,11 @@ window.__resetEmail = email;
             checkMining();
             render();
             startTimer();
+            
+            // CRITICAL: Hide login loading after everything is ready
+            if (typeof hideLoginLoading === 'function') {
+                setTimeout(() => hideLoginLoading(), 100);
+            }
         }
         
         function calculateActiveRefs() {
@@ -4865,7 +4875,6 @@ async function startMiningOnBackend() {
     align-items: center;
     justify-content: center;
     z-index: 99999;
-    requestAnimationFrame(() => hideLoginLoading());
 
 }
 
@@ -5493,16 +5502,8 @@ async function startMiningOnBackend() {
             
             // Current user card at the top (always show)
             if (currentUserData) {
-                // Calculate current user progress
-                const userCurrentReq = levelRequirements[currentUserData.level] || 0;
-                const userNextReq = levelRequirements[currentUserData.level + 1];
-                let userProgressPercent = 0;
-                
-                if (currentUserData.level >= 20) {
-                    userProgressPercent = 100;
-                } else if (userNextReq) {
-                    userProgressPercent = Math.min(((currentUserData.miningDays - userCurrentReq) / (userNextReq - userCurrentReq)) * 100, 100);
-                }
+                // Calculate progress based on 365 days
+                const userProgressPercent = Math.min((currentUserData.miningDays / 365) * 100, 100);
                 
                 html += `
                     <div style="background: rgba(251, 191, 36, 0.1); border: 1px solid #fbbf24; border-radius: 10px; padding: 10px; margin-bottom: 6px;">
@@ -5519,11 +5520,11 @@ async function startMiningOnBackend() {
                                 <div class="level-progress-bar" style="width: 70px; height: 16px; background: rgba(10, 20, 40, 0.85); border-radius: 8px; overflow: hidden; position: relative; border: 1px solid rgba(16, 185, 129, 0.3);">
                                     <div class="level-progress-fill" style="height: 100%; background: linear-gradient(90deg, #10b981, #059669); width: ${userProgressPercent}%;"></div>
                                     <div class="level-progress-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8px; font-weight: 700; color: white; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);">
-                                        ${currentUserData.level >= 20 ? `365/365 Days` : `${currentUserData.miningDays}/${userNextReq || '?'} Days`}
+                                        ${currentUserData.miningDays}/365 Days
                                     </div>
                                 </div>
                                 <div style="text-align: right;">
-                                    <div style="color: #fbbf24; font-weight: 800; font-size: 14px;">Lvl ${currentUserData.level}</div>
+                                    <div style="color: #00ffff; font-weight: 800; font-size: 14px;">Lv ${currentUserData.level}</div>
                                 </div>
                             </div>
                         </div>
@@ -5695,22 +5696,8 @@ async function startMiningOnBackend() {
                     </svg>`;
                 }
                 
-                // Calculate progress
-                const currentReq = levelRequirements[user.level] || 0;
-                const nextReq = levelRequirements[user.level + 1];
-                let progressPercent = 0;
-                let progressText = '';
-                
-                if (user.level >= 20) {
-                    progressPercent = 100;
-                    progressText = 'MAX LEVEL';
-                } else if (nextReq) {
-                    progressPercent = Math.min(((user.miningDays - currentReq) / (nextReq - currentReq)) * 100, 100);
-                    progressText = `${user.miningDays}/${nextReq} Days`;
-                } else {
-                    progressPercent = 100;
-                    progressText = `${user.miningDays} Days`;
-                }
+                // Calculate progress based on 365 days
+                const progressPercent = Math.min((user.miningDays / 365) * 100, 100);
                 
                 html += `
                     <div style="background: ${isCurrentUser ? 'rgba(251, 191, 36, 0.1)' : 'rgba(0, 0, 0, 0.3)'}; border: 1px solid ${isCurrentUser ? '#fbbf24' : 'rgba(0, 255, 255, 0.2)'}; border-radius: 10px; padding: 10px; ${isCurrentUser ? '' : ''}">
@@ -5733,11 +5720,11 @@ async function startMiningOnBackend() {
                                 <div class="level-progress-bar" style="width: 70px; height: 16px; background: rgba(10, 20, 40, 0.85); border-radius: 8px; overflow: hidden; position: relative; border: 1px solid rgba(16, 185, 129, 0.3);">
                                     <div class="level-progress-fill" style="height: 100%; background: linear-gradient(90deg, #10b981, #059669); width: ${progressPercent}%;"></div>
                                     <div class="level-progress-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8px; font-weight: 700; color: white; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);">
-                                        ${user.level >= 20 ? `365/365 Days` : `${user.miningDays}/${nextReq || '?'} Days`}
+                                        ${user.miningDays}/365 Days
                                     </div>
                                 </div>
                                 <div style="text-align: right;">
-                                    <div style="color: #00ffff; font-weight: 800; font-size: 14px;">Lvl ${user.level}</div>
+                                    <div style="color: #00ffff; font-weight: 800; font-size: 14px;">Lv ${user.level}</div>
                                 </div>
                             </div>
                         </div>
@@ -6508,7 +6495,7 @@ async function sendPasswordReset() {
 </div>
 
 <!-- Offline Page -->
-<div id="offlinePage" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #0a1428 0%, #1a2a4a 100%); z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;">
+<div id="offlinePage" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #0a1428 0%, #1a2a4a 100%); z-index: 99999; flex-direction: column; align-items: center; justify-content: center; padding: 20px;">
     <div style="text-align: center;">
         <!-- Logo -->
         <div style="width: 120px; height: 120px; margin: 0 auto 30px; background: linear-gradient(135deg, #00ffff, #0ea5e9); border-radius: 30px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 32px rgba(0, 255, 255, 0.3);">
@@ -6547,8 +6534,7 @@ function checkConnection() {
     }
 }
 
-// Check on load and connection changes
-window.addEventListener('load', checkConnection);
+// ONLY check on actual connection changes (not on page load)
 window.addEventListener('online', checkConnection);
 window.addEventListener('offline', checkConnection);
 </script>
