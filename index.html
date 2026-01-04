@@ -2879,6 +2879,12 @@ window.__resetEmail = email;
         }
         
         function confirmLogout() {
+            // Clear referrals cache
+            cachedReferralsData = null;
+            
+            // Clear leaderboard cache
+            cachedLeaderboardData = null;
+            
             localStorage.removeItem('currentUser');
             window.location.reload();
         }
@@ -3338,6 +3344,12 @@ window.__resetEmail = email;
                  menuUsername.textContent = currentUser.username;
             }
             
+            // Update referral counts from cache if available
+            if (cachedReferralsData) {
+                d.activeRefs = cachedReferralsData.activeRefs.length;
+                d.refs = cachedReferralsData.activeRefs.length + cachedReferralsData.inactiveRefs.length;
+            }
+            
             // Update Watch Ad button separately (don't recreate it)
             updateWatchAdButton();
             
@@ -3663,6 +3675,11 @@ localStorage.setItem('users', JSON.stringify(users));
             
             // Clear ad cooldown
             localStorage.removeItem('adCooldown_' + currentUser.email);
+            
+            // Clear referrals cache - mining status changed!
+            cachedReferralsData = null;
+            console.log('🔄 Referrals cache cleared - mining started');
+            
             // Call backend to start mining
         await startMiningOnBackend();
             d.mining = true;
@@ -3710,7 +3727,12 @@ async function startMiningOnBackend() {
             d.mining = false;
             d.timeLeft = 0;
             localStorage.removeItem('miningEndTime_' + currentUser.email);
-                        // Clear session ad boost now that mining ended
+            
+            // Clear referrals cache - mining status changed!
+            cachedReferralsData = null;
+            console.log('🔄 Referrals cache cleared - mining completed');
+            
+            // Clear session ad boost now that mining ended
             try {
                 const users = JSON.parse(localStorage.getItem('users') || '{}');
                 const userEmail = localStorage.getItem('currentUser');
@@ -3721,41 +3743,61 @@ async function startMiningOnBackend() {
                 }
             } catch(e) {}
 
-            // Update displayed rate after clearing ad boost (referral bonus stays dynamic)
-            d.activeRefs = calculateActiveRefs();
-            let adBonus = 0;
-            if (activeMiningSession && activeMiningSession.adBoostActive) {
-                const boostCount = activeMiningSession.adBoostCount || 1;
-                adBonus = boostCount * 0.25;  // Cumulative
-            }
-            d.rate = (currentUser.rate || 0.25) + (d.activeRefs * 0.05) + adBonus;
-
-const reward = d.rate * 24;
-            claimRewardFromBackend(reward);
+            // Call backend to claim - backend will calculate everything correctly
+            const sessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
+            claimRewardFromBackend(sessionId);
         }
-        async function claimRewardFromBackend(reward) {
+        async function claimRewardFromBackend(sessionId) {
+            if (!sessionId) {
+                console.error('No session ID found');
+                showToast('❌ No active mining session found', true);
+                return;
+            }
+            
             try {
                 const response = await fetch(API_ENDPOINTS.claimReward, {
                     method: 'POST',
                     headers: getApiHeaders(),
                     body: JSON.stringify({
                         userId: currentUser.userId,
-                        sessionId: localStorage.getItem('currentSessionId_' + currentUser.email),
-                        reward: reward
+                        sessionId: sessionId
                     })
                 });
 
                 if (response.ok) {
-                    d.balance += reward;
+                    const data = await response.json();
+                    
+                    // USE BACKEND DATA ONLY - no frontend calculations!
+                    const actualReward = data.reward;
+                    const newBalance = data.newBalance;
+                    
+                    console.log('✅ Backend claim successful:', { actualReward, newBalance });
+                    
+                    // Update balance with backend value
+                    d.balance = newBalance;
                     d.miningDays++;
                     dailyRewardAvailable = true;
+                    
+                    // Sync currentUser
+                    currentUser.balance = newBalance;
+                    currentUser.miningDays = (currentUser.miningDays || 0) + 1;
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    
                     save();
                     checkLevelUp();
                     render();
                     sendMiningCompleteNotification();
+                    showToast('✓ Mining completed! +' + actualReward.toFixed(2) + ' Coins claimed');
+                } else {
+                    // Show backend error message
+                    const errorData = await response.json().catch(() => ({}));
+                    const errorMsg = errorData.error || 'Failed to claim reward';
+                    showToast('❌ ' + errorMsg, true);
+                    console.error('Claim error:', errorMsg);
                 }
             } catch (error) {
                 console.error('Backend error:', error);
+                showToast('❌ Network error. Please try again.', true);
             }
         }
         function claimDailyReward() {
@@ -5108,32 +5150,62 @@ const reward = d.rate * 24;
             }
         }
         
+        // Cache for leaderboard - only fetch once per app session
+        let cachedLeaderboardData = null;
+        
         async function getLeaderboardPageContent() {
             let leaderboardData = [];
             
             try {
-                // Fetch from backend
-                const response = await fetch(API_ENDPOINTS.getLeaderboard);
-                const data = await response.json();
-                
-                
-if (response.ok && data.leaderboard) {
-                    leaderboardData = data.leaderboard;
+                // Use cache if available
+                if (cachedLeaderboardData) {
+                    console.log('✅ Using cached leaderboard data');
+                    leaderboardData = cachedLeaderboardData;
+                } else {
+                    console.log('🔄 Fetching leaderboard from backend...');
+                    
+                    // Fetch from backend
+                    const response = await fetch(API_ENDPOINTS.getLeaderboard);
+                    const data = await response.json();
+                    
+                    if (response.ok && data.leaderboard) {
+                        leaderboardData = data.leaderboard;
 
-                    // SORT: only by miningDays (higher first)
-                    leaderboardData.sort((a, b) => {
-                        return (b.miningDays || 0) - (a.miningDays || 0);
-                    });
+                        // SORT: only by miningDays (higher first)
+                        leaderboardData.sort((a, b) => {
+                            return (b.miningDays || 0) - (a.miningDays || 0);
+                        });
+                        
+                        // Cache the results
+                        cachedLeaderboardData = leaderboardData;
+                        console.log('✅ Leaderboard cached:', leaderboardData.length, 'users');
+                    }
                 }
-
             } catch (err) {
                 console.error('Failed to fetch leaderboard:', err);
             }
             
             // Find current user's rank
-            const currentEmail = localStorage.getItem('currentUser');
+            const currentEmail = currentUser ? currentUser.email : '';
+            console.log('🔍 Finding user in leaderboard:', currentEmail);
+            console.log('📊 Leaderboard data:', leaderboardData.length, 'users');
+            
             const currentUserRank = leaderboardData.findIndex(u => u.email === currentEmail) + 1;
-            const currentUserData = leaderboardData.find(u => u.email === currentEmail);
+            let currentUserData = leaderboardData.find(u => u.email === currentEmail);
+            
+            console.log('📍 User rank:', currentUserRank, '| Found in list:', !!currentUserData);
+            
+            // If user not in leaderboard, use currentUser data
+            if (!currentUserData && currentUser) {
+                console.log('ℹ️ User not in leaderboard, using currentUser data');
+                currentUserData = {
+                    email: currentUser.email,
+                    username: currentUser.username,
+                    level: currentUser.level || 1,
+                    miningDays: currentUser.miningDays || 0,
+                    country: currentUser.country || 'Turkey'
+                };
+            }
             
             if (leaderboardData.length === 0) {
                 return `
@@ -5234,8 +5306,8 @@ if (response.ok && data.leaderboard) {
                 <div style="display: flex; flex-direction: column; gap: 6px;">
             `;
             
-            // Current user card (if in top 100)
-            if (currentUserRank > 0 && currentUserData) {
+            // Current user card at the top (always show)
+            if (currentUserData) {
                 // Calculate current user progress
                 const userCurrentReq = levelRequirements[currentUserData.level] || 0;
                 const userNextReq = levelRequirements[currentUserData.level + 1];
@@ -5248,25 +5320,25 @@ if (response.ok && data.leaderboard) {
                 }
                 
                 html += `
-                    <div style="background: rgba(255, 215, 0, 0.1); border: 1px solid #fbbf24; border-radius: 10px; padding: 10px; margin-bottom: 6px;">
+                    <div style="background: rgba(251, 191, 36, 0.1); border: 1px solid #fbbf24; border-radius: 10px; padding: 10px; margin-bottom: 6px;">
                         <div style="display: flex; align-items: center; justify-content: space-between;">
                             <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
                                 <div style="color: #fbbf24; width: 30px; text-align: center; font-weight: 800; font-size: 14px;">
-                                    #${currentUserRank}
+                                    #${currentUserRank > 0 ? currentUserRank : '—'}
                                 </div>
                                 <div style="flex: 1;">
                                     <div style="color: #fbbf24; font-weight: 700; font-size: 14px;">${getCountryFlag(currentUserData.country || 'Turkey')} You</div>
                                 </div>
                             </div>
                             <div style="display: flex; align-items: center; gap: 6px;">
-                                <div class="level-progress-bar" style="width: 70px; height: 16px; background: rgba(10, 20, 40, 0.85); border-radius: 8px; overflow: hidden; position: relative; border: 1px solid rgba(16, 185, 129, 0.3);">
-                                    <div class="level-progress-fill" style="height: 100%; background: linear-gradient(90deg, #10b981, #059669); width: ${userProgressPercent}%;"></div>
+                                <div class="level-progress-bar" style="width: 70px; height: 16px; background: rgba(10, 20, 40, 0.85); border-radius: 8px; overflow: hidden; position: relative; border: 1px solid rgba(251, 191, 36, 0.3);">
+                                    <div class="level-progress-fill" style="height: 100%; background: linear-gradient(90deg, #fbbf24, #f59e0b); width: ${userProgressPercent}%;"></div>
                                     <div class="level-progress-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8px; font-weight: 700; color: white; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);">
                                         ${currentUserData.level >= 20 ? `365/365 Days` : `${currentUserData.miningDays}/${userNextReq || '?'} Days`}
                                     </div>
                                 </div>
                                 <div style="text-align: right;">
-                                    <div style="color: #00ffff; font-weight: 800; font-size: 14px;">Lvl ${currentUserData.level}</div>
+                                    <div style="color: #fbbf24; font-weight: 800; font-size: 14px;">Lvl ${currentUserData.level}</div>
                                 </div>
                             </div>
                         </div>
@@ -5456,7 +5528,7 @@ if (response.ok && data.leaderboard) {
                 }
                 
                 html += `
-                    <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 255, 0.2); border-radius: 10px; padding: 10px; ${isCurrentUser ? 'box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);' : ''}">
+                    <div style="background: ${isCurrentUser ? 'rgba(251, 191, 36, 0.1)' : 'rgba(0, 0, 0, 0.3)'}; border: 1px solid ${isCurrentUser ? '#fbbf24' : 'rgba(0, 255, 255, 0.2)'}; border-radius: 10px; padding: 10px; ${isCurrentUser ? '' : ''}">
                         <div style="display: flex; align-items: center; justify-content: space-between;">
                             <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
                                 ${isMedal ? 
@@ -5467,7 +5539,7 @@ if (response.ok && data.leaderboard) {
                                     `<div style="color: rgba(255, 255, 255, 0.5); font-weight: 800; font-size: 14px; min-width: 26px; margin-left: 33px;">#${rank}</div>`
                                 }
                                 <div style="flex: 1; min-width: 0;">
-                                    <div style="color: ${isCurrentUser ? '#8b5cf6' : (rank <= 3 ? '#00ffff' : 'white')}; font-weight: 700; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    <div style="color: ${isCurrentUser ? '#fbbf24' : (rank <= 3 ? '#00ffff' : 'white')}; font-weight: 700; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                         ${getCountryFlag(user.country || 'Turkey')} ${user.username}${isCurrentUser ? ' (You)' : ''}
                                     </div>
                                 </div>
@@ -5493,42 +5565,47 @@ if (response.ok && data.leaderboard) {
             return html;
         }
         
+        // Cache for referrals - only fetch once per app session
+        let cachedReferralsData = null;
+        
         async function getReferralsPageContent() {
             // Get current user from backend
             const users = JSON.parse(localStorage.getItem('users') || '{}');
             const currentEmail = localStorage.getItem('currentUser');
             
-            // Get referrals from backend
-    const now = Date.now();
-    let activeRefs = [];
-    let inactiveRefs = [];
-    
-    try {
-        // Get all referrals
-        const refResponse = await fetch(API_ENDPOINTS.getReferrals + '?userId=' + currentUser.userId);
-        const refData = await refResponse.json();
-        
-        // Get active count
-        const activeResponse = await fetch(API_ENDPOINTS.getActiveReferrals + '?userId=' + currentUser.userId);
-        const activeData = await activeResponse.json();
-        
-        if (refResponse.ok && refData.referrals) {
-            const allReferrals = refData.referrals;
-
-            // If backend provides per-referral active status, use it (accurate)
-            if (allReferrals.length > 0 && typeof allReferrals[0].isActive !== 'undefined') {
-                activeRefs = allReferrals.filter(r => r.isActive);
-                inactiveRefs = allReferrals.filter(r => !r.isActive);
-            } else {
-                // Backward-compatible fallback (older backend): split by count
-                const activeCount = activeData.activeCount || 0;
-                activeRefs = allReferrals.slice(0, activeCount);
-                inactiveRefs = allReferrals.slice(activeCount);
+            // Get referrals from backend OR cache
+            const now = Date.now();
+            let activeRefs = [];
+            let inactiveRefs = [];
+            
+            try {
+                // Use cache if available
+                if (cachedReferralsData) {
+                    console.log('✅ Using cached referrals data');
+                    activeRefs = cachedReferralsData.activeRefs;
+                    inactiveRefs = cachedReferralsData.inactiveRefs;
+                } else {
+                    console.log('🔄 Fetching referrals from backend...');
+                    
+                    // Get all referrals with isActive field
+                    const refResponse = await fetch(API_ENDPOINTS.getReferrals + '?userId=' + currentUser.userId);
+                    const refData = await refResponse.json();
+                    
+                    if (refResponse.ok && refData.referrals) {
+                        const allReferrals = refData.referrals;
+                        
+                        // Backend now provides isActive field for each referral
+                        activeRefs = allReferrals.filter(r => r.isActive === true);
+                        inactiveRefs = allReferrals.filter(r => r.isActive === false);
+                        
+                        // Cache the results
+                        cachedReferralsData = { activeRefs, inactiveRefs };
+                        console.log('✅ Referrals cached:', { active: activeRefs.length, inactive: inactiveRefs.length });
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch referrals:', err);
             }
-        }
-    } catch (err) {
-        console.error('Failed to fetch referrals:', err);
-    }
             
             // Check notification cooldown (5 minutes)
             const lastNotifTime = parseInt(localStorage.getItem('lastReferralNotif_' + currentEmail) || '0');
