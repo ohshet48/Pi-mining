@@ -24,7 +24,6 @@
             -ms-user-select: text;
             user-select: text;
         }
-        }
         
         body { 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -3346,7 +3345,7 @@ window.__resetEmail = email;
             }
         }
         
-        async function claimLevelReward() {
+        function claimLevelReward() {
             // Prevent double-claiming
             if (isClaimingLevel) return;
             if (!d.pendingLevelUp) return;
@@ -3359,15 +3358,38 @@ window.__resetEmail = email;
             isClaimingLevel = true;
             
             try {
+                d.balance += reward.coins;
                 const claimedLevel = d.pendingLevelUp;
-                
+                d.level = d.pendingLevelUp;
+                d.pendingLevelUp = null;
                 // Calculate new rate
-                const baseRate = 0.25;
-                const levelBonus = (claimedLevel - 1) * 0.05;
-                const newBaseRate = baseRate + levelBonus;
+            const baseRate = 0.25;
+            const levelBonus = (claimedLevel - 1) * 0.05;
+            const newBaseRate = baseRate + levelBonus;
+                // Update user's base rate with level bonus, but ensure MAX 5.0
+                const users = JSON.parse(localStorage.getItem('users') || '{}');
+                const userEmail = localStorage.getItem('currentUser');
+                if (users[userEmail]) {
+                    
+                    // Check if current total rate would exceed 5.0
+                    const activeRefs = calculateActiveRefs();
+                    const totalRate = newBaseRate + (activeRefs * 0.05);
+                    
+                    if (totalRate > 5.0) {
+                        // Cap at 5.0
+                        users[userEmail].rate = Math.min(newBaseRate, 5.0 - (activeRefs * 0.05));
+                    } else {
+                        users[userEmail].rate = newBaseRate;
+                    }
+                    
+                    localStorage.setItem('users', JSON.stringify(users));
+                    currentUser = users[userEmail];
+                }
                 
-                // Call backend FIRST - safer approach
-                const response = await fetch(API_ENDPOINTS.updateLevel, {
+                save();
+                
+                // Update backend asynchronously
+                fetch(API_ENDPOINTS.updateLevel, {
                     method: 'POST',
                     headers: getApiHeaders(),
                     body: JSON.stringify({
@@ -3376,71 +3398,26 @@ window.__resetEmail = email;
                         coinsReward: reward.coins,
                         newRate: newBaseRate
                     })
-                });
+                }).catch(err => console.error('Backend update failed:', err));
                 
-                const data = await response.json().catch(() => ({}));
-                
-                if (response.ok) {
-                    // Backend successful - update frontend
-                    d.balance += reward.coins;
-                    d.level = claimedLevel;
-                    d.pendingLevelUp = null;
-                    
-                    // Update user's base rate with level bonus
-                    const users = JSON.parse(localStorage.getItem('users') || '{}');
-                    const userEmail = localStorage.getItem('currentUser');
-                    if (users[userEmail]) {
-                        const activeRefs = calculateActiveRefs();
-                        const totalRate = newBaseRate + (activeRefs * 0.05);
-                        
-                        if (totalRate > 5.0) {
-                            users[userEmail].rate = Math.min(newBaseRate, 5.0 - (activeRefs * 0.05));
-                        } else {
-                            users[userEmail].rate = newBaseRate;
+                // Refresh currentUser from backend
+                fetch(API_ENDPOINTS.getUserData + '?userId=' + currentUser.userId)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.user) {
+                            currentUser = data.user;
+                            localStorage.setItem('currentUser', JSON.stringify(currentUser));
                         }
-                        
-                        localStorage.setItem('users', JSON.stringify(users));
-                        currentUser = users[userEmail];
-                    }
-                    
-                    save();
-                    
-                    // Refresh currentUser from backend
-                    fetch(API_ENDPOINTS.getUserData + '?userId=' + currentUser.userId)
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.user) {
-                                currentUser = data.user;
-                                localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                            }
-                        })
-                        .catch(err => console.error('Failed to refresh user:', err));
+                    })
+                    .catch(err => console.error('Failed to refresh user:', err));
 
-                    showToast(`✓ Claimed Level ${claimedLevel} reward: +${reward.coins} Coins!`);
-                    
-                    if (d.level < 20) {
-                        checkLevelUp();
-                    }
-                    
-                    render();
-                } else {
-                    // Backend error - check if already claimed
-                    if (data.error && data.error.includes('already claimed')) {
-                        // Already claimed - silently sync frontend with backend
-                        console.log('ℹ️ Level reward already claimed on backend, syncing...');
-                        d.pendingLevelUp = null;
-                        save();
-                        render();
-                    } else {
-                        // Other error - show user-friendly message
-                        const errorMsg = data.error || 'Failed to claim level reward';
-                        console.error('Level claim error:', errorMsg);
-                        showToast('❌ Unable to claim reward. Please try again.', true);
-                    }
+                showToast(`✓ Claimed Level ${claimedLevel} reward: +${reward.coins} Coins!`);
+                
+                if (d.level < 20) {
+                    checkLevelUp();
                 }
-            } catch (error) {
-                console.error('Level claim exception:', error);
-                showToast('❌ Network error. Please check your connection.', true);
+                
+                render();
             } finally {
                 // Release lock after a delay to prevent rapid re-claims
                 setTimeout(() => {
@@ -3897,34 +3874,18 @@ async function startMiningOnBackend() {
                     const data = await response.json();
                     localStorage.setItem('currentSessionId_' + currentUser.email, data.session.sessionId);
                     console.log('✓ Mining started on backend');
-                } else {
-                    // Handle "Mining already in progress" silently
+                } else if (response.status === 400) {
+                    // Check if it's "Mining already in progress" error
                     const errorData = await response.json().catch(() => ({}));
-                    
-                    if (errorData.error === 'Mining already in progress') {
-                        console.log('ℹ️ Mining already active, using existing session');
+                    if (errorData.error === 'Mining already in progress' && errorData.session) {
+                        // Silently use existing session - user won't notice anything
+                        console.log('ℹ️ Using existing active mining session');
+                        localStorage.setItem('currentSessionId_' + currentUser.email, errorData.session.sessionId);
                         
-                        // Use the existing session returned by backend
-                        if (errorData.session && errorData.session.sessionId) {
-                            localStorage.setItem('currentSessionId_' + currentUser.email, errorData.session.sessionId);
-                            
-                            // Sync endTime from backend
-                            const endTimeData = errorData.session.endTime;
-                            const endTimeMs = endTimeData._seconds 
-                                ? endTimeData._seconds * 1000 
-                                : endTimeData;
-                            
-                            localStorage.setItem('miningEndTime_' + currentUser.email, endTimeMs);
-                            
-                            // Recalculate timeLeft
-                            const now = Date.now();
-                            d.timeLeft = Math.max(0, Math.floor((endTimeMs - now) / 1000));
-                            d.mining = true;
-                            
-                            console.log('✓ Synced with existing mining session');
-                        }
-                    } else {
-                        console.error('Backend error:', errorData.error || 'Unknown error');
+                        // Sync endTime with backend
+                        const endTimeData = errorData.session.endTime;
+                        const endTimeMs = endTimeData._seconds ? endTimeData._seconds * 1000 : endTimeData;
+                        localStorage.setItem('miningEndTime_' + currentUser.email, endTimeMs);
                     }
                 }
             } catch (error) {
@@ -4048,24 +4009,13 @@ async function startMiningOnBackend() {
                         showToast('✓ Claimed +5 Coins daily reward!');
                         render();
                     } else {
-                        // Handle specific backend errors gracefully
-                        const errMsg = data.error || 'Failed to claim daily reward';
-                        
-                        if (errMsg.includes('already claimed')) {
-                            // Silently sync - already claimed
-                            console.log('ℹ️ Daily reward already claimed, syncing...');
-                            dailyRewardAvailable = false;
-                            render();
-                        } else if (errMsg.includes('not complete')) {
-                            showToast('⏳ Mining session not finished yet', true);
-                        } else {
-                            console.error('Daily reward error:', errMsg);
-                            showToast('❌ Unable to claim reward. Please try again.', true);
-                        }
+                        // Backend can return explicit errors (e.g., already claimed)
+                        const errMsg = (data && data.error) ? data.error : 'Failed to claim daily reward';
+                        showToast('❌ ' + errMsg, true);
                     }
                 } catch (err) {
                     console.error('Daily reward failed:', err);
-                    showToast('❌ Network error. Please check your connection.', true);
+                    showToast('❌ Failed to claim daily reward', true);
                 } finally {
                     // Release lock ONLY after request finishes
                     isClaimingDaily = false;
@@ -5997,52 +5947,36 @@ async function startMiningOnBackend() {
             // Set lock
             isClaimingReferral = true;
             
-            (async () => {
-                try {
-                    const res = await fetch(API_ENDPOINTS.claimReferralEarnings, {
-                        method: 'POST',
-                        headers: getApiHeaders(),
-                        body: JSON.stringify({
-                            userId: currentUser.userId
-                        })
-                    });
-                    
-                    const data = await res.json().catch(() => ({}));
-                    
-                    if (res.ok && data.earnings) {
-                        d.balance += data.earnings;
-                        d.pendingReferralEarnings = 0;
-                        currentUser.pendingReferralEarnings = 0;
-                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                        save();
-                        showToast(`✓ Claimed ${data.earnings} Coins from referrals!`);
-                        render();
-                    } else {
-                        // Handle backend errors gracefully
-                        const errMsg = data.error || 'Failed to claim';
-                        
-                        if (errMsg.includes('No earnings')) {
-                            // Silently sync
-                            console.log('ℹ️ No earnings available, syncing...');
-                            d.pendingReferralEarnings = 0;
-                            currentUser.pendingReferralEarnings = 0;
-                            localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                            render();
-                        } else {
-                            console.error('Referral claim error:', errMsg);
-                            showToast('❌ Unable to claim earnings. Please try again.', true);
-                        }
-                    }
-                } catch (err) {
-                    console.error('Referral claim exception:', err);
-                    showToast('❌ Network error. Please check your connection.', true);
-                } finally {
-                    // Release lock after delay
-                    setTimeout(() => {
-                        isClaimingReferral = false;
-                    }, 1000);
-                }
-            })();
+            try {
+                // Call backend
+                fetch(API_ENDPOINTS.claimReferralEarnings, {
+                    method: 'POST',
+                    headers: getApiHeaders(),
+                    body: JSON.stringify({
+                        userId: currentUser.userId
+                    })
+                }).then(res => res.json())
+                  .then(data => {
+                      if (data.earnings) {
+                          d.balance += data.earnings;
+                          d.pendingReferralEarnings = 0;
+                          currentUser.pendingReferralEarnings = 0;
+                          localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                          save();
+                          showToast(`✓ Claimed ${data.earnings} Coins from referrals!`);
+                          render();
+                      }
+                  })
+                  .catch(err => {
+                      console.error('Referral claim failed:', err);
+                      showToast('❌ Failed to claim referral earnings');
+                  });
+            } finally {
+                // Release lock after delay
+                setTimeout(() => {
+                    isClaimingReferral = false;
+                }, 1000);
+            }
         }
         
         function getProfilePageContent() {
