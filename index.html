@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#5b21b6">
+    <meta name="theme-color" content="#00d4ff">
+    <link rel="manifest" href="/manifest.json">
     <title>Arc Astra</title>
     <style>
         * { 
@@ -2009,68 +2010,153 @@ function getApiHeaders(additionalHeaders = {}) {
 // ============================================
 let fcmToken = null;
 
-// Request notification permission and get FCM token
+// Request notification permission and get FCM token - CRITICAL for mobile notifications!
     async function requestNotificationPermission() {
+  console.log('🔔 [FCM] Starting notification permission request...');
+  
   try {
+    // Check if browser supports notifications
     if (!('Notification' in window)) {
-      console.log('Browser does not support notifications');
+      console.warn('⚠️ [FCM] Browser does not support notifications');
       return null;
     }
 
+    // Check service worker support
     if (!('serviceWorker' in navigator)) {
-      console.log('Service workers not supported');
+      console.warn('⚠️ [FCM] Service workers not supported');
       return null;
     }
 
-    // Register service worker
-    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-    console.log('Service Worker registered');
+    console.log('✅ [FCM] Browser supports notifications and service workers');
 
-    // Request permission
-    const permission = await Notification.requestPermission();
-    
-    if (permission === 'granted') {
-      console.log('Notification permission granted');
+    // Register service worker FIRST
+    let registration;
+    try {
+      registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+        scope: '/'
+      });
+      console.log('✅ [FCM] Service Worker registered successfully:', registration);
       
-      // Get FCM token
-      // TODO: VAPID Key'inizi buraya ekleyin (Firebase Console > Cloud Messaging > Web Push certificates)
+      // Wait for service worker to be active
+      await navigator.serviceWorker.ready;
+      console.log('✅ [FCM] Service Worker is ready');
+    } catch (swError) {
+      console.error('❌ [FCM] Service Worker registration failed:', swError);
+      return null;
+    }
+
+    // Request permission - AGGRESSIVE MODE
+    console.log('🔔 [FCM] Current permission status:', Notification.permission);
+    
+    let permission = Notification.permission;
+    
+    if (permission === 'default') {
+      console.log('📱 [FCM] Requesting notification permission...');
+      permission = await Notification.requestPermission();
+      console.log('📱 [FCM] Permission result:', permission);
+    }
+    
+    if (permission !== 'granted') {
+      console.warn('⚠️ [FCM] Notification permission denied or blocked');
+      return null;
+    }
+
+    console.log('✅ [FCM] Notification permission GRANTED');
+    
+    // Get FCM token
+    try {
+      console.log('🔑 [FCM] Getting FCM token...');
       const token = await messaging.getToken({
         vapidKey: 'BDvw3djSgLBuH4zlK80RoTCQLdek4Lv0PGjicCLwiU_gZZxq5fJcBrFgAOJPovzkL_g-dR8J_mL2IaZyKX5csy4',
         serviceWorkerRegistration: registration
       });
       
-      if (token) {
-        console.log('FCM Token:', token);
-        fcmToken = token;
-        await updateFcmToken(token);
-        return token;
+      if (!token) {
+        console.error('❌ [FCM] No token received');
+        return null;
       }
-    } else {
-      console.log('Notification permission denied');
+      
+      console.log('✅ [FCM] Token received successfully!');
+      console.log('🔑 [FCM] Token:', token);
+      
+      // Save token globally
+      window.fcmToken = token;
+      
+      // Send token to backend
+      await updateFcmToken(token);
+      
+      return token;
+    } catch (tokenError) {
+      console.error('❌ [FCM] Error getting token:', tokenError);
+      return null;
     }
-    return null;
   } catch (error) {
-    console.error('Error getting notification permission:', error);
+    console.error('❌ [FCM] Error in requestNotificationPermission:', error);
     return null;
   }
 }
 
-// Save FCM token to backend
+// Save FCM token to backend - CRITICAL for receiving notifications!
     async function updateFcmToken(token) {
+  console.log('💾 [FCM] Saving token to backend...');
+  
   try {
     const userId = localStorage.getItem('userId');
-    if (!userId) return;
+    if (!userId) {
+      console.warn('⚠️ [FCM] No userId found - cannot save token');
+      return false;
+    }
 
+    console.log('📤 [FCM] Sending token to backend for user:', userId);
+    
     const response = await fetch(API_ENDPOINTS.updateFcmToken, {
       method: 'POST',
       headers: getApiHeaders(),
-      body: JSON.stringify({userId, fcmToken: token})
+      body: JSON.stringify({
+        userId: userId, 
+        fcmToken: token
+      })
     });
 
+    if (!response.ok) {
+      throw new Error(`Backend responded with status: ${response.status}`);
+    }
+
     const data = await response.json();
-    console.log('FCM token saved:', data);
+    console.log('✅ [FCM] Token saved successfully to backend:', data);
+    
+    // Store in localStorage for debugging
+    localStorage.setItem('fcmToken', token);
+    localStorage.setItem('fcmTokenSavedAt', new Date().toISOString());
+    
+    return true;
   } catch (error) {
-    console.error('Error saving FCM token:', error);
+    console.error('❌ [FCM] Error saving FCM token:', error);
+    
+    // Retry once after 2 seconds
+    console.log('🔄 [FCM] Retrying token save in 2 seconds...');
+    setTimeout(async () => {
+      try {
+        const userId = localStorage.getItem('userId');
+        if (userId) {
+          const retryResponse = await fetch(API_ENDPOINTS.updateFcmToken, {
+            method: 'POST',
+            headers: getApiHeaders(),
+            body: JSON.stringify({ userId, fcmToken: token })
+          });
+          
+          if (retryResponse.ok) {
+            console.log('✅ [FCM] Token saved on retry');
+            localStorage.setItem('fcmToken', token);
+            localStorage.setItem('fcmTokenSavedAt', new Date().toISOString());
+          }
+        }
+      } catch (retryError) {
+        console.error('❌ [FCM] Retry failed:', retryError);
+      }
+    }, 2000);
+    
+    return false;
   }
 }
 
@@ -2696,6 +2782,13 @@ window.__resetEmail = email;
             localStorage.setItem('userEmail', user.email);
             localStorage.setItem('isLoggedIn', 'true');
             localStorage.setItem('currentUser', JSON.stringify(data.user));
+            
+            // Get FCM token immediately after login - CRITICAL for notifications!
+            console.log('🔔 [LOGIN] Requesting FCM token after successful login...');
+            requestNotificationPermission().catch(err => {
+                console.error('❌ [LOGIN] FCM token request failed:', err);
+            });
+            
             showSuccess('Login successful! ');
             
             setTimeout(() => {
@@ -2910,14 +3003,22 @@ window.__resetEmail = email;
             if (savedUser) {
                 currentUser = JSON.parse(savedUser);
                 if (currentUser) {
-                    // Don't show app yet, initApp will handle it
+                    // Don't show app yet, initApp will handle it (and hide splash)
                     document.getElementById('authScreen').style.display = 'none';
-                    initApp(); // Load fresh data
+                    initApp(); // Load fresh data, will hide splash when done
                     return;
                 }
             }
             
-             // Hide loading if no user
+             // Hide splash and show login if no user
+            const splashScreen = document.getElementById('splashScreen');
+            if (splashScreen) {
+                splashScreen.classList.add('fade-out');
+                setTimeout(() => {
+                    splashScreen.style.display = 'none';
+                }, 800);
+            }
+            
             document.getElementById('authScreen').style.display = 'flex';
             document.getElementById('app').style.display = 'none';
         }
@@ -2969,28 +3070,78 @@ window.__resetEmail = email;
         }
         
         function sendMiningCompleteNotification() {
+            console.log('🔔 Attempting to send mining complete notification...');
+            
             // Check if notifications are enabled and permitted
             const notificationsEnabled = localStorage.getItem('notificationsEnabled') !== 'false';
             
-            if (!notificationsEnabled || !('Notification' in window) || Notification.permission !== 'granted') {
+            if (!notificationsEnabled) {
+                console.log('⚠️ Notifications disabled by user');
                 return;
             }
             
-            // Create notification
-            const notification = new Notification('⛏️ Mining Complete!', {
-                body: 'Your mining session has ended. Start mining again!',
-                icon: '/favicon.ico', // You can replace with your app icon
-                badge: '/favicon.ico',
-                tag: 'mining-complete',
-                requireInteraction: false,
-                silent: false
-            });
+            if (!('Notification' in window)) {
+                console.log('⚠️ Browser does not support notifications');
+                return;
+            }
             
-            // Open app when notification is clicked
-            notification.onclick = function() {
-                window.focus();
-                notification.close();
-            };
+            if (Notification.permission !== 'granted') {
+                console.log('⚠️ Notification permission not granted:', Notification.permission);
+                return;
+            }
+            
+            try {
+                // Create notification
+                const notification = new Notification('⛏️ Mining Complete!', {
+                    body: 'Your mining session has ended! Please start again!',
+                    icon: 'https://i.ibb.co/zVD0p73/logo.png',
+                    badge: 'https://i.ibb.co/zVD0p73/logo.png',
+                    tag: 'mining-complete',
+                    requireInteraction: true, // Notification stays until user interacts
+                    silent: false,
+                    vibrate: [200, 100, 200]
+                });
+                
+                // Open app when notification is clicked
+                notification.onclick = function() {
+                    window.focus();
+                    notification.close();
+                };
+                
+                console.log('✅ Mining complete notification sent successfully');
+            } catch (error) {
+                console.error('❌ Error sending notification:', error);
+            }
+        }
+        
+        // Send backend push notification for when app is closed
+        async function sendBackendPushNotification() {
+            const sessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
+            if (!sessionId || !currentUser.userId) {
+                console.log('⚠️ No session ID or user ID for backend notification');
+                return;
+            }
+            
+            try {
+                console.log('📤 Sending backend push notification...');
+                const response = await fetch(API_ENDPOINTS.sendMiningNotification, {
+                    method: 'POST',
+                    headers: getApiHeaders(),
+                    body: JSON.stringify({
+                        userId: currentUser.userId,
+                        sessionId: sessionId
+                    })
+                });
+                
+                if (response.ok) {
+                    console.log('✅ Backend push notification sent successfully');
+                } else {
+                    const error = await response.json().catch(() => ({}));
+                    console.log('⚠️ Backend notification failed:', error.error || 'Unknown error');
+                }
+            } catch (error) {
+                console.error('❌ Error sending backend notification:', error);
+            }
         }
         async function initApp() {
     requestAnimationFrame(() => {  });
@@ -3129,6 +3280,16 @@ window.__resetEmail = email;
           document.getElementById('authScreen').style.display = 'none';
            // Hide loading screen
           document.getElementById('app').style.display = 'block';
+          
+          // Hide splash screen after data is loaded
+          const splashScreen = document.getElementById('splashScreen');
+          if (splashScreen) {
+              splashScreen.classList.add('fade-out');
+              setTimeout(() => {
+                  splashScreen.style.display = 'none';
+              }, 800);
+          }
+          
         // keep loading until app fully ready  
             checkMining();
             render();
@@ -3720,6 +3881,8 @@ async function startMiningOnBackend() {
             }
         }
         function completeMine() {
+            console.log('⛏️ Mining completed!');
+            
             d.mining = false;
             d.timeLeft = 0;
             localStorage.removeItem('miningEndTime_' + currentUser.email);
@@ -3738,6 +3901,10 @@ async function startMiningOnBackend() {
                     currentUser = users[userEmail];
                 }
             } catch(e) {}
+
+            // SEND NOTIFICATIONS - Both browser and backend push
+            sendMiningCompleteNotification(); // Browser notification (if app is open)
+            sendBackendPushNotification(); // Backend push (for when app is closed)
 
             // Call backend to claim - backend will calculate everything correctly
             const sessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
@@ -3782,7 +3949,6 @@ async function startMiningOnBackend() {
                     save();
                     checkLevelUp();
                     render();
-                    sendMiningCompleteNotification();
                     showToast('✓ Mining completed! +' + actualReward.toFixed(2) + ' Coins claimed');
                 } else {
                     // Show backend error message
@@ -5981,17 +6147,9 @@ async function startMiningOnBackend() {
         
         createParticles();
         
-        // Splash screen - Firebase yüklendikten sonra kaybol
+        // Splash screen - checkAuth çağır, splash initApp bitene kadar kalacak
         window.addEventListener('load', function() {
-            setTimeout(function() {
-                document.getElementById('splashScreen').classList.add('fade-out');
-                setTimeout(function() {
-                    document.getElementById('splashScreen').style.display = 'none';
-                    // Show loading screen
-                    
-                    checkAuth();
-                }, 800);
-            }, 2000);
+            checkAuth();
         });
         
         // Exit handling - double back press
