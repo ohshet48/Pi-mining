@@ -10,19 +10,33 @@
             margin: 0; 
             padding: 0; 
             box-sizing: border-box;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-            -webkit-touch-callout: none;
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+            user-select: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+            -webkit-touch-callout: none !important;
+            -webkit-user-drag: none !important;
+            -khtml-user-select: none !important;
         }
         
-        input, button {
-            -webkit-user-select: text;
-            -moz-user-select: text;
-            -ms-user-select: text;
-            user-select: text;
+        /* Only allow text selection in input fields, NOT buttons */
+        input, textarea {
+            -webkit-user-select: text !important;
+            -moz-user-select: text !important;
+            -ms-user-select: text !important;
+            user-select: text !important;
+        }
+        
+        button, a, div, span, p, h1, h2, h3, h4, h5, h6 {
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+            user-select: none !important;
+            -webkit-touch-callout: none !important;
+            -webkit-user-drag: none !important;
+            pointer-events: auto !important;
+        }
         }
         
         body { 
@@ -35,6 +49,20 @@
             overflow-y: auto;
             position: relative;
             touch-action: pan-y;
+            /* Prevent zoom on double-tap */
+            touch-action: manipulation;
+        }
+        
+        /* Prevent text selection and context menu on all interactive elements */
+        button, a, div[onclick], span[onclick], .btn, [class*="button"], [class*="btn"] {
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+            user-select: none !important;
+            -webkit-touch-callout: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+            /* Prevent zoom on double-tap for buttons */
+            touch-action: manipulation !important;
         }
         
         /* Simplified Tech Background - Single Layer */
@@ -2213,6 +2241,110 @@ function showCustomNotification(title, body, data) {
 // Initialize FCM on page load
 window.addEventListener('load', () => {
   setTimeout(() => requestNotificationPermission(), 2000);
+  
+  // AGRESIF MOD: Tüm selection ve context menu olaylarını engelle
+  
+  // 1. Context menu (basılı tutma menüsü) - TÜM ELEMENTLERDE
+  document.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    return false;
+  }, true);
+  
+  // 2. Long press - iOS ve Android
+  document.addEventListener('touchstart', (e) => {
+    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+      const touch = e.touches[0];
+      const timer = setTimeout(() => {
+        e.preventDefault();
+        e.stopPropagation();
+      }, 500);
+      
+      document.addEventListener('touchend', () => {
+        clearTimeout(timer);
+      }, { once: true });
+    }
+  }, { passive: false });
+  
+  // 3. Selection start - HİÇ SEÇİM YAPILMASIN
+  document.addEventListener('selectstart', (e) => {
+    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }
+  }, true);
+  
+  // 4. Select event
+  document.addEventListener('select', (e) => {
+    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }
+  }, true);
+  
+  // 5. Copy/Cut engelle
+  document.addEventListener('copy', (e) => {
+    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      e.stopPropagation();
+      e.clipboardData.setData('text/plain', '');
+      return false;
+    }
+  }, true);
+  
+  document.addEventListener('cut', (e) => {
+    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }
+  }, true);
+  
+  // 6. Double-tap zoom engelle
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', (e) => {
+    const now = Date.now();
+    if (now - lastTouchEnd <= 300) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    lastTouchEnd = now;
+  }, false);
+  
+  // 7. Mouse events - PC'de test için
+  document.addEventListener('mousedown', (e) => {
+    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+      if (e.detail > 1) { // Double/Triple click
+        e.preventDefault();
+        return false;
+      }
+    }
+  });
+  
+  // 8. Drag engelle
+  document.addEventListener('dragstart', (e) => {
+    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      return false;
+    }
+  });
+  
+  // 9. Her 100ms'de selection'ı temizle
+  setInterval(() => {
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      const container = range.commonAncestorContainer;
+      const element = container.nodeType === 1 ? container : container.parentElement;
+      
+      if (element && element.tagName !== 'INPUT' && element.tagName !== 'TEXTAREA') {
+        selection.removeAllRanges();
+      }
+    }
+  }, 100);
 });
 
 </script>
@@ -3345,7 +3477,7 @@ window.__resetEmail = email;
             }
         }
         
-        function claimLevelReward() {
+        async function claimLevelReward() {
             // Prevent double-claiming
             if (isClaimingLevel) return;
             if (!d.pendingLevelUp) return;
@@ -3358,38 +3490,15 @@ window.__resetEmail = email;
             isClaimingLevel = true;
             
             try {
-                d.balance += reward.coins;
                 const claimedLevel = d.pendingLevelUp;
-                d.level = d.pendingLevelUp;
-                d.pendingLevelUp = null;
+                
                 // Calculate new rate
-            const baseRate = 0.25;
-            const levelBonus = (claimedLevel - 1) * 0.05;
-            const newBaseRate = baseRate + levelBonus;
-                // Update user's base rate with level bonus, but ensure MAX 5.0
-                const users = JSON.parse(localStorage.getItem('users') || '{}');
-                const userEmail = localStorage.getItem('currentUser');
-                if (users[userEmail]) {
-                    
-                    // Check if current total rate would exceed 5.0
-                    const activeRefs = calculateActiveRefs();
-                    const totalRate = newBaseRate + (activeRefs * 0.05);
-                    
-                    if (totalRate > 5.0) {
-                        // Cap at 5.0
-                        users[userEmail].rate = Math.min(newBaseRate, 5.0 - (activeRefs * 0.05));
-                    } else {
-                        users[userEmail].rate = newBaseRate;
-                    }
-                    
-                    localStorage.setItem('users', JSON.stringify(users));
-                    currentUser = users[userEmail];
-                }
+                const baseRate = 0.25;
+                const levelBonus = (claimedLevel - 1) * 0.05;
+                const newBaseRate = baseRate + levelBonus;
                 
-                save();
-                
-                // Update backend asynchronously
-                fetch(API_ENDPOINTS.updateLevel, {
+                // Call backend FIRST - safer approach
+                const response = await fetch(API_ENDPOINTS.updateLevel, {
                     method: 'POST',
                     headers: getApiHeaders(),
                     body: JSON.stringify({
@@ -3398,26 +3507,71 @@ window.__resetEmail = email;
                         coinsReward: reward.coins,
                         newRate: newBaseRate
                     })
-                }).catch(err => console.error('Backend update failed:', err));
+                });
                 
-                // Refresh currentUser from backend
-                fetch(API_ENDPOINTS.getUserData + '?userId=' + currentUser.userId)
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.user) {
-                            currentUser = data.user;
-                            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                const data = await response.json().catch(() => ({}));
+                
+                if (response.ok) {
+                    // Backend successful - update frontend
+                    d.balance += reward.coins;
+                    d.level = claimedLevel;
+                    d.pendingLevelUp = null;
+                    
+                    // Update user's base rate with level bonus
+                    const users = JSON.parse(localStorage.getItem('users') || '{}');
+                    const userEmail = localStorage.getItem('currentUser');
+                    if (users[userEmail]) {
+                        const activeRefs = calculateActiveRefs();
+                        const totalRate = newBaseRate + (activeRefs * 0.05);
+                        
+                        if (totalRate > 5.0) {
+                            users[userEmail].rate = Math.min(newBaseRate, 5.0 - (activeRefs * 0.05));
+                        } else {
+                            users[userEmail].rate = newBaseRate;
                         }
-                    })
-                    .catch(err => console.error('Failed to refresh user:', err));
+                        
+                        localStorage.setItem('users', JSON.stringify(users));
+                        currentUser = users[userEmail];
+                    }
+                    
+                    save();
+                    
+                    // Refresh currentUser from backend
+                    fetch(API_ENDPOINTS.getUserData + '?userId=' + currentUser.userId)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.user) {
+                                currentUser = data.user;
+                                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                            }
+                        })
+                        .catch(err => console.error('Failed to refresh user:', err));
 
-                showToast(`✓ Claimed Level ${claimedLevel} reward: +${reward.coins} Coins!`);
-                
-                if (d.level < 20) {
-                    checkLevelUp();
+                    showToast(`✓ Claimed Level ${claimedLevel} reward: +${reward.coins} Coins!`);
+                    
+                    if (d.level < 20) {
+                        checkLevelUp();
+                    }
+                    
+                    render();
+                } else {
+                    // Backend error - check if already claimed
+                    if (data.error && data.error.includes('already claimed')) {
+                        // Already claimed - silently sync frontend with backend
+                        console.log('ℹ️ Level reward already claimed on backend, syncing...');
+                        d.pendingLevelUp = null;
+                        save();
+                        render();
+                    } else {
+                        // Other error - show user-friendly message
+                        const errorMsg = data.error || 'Failed to claim level reward';
+                        console.error('Level claim error:', errorMsg);
+                        showToast('❌ Unable to claim reward. Please try again.', true);
+                    }
                 }
-                
-                render();
+            } catch (error) {
+                console.error('Level claim exception:', error);
+                showToast('❌ Network error. Please check your connection.', true);
             } finally {
                 // Release lock after a delay to prevent rapid re-claims
                 setTimeout(() => {
@@ -3874,6 +4028,35 @@ async function startMiningOnBackend() {
                     const data = await response.json();
                     localStorage.setItem('currentSessionId_' + currentUser.email, data.session.sessionId);
                     console.log('✓ Mining started on backend');
+                } else {
+                    // Handle "Mining already in progress" silently
+                    const errorData = await response.json().catch(() => ({}));
+                    
+                    if (errorData.error === 'Mining already in progress') {
+                        console.log('ℹ️ Mining already active, using existing session');
+                        
+                        // Use the existing session returned by backend
+                        if (errorData.session && errorData.session.sessionId) {
+                            localStorage.setItem('currentSessionId_' + currentUser.email, errorData.session.sessionId);
+                            
+                            // Sync endTime from backend
+                            const endTimeData = errorData.session.endTime;
+                            const endTimeMs = endTimeData._seconds 
+                                ? endTimeData._seconds * 1000 
+                                : endTimeData;
+                            
+                            localStorage.setItem('miningEndTime_' + currentUser.email, endTimeMs);
+                            
+                            // Recalculate timeLeft
+                            const now = Date.now();
+                            d.timeLeft = Math.max(0, Math.floor((endTimeMs - now) / 1000));
+                            d.mining = true;
+                            
+                            console.log('✓ Synced with existing mining session');
+                        }
+                    } else {
+                        console.error('Backend error:', errorData.error || 'Unknown error');
+                    }
                 }
             } catch (error) {
                 console.error('Backend error:', error);
@@ -3996,13 +4179,24 @@ async function startMiningOnBackend() {
                         showToast('✓ Claimed +5 Coins daily reward!');
                         render();
                     } else {
-                        // Backend can return explicit errors (e.g., already claimed)
-                        const errMsg = (data && data.error) ? data.error : 'Failed to claim daily reward';
-                        showToast('❌ ' + errMsg, true);
+                        // Handle specific backend errors gracefully
+                        const errMsg = data.error || 'Failed to claim daily reward';
+                        
+                        if (errMsg.includes('already claimed')) {
+                            // Silently sync - already claimed
+                            console.log('ℹ️ Daily reward already claimed, syncing...');
+                            dailyRewardAvailable = false;
+                            render();
+                        } else if (errMsg.includes('not complete')) {
+                            showToast('⏳ Mining session not finished yet', true);
+                        } else {
+                            console.error('Daily reward error:', errMsg);
+                            showToast('❌ Unable to claim reward. Please try again.', true);
+                        }
                     }
                 } catch (err) {
                     console.error('Daily reward failed:', err);
-                    showToast('❌ Failed to claim daily reward', true);
+                    showToast('❌ Network error. Please check your connection.', true);
                 } finally {
                     // Release lock ONLY after request finishes
                     isClaimingDaily = false;
@@ -5934,36 +6128,52 @@ async function startMiningOnBackend() {
             // Set lock
             isClaimingReferral = true;
             
-            try {
-                // Call backend
-                fetch(API_ENDPOINTS.claimReferralEarnings, {
-                    method: 'POST',
-                    headers: getApiHeaders(),
-                    body: JSON.stringify({
-                        userId: currentUser.userId
-                    })
-                }).then(res => res.json())
-                  .then(data => {
-                      if (data.earnings) {
-                          d.balance += data.earnings;
-                          d.pendingReferralEarnings = 0;
-                          currentUser.pendingReferralEarnings = 0;
-                          localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                          save();
-                          showToast(`✓ Claimed ${data.earnings} Coins from referrals!`);
-                          render();
-                      }
-                  })
-                  .catch(err => {
-                      console.error('Referral claim failed:', err);
-                      showToast('❌ Failed to claim referral earnings');
-                  });
-            } finally {
-                // Release lock after delay
-                setTimeout(() => {
-                    isClaimingReferral = false;
-                }, 1000);
-            }
+            (async () => {
+                try {
+                    const res = await fetch(API_ENDPOINTS.claimReferralEarnings, {
+                        method: 'POST',
+                        headers: getApiHeaders(),
+                        body: JSON.stringify({
+                            userId: currentUser.userId
+                        })
+                    });
+                    
+                    const data = await res.json().catch(() => ({}));
+                    
+                    if (res.ok && data.earnings) {
+                        d.balance += data.earnings;
+                        d.pendingReferralEarnings = 0;
+                        currentUser.pendingReferralEarnings = 0;
+                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                        save();
+                        showToast(`✓ Claimed ${data.earnings} Coins from referrals!`);
+                        render();
+                    } else {
+                        // Handle backend errors gracefully
+                        const errMsg = data.error || 'Failed to claim';
+                        
+                        if (errMsg.includes('No earnings')) {
+                            // Silently sync
+                            console.log('ℹ️ No earnings available, syncing...');
+                            d.pendingReferralEarnings = 0;
+                            currentUser.pendingReferralEarnings = 0;
+                            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                            render();
+                        } else {
+                            console.error('Referral claim error:', errMsg);
+                            showToast('❌ Unable to claim earnings. Please try again.', true);
+                        }
+                    }
+                } catch (err) {
+                    console.error('Referral claim exception:', err);
+                    showToast('❌ Network error. Please check your connection.', true);
+                } finally {
+                    // Release lock after delay
+                    setTimeout(() => {
+                        isClaimingReferral = false;
+                    }, 1000);
+                }
+            })();
         }
         
         function getProfilePageContent() {
