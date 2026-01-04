@@ -3228,6 +3228,14 @@ window.__resetEmail = email;
         }
     }
     
+            // CRITICAL: Check if currentUser exists before creating d object
+            if (!currentUser) {
+                console.error('❌ currentUser is undefined! Redirecting to login...');
+                document.getElementById('authScreen').style.display = 'flex';
+                document.getElementById('app').style.display = 'none';
+                return;
+            }
+    
             d = {
                 balance: currentUser.balance || 0,
                 level: currentUser.level || 1,
@@ -3317,6 +3325,9 @@ window.__resetEmail = email;
                 
                 localStorage.setItem('users', JSON.stringify(users));
                 currentUser = users[userEmail];
+                
+                // CRITICAL: Also update currentUser in localStorage to prevent balance reset
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
             }
         }
         
