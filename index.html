@@ -1951,7 +1951,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             // If not in localStorage, fetch from backend
             console.log('storedUser not found, fetching from backend...');
             try {
-                const response = await fetch(API_ENDPOINTS.getUserData, {
+                const response = await fetch(API_ENDPOINTS.getAllUserData, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -3009,14 +3009,14 @@ function hideLoginLoading() {
         if (typeof showLoginLoading === 'function') showLoginLoading();
 
         // Backend'den kullanıcı bilgilerini al
-        const response = await fetch(API_ENDPOINTS.getUserData, {
+        const response = await fetch(API_ENDPOINTS.getAllUserData, {
             method: 'POST',
             headers: getApiHeaders(),
             body: JSON.stringify({ userId: user.uid })
         });
         const data = await response.json();
 
-        if (response.ok) {
+        if (response.ok && data.user) {
 window.__resetEmail = email;
             console.log('RESET EMAIL SET:', window.__resetEmail);
 
