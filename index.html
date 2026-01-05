@@ -4269,6 +4269,10 @@ async function startMiningOnBackend() {
                         
                         save();
                         localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                        
+                        // Reload app to refresh pending rewards and hide button
+                        await initApp();
+                        render();
                     } else {
                         // Rollback on error
                         d.balance = oldBalance;
