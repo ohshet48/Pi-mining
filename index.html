@@ -3615,79 +3615,110 @@ window.__resetEmail = email;
             // Set lock
             isClaimingLevel = true;
             
-            try {
-                // Get pending level reward from backend
-                const pendingRewards = await getPendingRewards();
-                const levelReward = pendingRewards.find(r => r.rewardType === 'levelUp');
-                
-                d.balance += reward.coins;
-                const claimedLevel = d.pendingLevelUp;
-                d.level = d.pendingLevelUp;
-                d.pendingLevelUp = null;
-                // Calculate new rate
+            // Store old values for rollback
+            const oldBalance = d.balance;
+            const oldLevel = d.level;
+            const oldPendingLevelUp = d.pendingLevelUp;
+            
+            // ⚡ OPTIMISTIC UI - Update immediately (0ms)
+            d.balance += reward.coins;
+            const claimedLevel = d.pendingLevelUp;
+            d.level = d.pendingLevelUp;
+            d.pendingLevelUp = null;
+            
+            // Calculate new rate
             const baseRate = 0.25;
             const levelBonus = (claimedLevel - 1) * 0.05;
             const newBaseRate = baseRate + levelBonus;
-                // Update user's base rate with level bonus, but ensure MAX 5.0
-                const users = JSON.parse(localStorage.getItem('users') || '{}');
-                const userEmail = localStorage.getItem('currentUser');
-                if (users[userEmail]) {
+            
+            // Update user's base rate
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            const userEmail = localStorage.getItem('currentUser');
+            if (users[userEmail]) {
+                const activeRefs = calculateActiveRefs();
+                const totalRate = newBaseRate + (activeRefs * 0.05);
+                
+                if (totalRate > 5.0) {
+                    users[userEmail].rate = Math.min(newBaseRate, 5.0 - (activeRefs * 0.05));
+                } else {
+                    users[userEmail].rate = newBaseRate;
+                }
+                
+                localStorage.setItem('users', JSON.stringify(users));
+                currentUser = users[userEmail];
+            }
+            
+            save();
+            
+            // Update UI instantly
+            render();
+            showToast(`✓ Claimed Level ${claimedLevel} reward: +${reward.coins} Coins!`);
+            
+            // ⚡ PARALLEL backend calls (all at once!)
+            (async () => {
+                try {
+                    // 🔥 ALL REQUESTS IN PARALLEL - NO WAITING!
+                    const [pendingRewardsData, updateResponse, userDataResponse] = await Promise.all([
+                        getPendingRewards(),
+                        fetch(API_ENDPOINTS.updateLevel, {
+                            method: 'POST',
+                            headers: getApiHeaders(),
+                            body: JSON.stringify({
+                                userId: currentUser.userId,
+                                newLevel: claimedLevel,
+                                coinsReward: reward.coins,
+                                newRate: newBaseRate
+                            })
+                        }),
+                        fetch(API_ENDPOINTS.getUserData, {
+                            method: 'POST',
+                            headers: getApiHeaders(),
+                            body: JSON.stringify({ userId: currentUser.userId })
+                        })
+                    ]);
                     
-                    // Check if current total rate would exceed 5.0
-                    const activeRefs = calculateActiveRefs();
-                    const totalRate = newBaseRate + (activeRefs * 0.05);
+                    const levelReward = pendingRewardsData.find(r => r.rewardType === 'levelUp');
                     
-                    if (totalRate > 5.0) {
-                        // Cap at 5.0
-                        users[userEmail].rate = Math.min(newBaseRate, 5.0 - (activeRefs * 0.05));
-                    } else {
-                        users[userEmail].rate = newBaseRate;
+                    if (!updateResponse.ok) {
+                        throw new Error('Backend update failed');
                     }
                     
-                    localStorage.setItem('users', JSON.stringify(users));
-                    currentUser = users[userEmail];
-                }
-                
-                save();
-                
-                // Update backend asynchronously
-                fetch(API_ENDPOINTS.updateLevel, {
-                    method: 'POST',
-                    headers: getApiHeaders(),
-                    body: JSON.stringify({
-                        userId: currentUser.userId,
-                        newLevel: claimedLevel,
-                        coinsReward: reward.coins,
-                        newRate: newBaseRate
-                    })
-                }).catch(err => console.error('Backend update failed:', err));
-                
-                // If there was a pending reward, claim it
-                if (levelReward) {
-                    await claimPendingRewardById(levelReward.id);
-                }
-                
-                // Refresh currentUser from backend
-                fetch(API_ENDPOINTS.getUserData + '?userId=' + currentUser.userId)
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.user) {
-                            currentUser = data.user;
+                    // Claim pending reward in parallel (fire and forget)
+                    if (levelReward) {
+                        claimPendingRewardById(levelReward.id).catch(err => 
+                            console.error('Pending reward claim failed:', err)
+                        );
+                    }
+                    
+                    // Use backend's balance
+                    if (userDataResponse.ok) {
+                        const userData = await userDataResponse.json();
+                        if (userData.user) {
+                            d.balance = userData.user.balance;
+                            currentUser = userData.user;
                             localStorage.setItem('currentUser', JSON.stringify(currentUser));
                         }
-                    })
-                    .catch(err => console.error('Failed to refresh user:', err));
-
-                showToast(`✓ Claimed Level ${claimedLevel} reward: +${reward.coins} Coins!`);
-                
-                if (d.level < 20) {
-                    checkLevelUp();
+                    }
+                    
+                    if (d.level < 20) {
+                        checkLevelUp();
+                    }
+                    
+                } catch (err) {
+                    console.error('Level reward backend error:', err);
+                    // Rollback on error
+                    d.balance = oldBalance;
+                    d.level = oldLevel;
+                    d.pendingLevelUp = oldPendingLevelUp;
+                    render();
+                    showToast('❌ Failed to claim level reward', true);
+                } finally {
+                    setTimeout(() => {
+                        isClaimingLevel = false;
+                    }, 1000);
                 }
-                
-                render();
-            } finally {
-                // Release lock after a delay to prevent rapid re-claims
-                setTimeout(() => {
+            })();
+        }
                     isClaimingLevel = false;
                 }, 1000);
             }
@@ -4204,50 +4235,72 @@ async function startMiningOnBackend() {
 
             // Set lock
             isClaimingDaily = true;
+            
+            // ⚡ OPTIMISTIC UI - Update immediately (0ms)
+            const rewardAmount = 5;
+            const oldBalance = d.balance;
+            d.balance += rewardAmount;
+            dailyRewardAvailable = false;
+            
+            // Update UI instantly
+            render();
+            
+            // Show success message immediately
+            showToast('✓ Claimed +5 Coins daily reward!');
 
-            // Try to visually disable the button while claiming (if present)
-            const btn = document.querySelector('.reward-claim-btn');
-            if (btn) {
-                btn.disabled = true;
-                btn.style.opacity = '0.6';
-                btn.style.cursor = 'not-allowed';
-            }
-
+            // ⚡ PARALLEL backend calls (all at once!)
             (async () => {
                 try {
-                    // Get pending daily reward from backend
-                    const pendingRewards = await getPendingRewards();
-                    const dailyReward = pendingRewards.find(r => r.rewardType === 'daily');
-
-                    const res = await fetch(API_ENDPOINTS.claimDailyReward, {
-                        method: 'POST',
-                        headers: getApiHeaders(),
-                        body: JSON.stringify({
-                            userId: currentUser.userId
+                    // 🔥 ALL 3 REQUESTS IN PARALLEL - NO WAITING!
+                    const [pendingRewardsData, claimResponse] = await Promise.all([
+                        getPendingRewards(),
+                        fetch(API_ENDPOINTS.claimDailyReward, {
+                            method: 'POST',
+                            headers: getApiHeaders(),
+                            body: JSON.stringify({
+                                userId: currentUser.userId
+                            })
                         })
-                    });
+                    ]);
 
-                    const data = await res.json().catch(() => ({}));
+                    const dailyReward = pendingRewardsData.find(r => r.rewardType === 'daily');
+                    const data = await claimResponse.json().catch(() => ({}));
 
-                    if (res.ok && data.reward) {
-                        d.balance += data.reward;
-                        dailyRewardAvailable = false;
+                    if (claimResponse.ok && data.reward) {
+                        // Use backend's exact balance (no flash!)
+                        d.balance = data.newBalance || d.balance;
+                        currentUser.balance = d.balance;
                         
-                        // If there was a pending reward, claim it
+                        // Claim pending reward in parallel
                         if (dailyReward) {
-                            await claimPendingRewardById(dailyReward.id);
+                            claimPendingRewardById(dailyReward.id).catch(err => 
+                                console.error('Pending reward claim failed:', err)
+                            );
                         }
                         
                         save();
-                        showToast('✓ Claimed +5 Coins daily reward!');
-                        render();
+                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
                     } else {
-                        // Backend can return explicit errors (e.g., already claimed)
+                        // Rollback on error
+                        d.balance = oldBalance;
+                        dailyRewardAvailable = true;
+                        render();
+                        
                         const errMsg = (data && data.error) ? data.error : 'Failed to claim daily reward';
                         showToast('❌ ' + errMsg, true);
                     }
                 } catch (err) {
                     console.error('Daily reward failed:', err);
+                    // Rollback on error
+                    d.balance = oldBalance;
+                    dailyRewardAvailable = true;
+                    render();
+                    showToast('❌ Failed to claim daily reward', true);
+                } finally {
+                    isClaimingDaily = false;
+                }
+            })();
+        }
                     showToast('❌ Failed to claim daily reward', true);
                 } finally {
                     // Release lock ONLY after request finishes
@@ -6164,46 +6217,81 @@ async function startMiningOnBackend() {
             // Set lock
             isClaimingReferral = true;
             
-            try {
-                // Get pending referral reward from backend
-                const pendingRewards = await getPendingRewards();
-                const referralRewards = pendingRewards.filter(r => r.rewardType === 'referral');
-                
-                // Call backend
-                const res = await fetch(API_ENDPOINTS.claimReferralEarnings, {
-                    method: 'POST',
-                    headers: getApiHeaders(),
-                    body: JSON.stringify({
-                        userId: currentUser.userId
-                    })
-                });
-                
-                const data = await res.json();
-                
-                if (data.earnings) {
-                    d.balance += data.earnings;
-                    d.pendingReferralEarnings = 0;
-                    currentUser.pendingReferralEarnings = 0;
-                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            // Store old values for rollback
+            const oldBalance = d.balance;
+            const oldPendingEarnings = d.pendingReferralEarnings;
+            const earningsAmount = currentUser.pendingReferralEarnings;
+            
+            // ⚡ OPTIMISTIC UI - Update immediately (0ms)
+            d.balance += earningsAmount;
+            d.pendingReferralEarnings = 0;
+            currentUser.pendingReferralEarnings = 0;
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            save();
+            
+            // Update UI instantly
+            render();
+            showToast(`✓ Claimed ${earningsAmount} Coins from referrals!`);
+            
+            // ⚡ PARALLEL backend calls (all at once!)
+            (async () => {
+                try {
+                    // 🔥 ALL REQUESTS IN PARALLEL - NO WAITING!
+                    const [pendingRewardsData, claimResponse] = await Promise.all([
+                        getPendingRewards(),
+                        fetch(API_ENDPOINTS.claimReferralEarnings, {
+                            method: 'POST',
+                            headers: getApiHeaders(),
+                            body: JSON.stringify({
+                                userId: currentUser.userId
+                            })
+                        })
+                    ]);
                     
-                    // Claim all pending referral rewards
-                    for (const reward of referralRewards) {
-                        await claimPendingRewardById(reward.id);
+                    const referralRewards = pendingRewardsData.filter(r => r.rewardType === 'referral');
+                    const data = await claimResponse.json();
+                    
+                    if (data.earnings) {
+                        // Use backend's exact balance (no flash!)
+                        d.balance = data.newBalance || d.balance;
+                        currentUser.balance = d.balance;
+                        
+                        // Claim all pending referral rewards in parallel (fire and forget)
+                        if (referralRewards.length > 0) {
+                            Promise.all(
+                                referralRewards.map(reward => 
+                                    claimPendingRewardById(reward.id).catch(err => 
+                                        console.error('Pending reward claim failed:', err)
+                                    )
+                                )
+                            );
+                        }
+                        
+                        save();
+                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    } else {
+                        // Rollback on error
+                        d.balance = oldBalance;
+                        d.pendingReferralEarnings = oldPendingEarnings;
+                        currentUser.pendingReferralEarnings = oldPendingEarnings;
+                        render();
+                        showToast('❌ Failed to claim referral earnings', true);
                     }
-                    
-                    save();
-                    showToast(`✓ Claimed ${data.earnings} Coins from referrals!`);
+                } catch (err) {
+                    console.error('Referral claim failed:', err);
+                    // Rollback on error
+                    d.balance = oldBalance;
+                    d.pendingReferralEarnings = oldPendingEarnings;
+                    currentUser.pendingReferralEarnings = oldPendingEarnings;
                     render();
+                    showToast('❌ Failed to claim referral earnings', true);
+                } finally {
+                    setTimeout(() => {
+                        isClaimingReferral = false;
+                    }, 1000);
                 }
-            } catch (err) {
-                console.error('Referral claim failed:', err);
-                showToast('❌ Failed to claim referral earnings', true);
-            } finally {
-                // Release lock after delay
-                setTimeout(() => {
-                    isClaimingReferral = false;
-                }, 1000);
-            }
+            })();
         }
         
         function getProfilePageContent() {
