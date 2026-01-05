@@ -3383,17 +3383,26 @@ window.__resetEmail = email;
                 localStorage.setItem('miningEndTime_' + currentUser.email, endTime);
                 localStorage.setItem('miningStartTime_' + currentUser.email, startTime);
                 localStorage.setItem('currentSessionId_' + currentUser.email, session.sessionId);
+                
+                // Debug: Log ad boost status
+                console.log('✅ Active mining session loaded:', {
+                    sessionId: session.sessionId,
+                    adBoostActive: session.adBoostActive,
+                    adBoostCount: session.adBoostCount
+                });
+            } else {
+                console.log('✓ No active mining session');
             }
             
             console.log('✅ User data yüklendi');
             
-            // Process Referrals
-            localStorage.setItem('referrals_' + currentUser.email, JSON.stringify(allData.referrals || []));
-            console.log('✅ Referrals yüklendi');
-            
-            // Process Active Referrals
+            // Process Referral Counts (no detailed list - modal will fetch that)
             localStorage.setItem('activeReferralsCount_' + currentUser.email, allData.activeCount || 0);
-            console.log('✅ Active referrals yüklendi');
+            localStorage.setItem('totalReferralsCount_' + currentUser.email, allData.totalCount || 0);
+            console.log('✅ Referral counts loaded:', {
+                active: allData.activeCount || 0,
+                total: allData.totalCount || 0
+            });
             
             // Process Pending Rewards
             pendingRewardsData = allData.pendingRewards || [];
@@ -3435,7 +3444,7 @@ window.__resetEmail = email;
             d = {
                 balance: currentUser.balance || 0,
                 level: currentUser.level || 1,
-                refs: currentUser.referrals?.length || 0,
+                refs: parseInt(localStorage.getItem('totalReferralsCount_' + currentUser.email)) || 0,
                 activeRefs: parseInt(localStorage.getItem('activeReferralsCount_' + currentUser.email)) || 0,
                 streak: currentUser.streak || 0,
                 lastDate: currentUser.lastDate || null,
@@ -3463,9 +3472,20 @@ window.__resetEmail = email;
             if (activeMiningSession && activeMiningSession.adBoostActive) {
                 const boostCount = activeMiningSession.adBoostCount || 1;
                 adBonus = boostCount * 0.25;  // Cumulative: each ad adds 0.25
+                console.log('🚀 Ad boost detected:', {
+                    adBoostCount: boostCount,
+                    adBonus: adBonus
+                });
             }
             
             d.rate = baseRate + refBonus + adBonus;
+            
+            console.log('💰 Final rate calculated:', {
+                baseRate: baseRate,
+                refBonus: refBonus,
+                adBonus: adBonus,
+                totalRate: d.rate
+            });
             
             // Check for pending airdrops
             hasPendingAirdrops = (currentUser.pendingAirdrops && currentUser.pendingAirdrops.length > 0) || false;
