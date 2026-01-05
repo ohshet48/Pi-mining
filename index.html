@@ -3502,11 +3502,12 @@ window.__resetEmail = email;
             // Check for pending airdrops
             hasPendingAirdrops = (currentUser.pendingAirdrops && currentUser.pendingAirdrops.length > 0) || false;
             
-            // Set dailyRewardAvailable - prioritize pending rewards flag over backend flag
-            // If already set by pending rewards, keep it; otherwise use backend value
-            if (!dailyRewardAvailable) {
-                dailyRewardAvailable = currentUser.dailyRewardAvailable || false;
-            }
+            // Set dailyRewardAvailable - ONLY use pending rewards system
+            // Backend's dailyRewardAvailable may be stale, so ignore it
+            // If there's a pending daily reward → available = true
+            // If no pending daily reward → available = false
+            const hasPendingDaily = pendingRewardsData.some(r => r.rewardType === 'daily');
+            dailyRewardAvailable = hasPendingDaily;
             
             // Load balance visibility preference
             const savedBalanceVisible = localStorage.getItem('balanceVisible_' + currentUser.email);
@@ -3657,9 +3658,8 @@ window.__resetEmail = email;
             // ⚡ PARALLEL backend calls (all at once!)
             (async () => {
                 try {
-                    // 🔥 ALL REQUESTS IN PARALLEL - NO WAITING!
-                    const [pendingRewardsData, updateResponse, userDataResponse] = await Promise.all([
-                        getPendingRewards(),
+                    // 🔥 BOTH REQUESTS IN PARALLEL - NO WAITING!
+                    const [updateResponse, userDataResponse] = await Promise.all([
                         fetch(API_ENDPOINTS.updateLevel, {
                             method: 'POST',
                             headers: getApiHeaders(),
@@ -3677,18 +3677,11 @@ window.__resetEmail = email;
                         })
                     ]);
                     
-                    const levelReward = pendingRewardsData.find(r => r.rewardType === 'levelUp');
-                    
                     if (!updateResponse.ok) {
                         throw new Error('Backend update failed');
                     }
                     
-                    // Claim pending reward in parallel (fire and forget)
-                    if (levelReward) {
-                        claimPendingRewardById(levelReward.id).catch(err => 
-                            console.error('Pending reward claim failed:', err)
-                        );
-                    }
+                    // Backend automatically claims pending reward ✅
                     
                     // Use backend's balance
                     if (userDataResponse.ok) {
@@ -4247,19 +4240,15 @@ async function startMiningOnBackend() {
             // ⚡ PARALLEL backend calls (all at once!)
             (async () => {
                 try {
-                    // 🔥 ALL 3 REQUESTS IN PARALLEL - NO WAITING!
-                    const [pendingRewardsData, claimResponse] = await Promise.all([
-                        getPendingRewards(),
-                        fetch(API_ENDPOINTS.claimDailyReward, {
-                            method: 'POST',
-                            headers: getApiHeaders(),
-                            body: JSON.stringify({
-                                userId: currentUser.userId
-                            })
+                    // 🔥 ALL REQUESTS IN PARALLEL - NO WAITING!
+                    const claimResponse = await fetch(API_ENDPOINTS.claimDailyReward, {
+                        method: 'POST',
+                        headers: getApiHeaders(),
+                        body: JSON.stringify({
+                            userId: currentUser.userId
                         })
-                    ]);
+                    });
 
-                    const dailyReward = pendingRewardsData.find(r => r.rewardType === 'daily');
                     const data = await claimResponse.json().catch(() => ({}));
 
                     if (claimResponse.ok && data.reward) {
@@ -4267,12 +4256,7 @@ async function startMiningOnBackend() {
                         d.balance = data.newBalance || d.balance;
                         currentUser.balance = d.balance;
                         
-                        // Claim pending reward in parallel
-                        if (dailyReward) {
-                            claimPendingRewardById(dailyReward.id).catch(err => 
-                                console.error('Pending reward claim failed:', err)
-                            );
-                        }
+                        // Backend automatically claims pending reward ✅
                         
                         save();
                         localStorage.setItem('currentUser', JSON.stringify(currentUser));
@@ -6226,19 +6210,15 @@ async function startMiningOnBackend() {
             // ⚡ PARALLEL backend calls (all at once!)
             (async () => {
                 try {
-                    // 🔥 ALL REQUESTS IN PARALLEL - NO WAITING!
-                    const [pendingRewardsData, claimResponse] = await Promise.all([
-                        getPendingRewards(),
-                        fetch(API_ENDPOINTS.claimReferralEarnings, {
-                            method: 'POST',
-                            headers: getApiHeaders(),
-                            body: JSON.stringify({
-                                userId: currentUser.userId
-                            })
+                    // 🔥 SINGLE REQUEST - Backend handles pending rewards!
+                    const claimResponse = await fetch(API_ENDPOINTS.claimReferralEarnings, {
+                        method: 'POST',
+                        headers: getApiHeaders(),
+                        body: JSON.stringify({
+                            userId: currentUser.userId
                         })
-                    ]);
+                    });
                     
-                    const referralRewards = pendingRewardsData.filter(r => r.rewardType === 'referral');
                     const data = await claimResponse.json();
                     
                     if (data.earnings) {
@@ -6246,16 +6226,7 @@ async function startMiningOnBackend() {
                         d.balance = data.newBalance || d.balance;
                         currentUser.balance = d.balance;
                         
-                        // Claim all pending referral rewards in parallel (fire and forget)
-                        if (referralRewards.length > 0) {
-                            Promise.all(
-                                referralRewards.map(reward => 
-                                    claimPendingRewardById(reward.id).catch(err => 
-                                        console.error('Pending reward claim failed:', err)
-                                    )
-                                )
-                            );
-                        }
+                        // Backend automatically claims all pending referral rewards ✅
                         
                         save();
                         localStorage.setItem('currentUser', JSON.stringify(currentUser));
