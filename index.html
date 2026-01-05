@@ -3150,7 +3150,12 @@ window.__resetEmail = email;
         // keep loading until app fully ready
     initApp();
             }, 1500);
-}
+        } else {
+            // Backend failed - delete Firebase Auth user to prevent orphan accounts
+            console.error('Backend registration failed:', data.error);
+            await user.delete();
+            showError('Registration failed: ' + (data.error || 'Unknown error'));
+        }
     } catch (error) {
         console.error('Signup error:', error);
         showError(error.message);
