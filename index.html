@@ -1973,6 +1973,7 @@ const API_ENDPOINTS = {
   applyAdBoost: `${FUNCTIONS_BASE_URL}/applyAdBoost`,
   claimReward: `${FUNCTIONS_BASE_URL}/claimReward`,
   getUserData: `${FUNCTIONS_BASE_URL}/getUserData`,
+  getAllUserData: `${FUNCTIONS_BASE_URL}/getAllUserData`,  // NEW: Optimized single request
   getMiningSessions: `${FUNCTIONS_BASE_URL}/getMiningSessions`,
   sendMiningNotification: `${FUNCTIONS_BASE_URL}/sendMiningNotification`,
   updateLevel: `${FUNCTIONS_BASE_URL}/updateLevel`,
@@ -2193,7 +2194,7 @@ function showPendingReferralReward(reward) {
 let fcmToken = null;
 
 // Request notification permission and get FCM token - CRITICAL for mobile notifications!
-    async function requestNotificationPermission() {
+async function requestNotificationPermission() {
   console.log('🔔 [FCM] Starting notification permission request...');
   
   try {
@@ -3351,109 +3352,72 @@ window.__resetEmail = email;
         }
     }
     
-    // Backend'den TÜM verileri çek - PARALEL (3x hızlı!)
+    // Backend'den TÜM verileri çek - TEK İSTEK (OPTİMİZE EDİLDİ!)
     if (userId) {
         try {
-            console.log('🔄 Backend veriler çekiliyor (paralel)...');
+            console.log('🔄 Backend veriler çekiliyor (optimize edilmiş tek istek)...');
             
-            // PARALEL API ÇAĞRILARI - 4'ü aynı anda!
-            const [userResponse, refResponse, activeRefResponse, pendingRewardsResponse] = await Promise.all([
-                // 1. User Data
-                fetch(API_ENDPOINTS.getUserData, {
-                    method: 'POST',
-                    headers: getApiHeaders(),
-                    body: JSON.stringify({ userId: userId })
-                }),
-                
-                // 2. Referrals
-                fetch(API_ENDPOINTS.getReferrals + '?userId=' + userId)
-                    .catch(e => {
-                        console.log('⚠️ Referrals yüklenemedi:', e);
-                        return null;
-                    }),
-                
-                // 3. Active Referrals Count
-                fetch(API_ENDPOINTS.getActiveReferrals + '?userId=' + userId)
-                    .catch(e => {
-                        console.log('⚠️ Active referrals yüklenemedi:', e);
-                        return null;
-                    }),
-                
-                // 4. Pending Rewards
-                fetch(API_ENDPOINTS.getPendingRewards, {
-                    method: 'POST',
-                    headers: getApiHeaders(),
-                    body: JSON.stringify({ userId: userId })
-                })
-                    .catch(e => {
-                        console.log('⚠️ Pending rewards yüklenemedi:', e);
-                        return null;
-                    })
-            ]);
+            // OPTİMİZE: 4 istek yerine TEK istek!
+            const response = await fetch(API_ENDPOINTS.getAllUserData, {
+                method: 'POST',
+                headers: getApiHeaders(),
+                body: JSON.stringify({ userId: userId })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch user data');
+            }
+            
+            const allData = await response.json();
             
             // Process User Data
-            if (userResponse.ok) {
-                const userData = await userResponse.json();
-                currentUser = userData.user;
-                activeMiningSession = userData.activeMiningSession || null; // Store for rate calculation
-                localStorage.setItem('currentUser', JSON.stringify(userData.user));
-                
-                // Aktif mining session varsa yükle
-                if (userData.activeMiningSession) {
-                    const session = userData.activeMiningSession;
-                    const endTime = session.endTime._seconds ? session.endTime._seconds * 1000 : session.endTime;
-                    const startTime = session.startTime._seconds ? session.startTime._seconds * 1000 : session.startTime;
-                    localStorage.setItem('miningEndTime_' + currentUser.email, endTime);
-                    localStorage.setItem('miningStartTime_' + currentUser.email, startTime);
-                    localStorage.setItem('currentSessionId_' + currentUser.email, session.sessionId);
-                }
-                
-                console.log('✅ User data yüklendi');
+            currentUser = allData.user;
+            activeMiningSession = allData.activeMiningSession || null;
+            localStorage.setItem('currentUser', JSON.stringify(allData.user));
+            
+            // Aktif mining session varsa yükle
+            if (allData.activeMiningSession) {
+                const session = allData.activeMiningSession;
+                const endTime = session.endTime._seconds ? session.endTime._seconds * 1000 : session.endTime;
+                const startTime = session.startTime._seconds ? session.startTime._seconds * 1000 : session.startTime;
+                localStorage.setItem('miningEndTime_' + currentUser.email, endTime);
+                localStorage.setItem('miningStartTime_' + currentUser.email, startTime);
+                localStorage.setItem('currentSessionId_' + currentUser.email, session.sessionId);
             }
+            
+            console.log('✅ User data yüklendi');
             
             // Process Referrals
-            if (refResponse && refResponse.ok) {
-                const refData = await refResponse.json();
-                localStorage.setItem('referrals_' + currentUser.email, JSON.stringify(refData.referrals || []));
-                console.log('✅ Referrals yüklendi');
-            }
+            localStorage.setItem('referrals_' + currentUser.email, JSON.stringify(allData.referrals || []));
+            console.log('✅ Referrals yüklendi');
             
             // Process Active Referrals
-            if (activeRefResponse && activeRefResponse.ok) {
-                const activeRefData = await activeRefResponse.json();
-                localStorage.setItem('activeReferralsCount_' + currentUser.email, activeRefData.activeCount || 0);
-                console.log('✅ Active referrals yüklendi');
-            }
+            localStorage.setItem('activeReferralsCount_' + currentUser.email, allData.activeCount || 0);
+            console.log('✅ Active referrals yüklendi');
             
-            // Process Pending Rewards - RESTORE FLAGS BEFORE d OBJECT CREATION
-            pendingRewardsData = []; // Reset array
-            if (pendingRewardsResponse && pendingRewardsResponse.ok) {
-                const pendingData = await pendingRewardsResponse.json();
-                pendingRewardsData = pendingData.pendingRewards || [];
+            // Process Pending Rewards
+            pendingRewardsData = allData.pendingRewards || [];
+            
+            if (pendingRewardsData.length > 0) {
+                console.log(`📦 ${pendingRewardsData.length} pending reward bulundu`);
                 
-                if (pendingRewardsData.length > 0) {
-                    console.log(`📦 ${pendingRewardsData.length} pending reward bulundu`);
-                    
-                    // Restore flags from pending rewards
-                    for (const reward of pendingRewardsData) {
-                        if (reward.rewardType === 'daily') {
-                            dailyRewardAvailable = true;
-                            console.log('✅ Daily reward flag set');
-                        } else if (reward.rewardType === 'levelUp') {
-                            const metadata = reward.metadata || {};
-                            const level = metadata.level || (currentUser.level + 1);
-                            // Will be set in d object below
-                            tempPendingLevelUp = level;
-                            console.log(`✅ Level up flag set: Level ${level}`);
-                        }
-                        // Referral earnings already in currentUser.pendingReferralEarnings
+                // Restore flags from pending rewards
+                for (const reward of pendingRewardsData) {
+                    if (reward.rewardType === 'daily') {
+                        dailyRewardAvailable = true;
+                        console.log('✅ Daily reward flag set');
+                    } else if (reward.rewardType === 'levelUp') {
+                        const metadata = reward.metadata || {};
+                        const level = metadata.level || (currentUser.level + 1);
+                        tempPendingLevelUp = level;
+                        console.log(`✅ Level up flag set: Level ${level}`);
                     }
-                } else {
-                    console.log('✓ No pending rewards');
                 }
+            } else {
+                console.log('✓ No pending rewards');
             }
             
-            console.log('✅ TÜM BACKEND VERİLER YÜKLENDİ (paralel + pending rewards)!');
+            console.log('✅ TÜM BACKEND VERİLER YÜKLENDİ (tek istek - optimize!)');
             
         } catch (error) {
             console.error('❌ Backend veri çekme hatası:', error);
@@ -3519,8 +3483,13 @@ window.__resetEmail = email;
                 balanceVisible = savedBalanceVisible === 'true';
             }
             
+            console.log('🚀 [DEBUG] About to call requestNotificationPermission...');
+            
             // Request notification permission
             requestNotificationPermission();
+            
+            console.log('✅ [DEBUG] requestNotificationPermission called');
+            
           document.getElementById('authScreen').style.display = 'none';
            // Hide loading screen
           document.getElementById('app').style.display = 'block';
