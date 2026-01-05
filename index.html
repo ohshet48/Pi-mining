@@ -1989,6 +1989,9 @@ const API_ENDPOINTS = {
   sendPasswordReset: `${FUNCTIONS_BASE_URL}/sendPasswordReset`,
   resetPasswordWithCode: `${FUNCTIONS_BASE_URL}/resetPasswordWithCode`,
   sendEmailVerification: `${FUNCTIONS_BASE_URL}/sendEmailVerification`,
+  addPendingReward: `${FUNCTIONS_BASE_URL}/addPendingReward`,
+  getPendingRewards: `${FUNCTIONS_BASE_URL}/getPendingRewards`,
+  claimPendingReward: `${FUNCTIONS_BASE_URL}/claimPendingReward`,
 };
 
 // API Key for mobile app security
@@ -2003,6 +2006,186 @@ function getApiHeaders(additionalHeaders = {}) {
   };
 }
   
+
+// ============================================
+// PENDING REWARDS MANAGEMENT
+// ============================================
+
+// Add pending reward to Firebase
+async function addPendingReward(rewardType, amount, metadata = {}) {
+    try {
+        const response = await fetch(API_ENDPOINTS.addPendingReward, {
+            method: 'POST',
+            headers: getApiHeaders(),
+            body: JSON.stringify({
+                userId: currentUser.userId,
+                rewardType, // 'daily', 'levelUp', 'referral'
+                amount,
+                metadata
+            })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            console.log(`✅ Pending ${rewardType} reward saved:`, amount);
+            return data.rewardId;
+        } else {
+            console.error('❌ Failed to save pending reward:', data.error);
+            return null;
+        }
+    } catch (error) {
+        console.error('❌ Error saving pending reward:', error);
+        return null;
+    }
+}
+
+// Get all pending rewards for current user
+async function getPendingRewards() {
+    try {
+        const response = await fetch(API_ENDPOINTS.getPendingRewards, {
+            method: 'POST',
+            headers: getApiHeaders(),
+            body: JSON.stringify({
+                userId: currentUser.userId
+            })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            console.log('📋 Pending rewards loaded:', data.pendingRewards.length);
+            return data.pendingRewards || [];
+        } else {
+            console.error('❌ Failed to load pending rewards:', data.error);
+            return [];
+        }
+    } catch (error) {
+        console.error('❌ Error loading pending rewards:', error);
+        return [];
+    }
+}
+
+// Claim a pending reward
+async function claimPendingRewardById(rewardId) {
+    try {
+        const response = await fetch(API_ENDPOINTS.claimPendingReward, {
+            method: 'POST',
+            headers: getApiHeaders(),
+            body: JSON.stringify({
+                userId: currentUser.userId,
+                rewardId
+            })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            console.log('✅ Pending reward claimed:', data.amount);
+            
+            // Update local balance
+            currentUser.balance = (currentUser.balance || 0) + data.amount;
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            return true;
+        } else {
+            console.error('❌ Failed to claim pending reward:', data.error);
+            return false;
+        }
+    } catch (error) {
+        console.error('❌ Error claiming pending reward:', error);
+        return false;
+    }
+}
+
+// Check and restore pending rewards on app init
+async function checkAndShowPendingRewards() {
+    if (!currentUser || !currentUser.userId) return;
+    
+    console.log('🔍 Checking for pending rewards...');
+    const pendingRewards = await getPendingRewards();
+    
+    if (pendingRewards.length === 0) {
+        console.log('✓ No pending rewards');
+        return;
+    }
+    
+    console.log(`📦 Found ${pendingRewards.length} pending reward(s)`);
+    
+    // Process each pending reward and set appropriate flags
+    for (const reward of pendingRewards) {
+        console.log(`📦 Restoring pending ${reward.rewardType} reward:`, reward.amount);
+        
+        if (reward.rewardType === 'daily') {
+            // Set daily reward flag
+            dailyRewardAvailable = true;
+            console.log('✅ Daily reward flag restored');
+        } else if (reward.rewardType === 'levelUp') {
+            // Set level up flag
+            const metadata = reward.metadata || {};
+            const level = metadata.level || (currentUser.level + 1);
+            d.pendingLevelUp = level;
+            console.log(`✅ Level up flag restored: Level ${level}`);
+        } else if (reward.rewardType === 'referral') {
+            // Referral earnings already in currentUser.pendingReferralEarnings
+            console.log('✅ Referral earnings already loaded from backend');
+        }
+    }
+    
+    // Re-render to show claim buttons
+    render();
+}
+
+// Show pending daily reward modal
+function showPendingDailyReward(reward) {
+    console.log('🎁 Showing pending daily reward modal');
+    const modal = document.getElementById('dailyRewardModal');
+    if (!modal) return;
+    
+    // Store reward ID for claiming
+    modal.dataset.rewardId = reward.id;
+    
+    // Show modal
+    modal.style.display = 'flex';
+    dailyRewardAvailable = true;
+    
+    // Make sure claim button is visible and functional
+    render();
+}
+
+// Show pending level up reward modal
+function showPendingLevelUpReward(reward) {
+    console.log('🎁 Showing pending level up reward modal');
+    const modal = document.getElementById('levelUpModal');
+    if (!modal) return;
+    
+    // Store reward ID for claiming
+    modal.dataset.rewardId = reward.id;
+    
+    const metadata = reward.metadata || {};
+    const level = metadata.level || currentUser.level;
+    const amount = reward.amount;
+    
+    // Update modal content
+    modal.querySelector('.level-badge').textContent = level;
+    modal.querySelector('.reward-amount').textContent = amount;
+    
+    // Show modal
+    modal.style.display = 'flex';
+}
+
+// Show pending referral reward modal
+function showPendingReferralReward(reward) {
+    console.log('🎁 Showing pending referral reward modal');
+    const modal = document.getElementById('referralRewardModal');
+    if (!modal) return;
+    
+    // Store reward ID for claiming
+    modal.dataset.rewardId = reward.id;
+    
+    // Show modal
+    modal.style.display = 'flex';
+    
+    // Update UI to show pending earnings
+    render();
+}
 
 // ============================================
 // FCM (Firebase Cloud Messaging) Functions
@@ -3032,6 +3215,7 @@ window.__resetEmail = email;
         let dailyRewardAvailable = false;
         let hasPendingAirdrops = false;
         let activeMiningSession = null; // Store active session for ad boost check
+        let tempPendingLevelUp = null; // Temporary storage for pending level up from backend
         
         // Claiming locks to prevent double-claims
         let isClaimingLevel = false;
@@ -3168,8 +3352,8 @@ window.__resetEmail = email;
         try {
             console.log('🔄 Backend veriler çekiliyor (paralel)...');
             
-            // PARALEL API ÇAĞRILARI - 3'ü aynı anda!
-            const [userResponse, refResponse, activeRefResponse] = await Promise.all([
+            // PARALEL API ÇAĞRILARI - 4'ü aynı anda!
+            const [userResponse, refResponse, activeRefResponse, pendingRewardsResponse] = await Promise.all([
                 // 1. User Data
                 fetch(API_ENDPOINTS.getUserData, {
                     method: 'POST',
@@ -3188,6 +3372,17 @@ window.__resetEmail = email;
                 fetch(API_ENDPOINTS.getActiveReferrals + '?userId=' + userId)
                     .catch(e => {
                         console.log('⚠️ Active referrals yüklenemedi:', e);
+                        return null;
+                    }),
+                
+                // 4. Pending Rewards
+                fetch(API_ENDPOINTS.getPendingRewards, {
+                    method: 'POST',
+                    headers: getApiHeaders(),
+                    body: JSON.stringify({ userId: userId })
+                })
+                    .catch(e => {
+                        console.log('⚠️ Pending rewards yüklenemedi:', e);
                         return null;
                     })
             ]);
@@ -3226,7 +3421,34 @@ window.__resetEmail = email;
                 console.log('✅ Active referrals yüklendi');
             }
             
-            console.log('✅ TÜM BACKEND VERİLER YÜKLENDİ (paralel)!');
+            // Process Pending Rewards - RESTORE FLAGS BEFORE RENDER
+            if (pendingRewardsResponse && pendingRewardsResponse.ok) {
+                const pendingData = await pendingRewardsResponse.json();
+                const pendingRewards = pendingData.pendingRewards || [];
+                
+                if (pendingRewards.length > 0) {
+                    console.log(`📦 ${pendingRewards.length} pending reward bulundu`);
+                    
+                    // Restore flags from pending rewards
+                    for (const reward of pendingRewards) {
+                        if (reward.rewardType === 'daily') {
+                            dailyRewardAvailable = true;
+                            console.log('✅ Daily reward flag set');
+                        } else if (reward.rewardType === 'levelUp') {
+                            const metadata = reward.metadata || {};
+                            const level = metadata.level || (currentUser.level + 1);
+                            // Will be set in d object below
+                            tempPendingLevelUp = level;
+                            console.log(`✅ Level up flag set: Level ${level}`);
+                        }
+                        // Referral earnings already in currentUser.pendingReferralEarnings
+                    }
+                } else {
+                    console.log('✓ No pending rewards');
+                }
+            }
+            
+            console.log('✅ TÜM BACKEND VERİLER YÜKLENDİ (paralel + pending rewards)!');
             
         } catch (error) {
             console.error('❌ Backend veri çekme hatası:', error);
@@ -3255,7 +3477,7 @@ window.__resetEmail = email;
                 mining: false,
                 timeLeft: 0,
                 miningDays: currentUser.miningDays || 0,
-                pendingLevelUp: currentUser.pendingLevelUp || null,
+                pendingLevelUp: tempPendingLevelUp || currentUser.pendingLevelUp || null,
                 pendingReferralEarnings: currentUser.pendingReferralEarnings || 0
             };
             
@@ -3355,18 +3577,28 @@ window.__resetEmail = email;
             };
         }
         
-        function checkLevelUp() {
+        async function checkLevelUp() {
             if (d.level >= 20) return;
             
             const nextReq = levelRequirements[d.level + 1];
             if (d.miningDays >= nextReq && !d.pendingLevelUp) {
                 d.pendingLevelUp = d.level + 1;
                 save();
+                
+                // Save pending level up reward
+                const levelReward = levelRewards[d.level + 1];
+                if (levelReward && currentUser && currentUser.userId) {
+                    await addPendingReward('levelUp', levelReward.coins, {
+                        level: d.level + 1,
+                        miningDays: d.miningDays
+                    });
+                }
+                
                 render();
             }
         }
         
-        function claimLevelReward() {
+        async function claimLevelReward() {
             // Prevent double-claiming
             if (isClaimingLevel) return;
             if (!d.pendingLevelUp) return;
@@ -3379,6 +3611,10 @@ window.__resetEmail = email;
             isClaimingLevel = true;
             
             try {
+                // Get pending level reward from backend
+                const pendingRewards = await getPendingRewards();
+                const levelReward = pendingRewards.find(r => r.rewardType === 'levelUp');
+                
                 d.balance += reward.coins;
                 const claimedLevel = d.pendingLevelUp;
                 d.level = d.pendingLevelUp;
@@ -3420,6 +3656,11 @@ window.__resetEmail = email;
                         newRate: newBaseRate
                     })
                 }).catch(err => console.error('Backend update failed:', err));
+                
+                // If there was a pending reward, claim it
+                if (levelReward) {
+                    await claimPendingRewardById(levelReward.id);
+                }
                 
                 // Refresh currentUser from backend
                 fetch(API_ENDPOINTS.getUserData + '?userId=' + currentUser.userId)
@@ -3914,7 +4155,7 @@ async function startMiningOnBackend() {
             }
         }
         function completeMine() {
-            console.log('⛏️ Mining completed!');
+            console.log('⛏️ Mining completed - rewards already added by backend!');
             
             d.mining = false;
             d.timeLeft = 0;
@@ -3935,67 +4176,11 @@ async function startMiningOnBackend() {
                 }
             } catch(e) {}
 
-            // SEND NOTIFICATIONS - Both browser and backend push
-            sendMiningCompleteNotification(); // Browser notification (if app is open)
-            sendBackendPushNotification(); // Backend push (for when app is closed)
-
-            // Call backend to claim - backend will calculate everything correctly
-            const sessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
-            claimRewardFromBackend(sessionId);
+            // Reload user data to get updated balance from backend
+            initApp();
         }
-        async function claimRewardFromBackend(sessionId) {
-            if (!sessionId) {
-                console.error('No session ID found');
-                showToast('❌ No active mining session found', true);
-                return;
-            }
-            
-            try {
-                const response = await fetch(API_ENDPOINTS.claimReward, {
-                    method: 'POST',
-                    headers: getApiHeaders(),
-                    body: JSON.stringify({
-                        userId: currentUser.userId,
-                        sessionId: sessionId
-                    })
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    
-                    // USE BACKEND DATA ONLY - no frontend calculations!
-                    const actualReward = data.reward;
-                    const newBalance = data.newBalance;
-                    
-                    console.log('✅ Backend claim successful:', { actualReward, newBalance });
-                    
-                    // Update balance with backend value
-                    d.balance = newBalance;
-                    d.miningDays++;
-                    dailyRewardAvailable = true;
-                    
-                    // Sync currentUser
-                    currentUser.balance = newBalance;
-                    currentUser.miningDays = (currentUser.miningDays || 0) + 1;
-                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                    
-                    save();
-                    checkLevelUp();
-                    render();
-                    showToast('✓ Mining completed! +' + actualReward.toFixed(2) + ' Coins claimed');
-                } else {
-                    // Show backend error message
-                    const errorData = await response.json().catch(() => ({}));
-                    const errorMsg = errorData.error || 'Failed to claim reward';
-                    showToast('❌ ' + errorMsg, true);
-                    console.error('Claim error:', errorMsg);
-                }
-            } catch (error) {
-                console.error('Backend error:', error);
-                showToast('❌ Network error. Please try again.', true);
-            }
-        }
-        function claimDailyReward() {
+        
+        async function claimDailyReward() {
             // Prevent double-claiming
             if (isClaimingDaily) return;
             if (!dailyRewardAvailable) return;
@@ -4013,6 +4198,10 @@ async function startMiningOnBackend() {
 
             (async () => {
                 try {
+                    // Get pending daily reward from backend
+                    const pendingRewards = await getPendingRewards();
+                    const dailyReward = pendingRewards.find(r => r.rewardType === 'daily');
+
                     const res = await fetch(API_ENDPOINTS.claimDailyReward, {
                         method: 'POST',
                         headers: getApiHeaders(),
@@ -4026,6 +4215,12 @@ async function startMiningOnBackend() {
                     if (res.ok && data.reward) {
                         d.balance += data.reward;
                         dailyRewardAvailable = false;
+                        
+                        // If there was a pending reward, claim it
+                        if (dailyReward) {
+                            await claimPendingRewardById(dailyReward.id);
+                        }
+                        
                         save();
                         showToast('✓ Claimed +5 Coins daily reward!');
                         render();
@@ -5933,7 +6128,7 @@ async function startMiningOnBackend() {
             openPage('referrals');
         }
         
-        function claimReferralEarnings() {
+        async function claimReferralEarnings() {
             // Prevent double-claiming
             if (isClaimingReferral) return;
             
@@ -5946,29 +6141,39 @@ async function startMiningOnBackend() {
             isClaimingReferral = true;
             
             try {
+                // Get pending referral reward from backend
+                const pendingRewards = await getPendingRewards();
+                const referralRewards = pendingRewards.filter(r => r.rewardType === 'referral');
+                
                 // Call backend
-                fetch(API_ENDPOINTS.claimReferralEarnings, {
+                const res = await fetch(API_ENDPOINTS.claimReferralEarnings, {
                     method: 'POST',
                     headers: getApiHeaders(),
                     body: JSON.stringify({
                         userId: currentUser.userId
                     })
-                }).then(res => res.json())
-                  .then(data => {
-                      if (data.earnings) {
-                          d.balance += data.earnings;
-                          d.pendingReferralEarnings = 0;
-                          currentUser.pendingReferralEarnings = 0;
-                          localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                          save();
-                          showToast(`✓ Claimed ${data.earnings} Coins from referrals!`);
-                          render();
-                      }
-                  })
-                  .catch(err => {
-                      console.error('Referral claim failed:', err);
-                      showToast('❌ Failed to claim referral earnings');
-                  });
+                });
+                
+                const data = await res.json();
+                
+                if (data.earnings) {
+                    d.balance += data.earnings;
+                    d.pendingReferralEarnings = 0;
+                    currentUser.pendingReferralEarnings = 0;
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    
+                    // Claim all pending referral rewards
+                    for (const reward of referralRewards) {
+                        await claimPendingRewardById(reward.id);
+                    }
+                    
+                    save();
+                    showToast(`✓ Claimed ${data.earnings} Coins from referrals!`);
+                    render();
+                }
+            } catch (err) {
+                console.error('Referral claim failed:', err);
+                showToast('❌ Failed to claim referral earnings', true);
             } finally {
                 // Release lock after delay
                 setTimeout(() => {
