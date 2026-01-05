@@ -3222,7 +3222,11 @@ window.__resetEmail = email;
             // Clear leaderboard cache
             cachedLeaderboardData = null;
             
+            // Clear ALL auth data to prevent auto-login
             localStorage.removeItem('currentUser');
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('userId');
+            
             window.location.reload();
         }
         
