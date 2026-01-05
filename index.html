@@ -3502,12 +3502,11 @@ window.__resetEmail = email;
             // Check for pending airdrops
             hasPendingAirdrops = (currentUser.pendingAirdrops && currentUser.pendingAirdrops.length > 0) || false;
             
-            // Set dailyRewardAvailable - ONLY use pending rewards system
-            // Backend's dailyRewardAvailable may be stale, so ignore it
-            // If there's a pending daily reward → available = true
-            // If no pending daily reward → available = false
-            const hasPendingDaily = pendingRewardsData.some(r => r.rewardType === 'daily');
-            dailyRewardAvailable = hasPendingDaily;
+            // Set dailyRewardAvailable - prioritize pending rewards flag over backend flag
+            // If already set by pending rewards, keep it; otherwise use backend value
+            if (!dailyRewardAvailable) {
+                dailyRewardAvailable = currentUser.dailyRewardAvailable || false;
+            }
             
             // Load balance visibility preference
             const savedBalanceVisible = localStorage.getItem('balanceVisible_' + currentUser.email);
@@ -3658,8 +3657,9 @@ window.__resetEmail = email;
             // ⚡ PARALLEL backend calls (all at once!)
             (async () => {
                 try {
-                    // 🔥 BOTH REQUESTS IN PARALLEL - NO WAITING!
-                    const [updateResponse, userDataResponse] = await Promise.all([
+                    // 🔥 ALL REQUESTS IN PARALLEL - NO WAITING!
+                    const [pendingRewardsData, updateResponse, userDataResponse] = await Promise.all([
+                        getPendingRewards(),
                         fetch(API_ENDPOINTS.updateLevel, {
                             method: 'POST',
                             headers: getApiHeaders(),
@@ -3677,11 +3677,18 @@ window.__resetEmail = email;
                         })
                     ]);
                     
+                    const levelReward = pendingRewardsData.find(r => r.rewardType === 'levelUp');
+                    
                     if (!updateResponse.ok) {
                         throw new Error('Backend update failed');
                     }
                     
-                    // Backend automatically claims pending reward ✅
+                    // Claim pending reward in parallel (fire and forget)
+                    if (levelReward) {
+                        claimPendingRewardById(levelReward.id).catch(err => 
+                            console.error('Pending reward claim failed:', err)
+                        );
+                    }
                     
                     // Use backend's balance
                     if (userDataResponse.ok) {
@@ -3711,6 +3718,10 @@ window.__resetEmail = email;
                     }, 1000);
                 }
             })();
+        }
+                    isClaimingLevel = false;
+                }, 1000);
+            }
         }
 
         function fmt(s) {
@@ -4240,15 +4251,19 @@ async function startMiningOnBackend() {
             // ⚡ PARALLEL backend calls (all at once!)
             (async () => {
                 try {
-                    // 🔥 ALL REQUESTS IN PARALLEL - NO WAITING!
-                    const claimResponse = await fetch(API_ENDPOINTS.claimDailyReward, {
-                        method: 'POST',
-                        headers: getApiHeaders(),
-                        body: JSON.stringify({
-                            userId: currentUser.userId
+                    // 🔥 ALL 3 REQUESTS IN PARALLEL - NO WAITING!
+                    const [pendingRewardsData, claimResponse] = await Promise.all([
+                        getPendingRewards(),
+                        fetch(API_ENDPOINTS.claimDailyReward, {
+                            method: 'POST',
+                            headers: getApiHeaders(),
+                            body: JSON.stringify({
+                                userId: currentUser.userId
+                            })
                         })
-                    });
+                    ]);
 
+                    const dailyReward = pendingRewardsData.find(r => r.rewardType === 'daily');
                     const data = await claimResponse.json().catch(() => ({}));
 
                     if (claimResponse.ok && data.reward) {
@@ -4256,7 +4271,12 @@ async function startMiningOnBackend() {
                         d.balance = data.newBalance || d.balance;
                         currentUser.balance = d.balance;
                         
-                        // Backend automatically claims pending reward ✅
+                        // Claim pending reward in parallel
+                        if (dailyReward) {
+                            claimPendingRewardById(dailyReward.id).catch(err => 
+                                console.error('Pending reward claim failed:', err)
+                            );
+                        }
                         
                         save();
                         localStorage.setItem('currentUser', JSON.stringify(currentUser));
@@ -4281,6 +4301,21 @@ async function startMiningOnBackend() {
                 }
             })();
         }
+                    showToast('❌ Failed to claim daily reward', true);
+                } finally {
+                    // Release lock ONLY after request finishes
+                    isClaimingDaily = false;
+
+                    // Restore button state if still visible
+                    const btn2 = document.querySelector('.reward-claim-btn');
+                    if (btn2) {
+                        btn2.disabled = !dailyRewardAvailable;
+                        btn2.style.opacity = dailyRewardAvailable ? '1' : '0.6';
+                        btn2.style.cursor = dailyRewardAvailable ? 'pointer' : 'not-allowed';
+                    }
+                }
+            })();
+        }
 
         function claimBonus() {
             if (d.streak >= 7) {
@@ -4296,20 +4331,12 @@ async function startMiningOnBackend() {
             balanceVisible = !balanceVisible;
             localStorage.setItem('balanceVisible_' + currentUser.email, balanceVisible);
             
-            // ⚡ INSTANT UPDATE - Update balance text
+            // ⚡ INSTANT UPDATE - Only update balance display, not entire page
             const balanceElement = document.querySelector('.balance-value');
             if (balanceElement) {
                 balanceElement.textContent = balanceVisible 
                     ? d.balance.toFixed(2) 
-                    : '••••••'; // Always 6 dots (matches toFixed(2) length better)
-            }
-            
-            // Update eye icon - CORRECT CLASS NAME
-            const eyeBtn = document.querySelector('.balance-toggle');
-            if (eyeBtn) {
-                eyeBtn.innerHTML = balanceVisible 
-                    ? '<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'
-                    : '<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+                    : '••••';
             }
         }
         
@@ -6210,15 +6237,19 @@ async function startMiningOnBackend() {
             // ⚡ PARALLEL backend calls (all at once!)
             (async () => {
                 try {
-                    // 🔥 SINGLE REQUEST - Backend handles pending rewards!
-                    const claimResponse = await fetch(API_ENDPOINTS.claimReferralEarnings, {
-                        method: 'POST',
-                        headers: getApiHeaders(),
-                        body: JSON.stringify({
-                            userId: currentUser.userId
+                    // 🔥 ALL REQUESTS IN PARALLEL - NO WAITING!
+                    const [pendingRewardsData, claimResponse] = await Promise.all([
+                        getPendingRewards(),
+                        fetch(API_ENDPOINTS.claimReferralEarnings, {
+                            method: 'POST',
+                            headers: getApiHeaders(),
+                            body: JSON.stringify({
+                                userId: currentUser.userId
+                            })
                         })
-                    });
+                    ]);
                     
+                    const referralRewards = pendingRewardsData.filter(r => r.rewardType === 'referral');
                     const data = await claimResponse.json();
                     
                     if (data.earnings) {
@@ -6226,7 +6257,16 @@ async function startMiningOnBackend() {
                         d.balance = data.newBalance || d.balance;
                         currentUser.balance = d.balance;
                         
-                        // Backend automatically claims all pending referral rewards ✅
+                        // Claim all pending referral rewards in parallel (fire and forget)
+                        if (referralRewards.length > 0) {
+                            Promise.all(
+                                referralRewards.map(reward => 
+                                    claimPendingRewardById(reward.id).catch(err => 
+                                        console.error('Pending reward claim failed:', err)
+                                    )
+                                )
+                            );
+                        }
                         
                         save();
                         localStorage.setItem('currentUser', JSON.stringify(currentUser));
