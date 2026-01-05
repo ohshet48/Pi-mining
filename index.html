@@ -2085,6 +2085,9 @@ async function claimPendingRewardById(rewardId) {
             currentUser.balance = (currentUser.balance || 0) + data.amount;
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             
+            // Reload app to refresh pending rewards and hide claimed buttons
+            await initApp();
+            
             return true;
         } else {
             console.error('❌ Failed to claim pending reward:', data.error);
@@ -3692,19 +3695,14 @@ window.__resetEmail = email;
                     
                     // Backend automatically claims pending reward ✅
                     
-                    // Use backend's balance
-                    if (userDataResponse.ok) {
-                        const userData = await userDataResponse.json();
-                        if (userData.user) {
-                            d.balance = userData.user.balance;
-                            currentUser = userData.user;
-                            localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                        }
-                    }
+                    // Reload app to refresh pending rewards
+                    await initApp();
                     
                     if (d.level < 20) {
                         checkLevelUp();
                     }
+                    
+                    render();
                     
                 } catch (err) {
                     console.error('Level reward backend error:', err);
@@ -6243,6 +6241,10 @@ async function startMiningOnBackend() {
                         
                         save();
                         localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                        
+                        // Reload app to refresh pending rewards
+                        await initApp();
+                        render();
                     } else {
                         // Rollback on error
                         d.balance = oldBalance;
