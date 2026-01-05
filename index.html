@@ -3461,6 +3461,10 @@ window.__resetEmail = email;
                 });
             } else {
                 console.log('✓ No active mining session');
+                // CRITICAL: Clean up stale localStorage data
+                localStorage.removeItem('miningEndTime_' + currentUser.email);
+                localStorage.removeItem('miningStartTime_' + currentUser.email);
+                localStorage.removeItem('currentSessionId_' + currentUser.email);
             }
             
             console.log('✅ User data yüklendi');
@@ -3793,7 +3797,7 @@ window.__resetEmail = email;
                 return;
             }
             
-            const currentRate = d.rate;
+            const currentRate = d.rate || 0.25;
             const adCooldownKey = 'adCooldown_' + currentUser.email;
             const adCooldownEnd = parseInt(localStorage.getItem(adCooldownKey) || '0');
             const now = Date.now();
@@ -3918,7 +3922,7 @@ window.__resetEmail = email;
                                 <p class="earning-text">Earning: <span class="earning-amount">${(() => {
                                     const miningDuration = localStorage.getItem('miningDuration_' + currentUser.email) || 86400000; // Default 24 hours
                                     const hours = parseInt(miningDuration) / (1000 * 60 * 60);
-                                    return (d.rate * hours).toFixed(2);
+                                    return ((d.rate || 0.25) * hours).toFixed(2);
                                 })()} <span style="font-size: 14px;">ARCASTRA</span></span></p>
                             </div>
                         </div>
@@ -3936,7 +3940,7 @@ window.__resetEmail = email;
                             </div>
                             <span class="stat-label">Mining Rate</span>
                         </div>
-                        <div class="stat-value">${d.rate.toFixed(2)}</div>
+                        <div class="stat-value">${(d.rate || 0.25).toFixed(2)}</div>
                         <div class="stat-unit">ARCASTRA/hour</div>
                     </div>
 
