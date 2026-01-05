@@ -4081,33 +4081,11 @@ window.__resetEmail = email;
             const now = Date.now();
             const miningDuration = 24 * 60 * 60 * 1000; // 24 hours in ms
             const end = now + miningDuration;
-            localStorage.setItem('miningEndTime_' + currentUser.email, end);
-            localStorage.setItem('miningDuration_' + currentUser.email, miningDuration); // Store duration
             
-            // Reset ad boost for new session
-            const users = JSON.parse(localStorage.getItem('users') || '{}');
-            if (users[currentUser.email]) {
-                // Remove any ad boost from previous session
-                const baseRate = 0.25; // Starting rate
-                const levelBonus = (users[currentUser.email].level - 1) * 0.05; // Level rewards
-                users[currentUser.email].rate = baseRate + levelBonus;
-                                users[currentUser.email].adBoostAmount = 0; // Clear ad boost for new session
-localStorage.setItem('users', JSON.stringify(users));
-                currentUser = users[currentUser.email];
-            }
-            
-            // Clear ad cooldown
-            localStorage.removeItem('adCooldown_' + currentUser.email);
-            
-            // Clear referrals cache - mining status changed!
-            cachedReferralsData = null;
-            console.log('🔄 Referrals cache cleared - mining started');
-            
-            // Call backend to start mining
-        await startMiningOnBackend();
+            // OPTIMISTIC UI: Update UI IMMEDIATELY (0ms delay)
             d.mining = true;
             d.timeLeft = 24 * 60 * 60;
-
+            
             const today = new Date().toDateString();
             if (d.lastDate) {
                 const last = new Date(d.lastDate);
@@ -4122,9 +4100,43 @@ localStorage.setItem('users', JSON.stringify(users));
                 d.streak = 1;
             }
             d.lastDate = today;
+            
+            localStorage.setItem('miningEndTime_' + currentUser.email, end);
+            localStorage.setItem('miningDuration_' + currentUser.email, miningDuration);
+            localStorage.setItem('miningStartTime_' + currentUser.email, now);
+            
+            // Reset ad boost for new session
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            if (users[currentUser.email]) {
+                const baseRate = 0.25;
+                const levelBonus = (users[currentUser.email].level - 1) * 0.05;
+                users[currentUser.email].rate = baseRate + levelBonus;
+                users[currentUser.email].adBoostAmount = 0;
+                localStorage.setItem('users', JSON.stringify(users));
+                currentUser = users[currentUser.email];
+            }
+            
+            // Clear ad cooldown
+            localStorage.removeItem('adCooldown_' + currentUser.email);
+            
+            // Clear referrals cache
+            cachedReferralsData = null;
+            console.log('🔄 Referrals cache cleared - mining started');
+            
             save();
-            initApp();
-            render();
+            render(); // ⚡ INSTANT UPDATE!
+            
+            // Backend call in background (user won't wait for this)
+            startMiningOnBackend().catch(err => {
+                console.error('❌ Backend mining start failed:', err);
+                // Rollback if backend fails
+                d.mining = false;
+                d.timeLeft = 0;
+                localStorage.removeItem('miningEndTime_' + currentUser.email);
+                localStorage.removeItem('miningStartTime_' + currentUser.email);
+                render();
+                showToast('❌ Failed to start mining. Please try again.', true);
+            });
         }
 async function startMiningOnBackend() {
             try {
