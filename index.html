@@ -3695,7 +3695,7 @@ window.__resetEmail = email;
             
             // Calculate new rate
             const baseRate = 0.25;
-            const levelBonus = (claimedLevel - 1) * 0.05;
+            const levelBonus = ((claimedLevel || 1) - 1) * 0.05;
             const newBaseRate = baseRate + levelBonus;
             
             // Update user's base rate
