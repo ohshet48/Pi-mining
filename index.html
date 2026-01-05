@@ -2212,6 +2212,21 @@ async function requestNotificationPermission() {
 
     console.log('✅ [FCM] Browser supports notifications and service workers');
 
+    // Check if service worker file exists before registering
+    let swExists = false;
+    try {
+      const swCheck = await fetch('/firebase-messaging-sw.js', { method: 'HEAD' });
+      swExists = swCheck.ok;
+    } catch (e) {
+      console.warn('⚠️ [FCM] Service Worker file not found - notifications disabled');
+      return null;
+    }
+
+    if (!swExists) {
+      console.warn('⚠️ [FCM] Service Worker file not available - notifications disabled');
+      return null;
+    }
+
     // Register service worker FIRST
     let registration;
     try {
@@ -2224,7 +2239,8 @@ async function requestNotificationPermission() {
       await navigator.serviceWorker.ready;
       console.log('✅ [FCM] Service Worker is ready');
     } catch (swError) {
-      console.error('❌ [FCM] Service Worker registration failed:', swError);
+      console.warn('⚠️ [FCM] Service Worker registration failed (this is OK - notifications disabled):', swError.message);
+      // Return null to disable FCM without breaking the app
       return null;
     }
 
