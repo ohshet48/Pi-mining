@@ -3421,16 +3421,17 @@ window.__resetEmail = email;
                 console.log('✅ Active referrals yüklendi');
             }
             
-            // Process Pending Rewards - RESTORE FLAGS BEFORE RENDER
+            // Process Pending Rewards - RESTORE FLAGS BEFORE d OBJECT CREATION
+            let pendingRewardsData = [];
             if (pendingRewardsResponse && pendingRewardsResponse.ok) {
                 const pendingData = await pendingRewardsResponse.json();
-                const pendingRewards = pendingData.pendingRewards || [];
+                pendingRewardsData = pendingData.pendingRewards || [];
                 
-                if (pendingRewards.length > 0) {
-                    console.log(`📦 ${pendingRewards.length} pending reward bulundu`);
+                if (pendingRewardsData.length > 0) {
+                    console.log(`📦 ${pendingRewardsData.length} pending reward bulundu`);
                     
                     // Restore flags from pending rewards
-                    for (const reward of pendingRewards) {
+                    for (const reward of pendingRewardsData) {
                         if (reward.rewardType === 'daily') {
                             dailyRewardAvailable = true;
                             console.log('✅ Daily reward flag set');
@@ -3501,7 +3502,11 @@ window.__resetEmail = email;
             // Check for pending airdrops
             hasPendingAirdrops = (currentUser.pendingAirdrops && currentUser.pendingAirdrops.length > 0) || false;
             
-            dailyRewardAvailable = currentUser.dailyRewardAvailable || false;
+            // Set dailyRewardAvailable - prioritize pending rewards flag over backend flag
+            // If already set by pending rewards, keep it; otherwise use backend value
+            if (!dailyRewardAvailable) {
+                dailyRewardAvailable = currentUser.dailyRewardAvailable || false;
+            }
             
             // Load balance visibility preference
             const savedBalanceVisible = localStorage.getItem('balanceVisible_' + currentUser.email);
