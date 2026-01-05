@@ -4277,7 +4277,14 @@ async function startMiningOnBackend() {
         function toggleBalance() {
             balanceVisible = !balanceVisible;
             localStorage.setItem('balanceVisible_' + currentUser.email, balanceVisible);
-            render();
+            
+            // ⚡ INSTANT UPDATE - Only update balance display, not entire page
+            const balanceElement = document.querySelector('.balance-value');
+            if (balanceElement) {
+                balanceElement.textContent = balanceVisible 
+                    ? d.balance.toFixed(2) 
+                    : '••••';
+            }
         }
         
         async function watchAdBoost() {
