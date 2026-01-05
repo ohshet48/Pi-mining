@@ -1921,7 +1921,7 @@ firebase.initializeApp(firebaseConfig);
 console.log('Firebase initialized:', firebase.apps.length);
 const messaging = firebase.messaging();
 // Auto-login when DOM is ready  
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     // Auto-reload when internet connection restored
     window.addEventListener('online', () => {
         console.log('Internet connection restored - reloading...');
