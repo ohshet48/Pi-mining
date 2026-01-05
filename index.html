@@ -1938,13 +1938,54 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('userId:', userId);
     console.log('storedUser:', storedUser ? 'VAR' : 'YOK');
     
-    if (isLoggedIn === 'true' && userId && storedUser) {
-        currentUser = JSON.parse(storedUser);
-        if (!currentUser.username && currentUser.email) {
-            currentUser.username = currentUser.email.split('@')[0];
+    if (isLoggedIn === 'true' && userId) {
+        // Try to load from localStorage first
+        if (storedUser) {
+            currentUser = JSON.parse(storedUser);
+            if (!currentUser.username && currentUser.email) {
+                currentUser.username = currentUser.email.split('@')[0];
+            }
+            
+            console.log('currentUser loaded from localStorage:', currentUser);
+        } else {
+            // If not in localStorage, fetch from backend
+            console.log('storedUser not found, fetching from backend...');
+            try {
+                const response = await fetch(API_ENDPOINTS.getUserData, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': 'arcastra2024secure'
+                    },
+                    body: JSON.stringify({ userId: userId })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.user) {
+                        currentUser = data.user;
+                        currentUser.userId = userId;
+                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                        console.log('✅ User data fetched from backend:', currentUser);
+                    } else {
+                        console.error('❌ No user data in response');
+                        localStorage.removeItem('isLoggedIn');
+                        localStorage.removeItem('userId');
+                        return;
+                    }
+                } else {
+                    console.error('❌ Failed to fetch user data:', response.status);
+                    localStorage.removeItem('isLoggedIn');
+                    localStorage.removeItem('userId');
+                    return;
+                }
+            } catch (error) {
+                console.error('❌ Error fetching user data:', error);
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('userId');
+                return;
+            }
         }
-        
-        console.log('currentUser loaded:', currentUser);
         
         setTimeout(() => {
             console.log('Showing app...');
