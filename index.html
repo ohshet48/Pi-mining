@@ -3153,22 +3153,20 @@ window.__resetEmail = email;
         const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
         const user = userCredential.user;
 
-        const response = await fetch(API_ENDPOINTS.registerUser, {
-            method: 'POST',
-            headers: getApiHeaders(),
-            body: JSON.stringify({
-                userId: user.uid,
-                email: user.email,
-                username: username,
-                fullName: fullName,
-                birthDate: birthDate,
-                country: country,
-				referralCode: document.getElementById('signupReferral').value || null
-            })
+        // Use Firebase Functions onCall (CORS-free!)
+        const registerUserFunc = firebase.functions().httpsCallable('registerUser');
+        const result = await registerUserFunc({
+            userId: user.uid,
+            email: user.email,
+            username: username,
+            fullName: fullName,
+            birthDate: birthDate,
+            country: country,
+            referralCode: document.getElementById('signupReferral').value || null
         });
 
-        const data = await response.json();
-        if (response.ok) {
+        const data = result.data;
+        if (data.user) {
             localStorage.setItem('userId', user.uid);
             localStorage.setItem('userEmail', user.email);
             localStorage.setItem('isLoggedIn', 'true');
@@ -3185,9 +3183,9 @@ window.__resetEmail = email;
             }, 1500);
         } else {
             // Backend failed - delete Firebase Auth user to prevent orphan accounts
-            console.error('Backend registration failed:', data.error);
+            console.error('Backend registration failed:', data.message);
             await user.delete();
-            showError('Registration failed: ' + (data.error || 'Unknown error'));
+            showError('Registration failed: ' + (data.message || 'Unknown error'));
         }
     } catch (error) {
         console.error('Signup error:', error);
