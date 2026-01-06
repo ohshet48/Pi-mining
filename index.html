@@ -3093,6 +3093,10 @@ window.__resetEmail = email;
     const email = document.getElementById('signupEmail').value;
     const password = document.getElementById('signupPassword').value;
     const confirmPassword = document.getElementById('signupPasswordConfirm').value;
+    const fullName = document.getElementById('signupFullName').value.trim();
+    const birthDate = document.getElementById('signupBirthDate').value.trim();
+    const country = document.getElementById('signupCountry').value.trim();
+    
 // Username validation
     const username = document.getElementById('signupUsername').value || email.split('@')[0];
     if (!username || username.length < 3 || username.length > 12) {
@@ -3104,8 +3108,34 @@ window.__resetEmail = email;
         showError('Username can only contain letters and numbers');
         return;
     }
-    if (!email || !password || !confirmPassword) {
+    if (!email || !password || !confirmPassword || !fullName || !birthDate || !country) {
         showError('Please fill in all fields');
+        return;
+    }
+    
+    // Validate full name
+    const fullNameRegex = /^[a-zA-Z\s]+$/;
+    if (!fullNameRegex.test(fullName)) {
+        showError('Full Name: Only English letters allowed');
+        return;
+    }
+    if (fullName.length < 3) {
+        showError('Full Name must be at least 3 characters');
+        return;
+    }
+    
+    // Validate birth date
+    const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+    const match = birthDate.match(dateRegex);
+    if (!match) {
+        showError('Birth Date format: DD/MM/YYYY');
+        return;
+    }
+    const day = parseInt(match[1]);
+    const month = parseInt(match[2]);
+    const year = parseInt(match[3]);
+    if (year < 1923 || year > 2007 || month < 1 || month > 12 || day < 1 || day > 31) {
+        showError('Invalid birth date');
         return;
     }
 
@@ -3130,6 +3160,9 @@ window.__resetEmail = email;
                 userId: user.uid,
                 email: user.email,
                 username: username,
+                fullName: fullName,
+                birthDate: birthDate,
+                country: country,
 				referralCode: document.getElementById('signupReferral').value || null
             })
         });
