@@ -3500,6 +3500,14 @@ window.__resetEmail = email;
                         console.log(`✅ Level up flag set: Level ${level}`);
                     }
                 }
+                
+                // Calculate total pending referral earnings from pendingRewards
+                const referralRewards = pendingRewardsData.filter(r => r.rewardType === 'referral');
+                const totalReferralEarnings = referralRewards.reduce((sum, r) => sum + (r.amount || 0), 0);
+                if (totalReferralEarnings > 0) {
+                    currentUser.pendingReferralEarnings = totalReferralEarnings;
+                    console.log(`✅ Referral earnings calculated: ${totalReferralEarnings}`);
+                }
             } else {
                 console.log('✓ No pending rewards');
             }
