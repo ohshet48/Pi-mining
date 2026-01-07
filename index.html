@@ -3092,6 +3092,10 @@ window.__resetEmail = email;
     const confirmPassword = document.getElementById('signupPasswordConfirm').value;
 // Username validation
     const username = document.getElementById('signupUsername').value || email.split('@')[0];
+    const fullName = document.getElementById('signupFullName').value;
+    const country = document.getElementById('signupCountry').value;
+    const birthDate = document.getElementById('signupBirthDate').value;
+    
     if (!username || username.length < 3 || username.length > 12) {
         showError('Username must be 3-12 characters');
         return;
@@ -3127,6 +3131,9 @@ window.__resetEmail = email;
                 userId: user.uid,
                 email: user.email,
                 username: username,
+                fullName: fullName,
+                country: country,
+                birthDate: birthDate,
 				referralCode: document.getElementById('signupReferral').value || null
             })
         });
@@ -6025,7 +6032,7 @@ async function startMiningOnBackend() {
                                 }
                                 <div style="flex: 1; min-width: 0;">
                                     <div style="color: ${isCurrentUser ? '#fbbf24' : (rank <= 3 ? '#00ffff' : 'white')}; font-weight: 700; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                        ${getCountryFlag(user.country || 'Turkey')} ${user.username}${isCurrentUser ? ' (You)' : ''}
+                                        ${user.country ? getCountryFlag(user.country) : '🌍'} ${user.username}
                                     </div>
                                 </div>
                             </div>
