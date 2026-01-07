@@ -3430,8 +3430,13 @@ window.__resetEmail = email;
                 body: JSON.stringify({ userId: userId })
             });
             
+            console.log('📡 Response status:', response.status);
+            console.log('📡 Response ok:', response.ok);
+            
             if (!response.ok) {
-                throw new Error('Failed to fetch user data');
+                const errorText = await response.text();
+                console.error('❌ Response not ok:', response.status, errorText);
+                throw new Error(`Failed to fetch user data: ${response.status} - ${errorText}`);
             }
             
             const allData = await response.json();
@@ -3496,6 +3501,11 @@ window.__resetEmail = email;
             
         } catch (error) {
             console.error('❌ Backend veri çekme hatası:', error);
+            console.error('Error message:', error.message);
+            if (error.response) {
+                const errorData = await error.response.json().catch(() => ({}));
+                console.error('Backend error response:', errorData);
+            }
         }
     }
     
