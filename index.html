@@ -3238,6 +3238,9 @@ window.__resetEmail = email;
         function confirmLogout() {
             // Clear referrals cache
             cachedReferralsData = null;
+            cachedReferralsTimestamp = 0;
+            localStorage.removeItem('referralsCache_' + currentUser.email);
+            localStorage.removeItem('referralsCacheTime_' + currentUser.email);
             
             // Clear leaderboard cache
             cachedLeaderboardData = null;
@@ -4239,6 +4242,9 @@ window.__resetEmail = email;
             
             // Clear referrals cache
             cachedReferralsData = null;
+            cachedReferralsTimestamp = 0;
+            localStorage.removeItem('referralsCache_' + currentUser.email);
+            localStorage.removeItem('referralsCacheTime_' + currentUser.email);
             console.log('🔄 Referrals cache cleared - mining started');
             
             save();
@@ -4298,6 +4304,9 @@ async function startMiningOnBackend() {
             
             // Clear referrals cache - mining status changed!
             cachedReferralsData = null;
+            cachedReferralsTimestamp = 0;
+            localStorage.removeItem('referralsCache_' + currentUser.email);
+            localStorage.removeItem('referralsCacheTime_' + currentUser.email);
             console.log('🔄 Referrals cache cleared - mining completed');
             
             // Clear session ad boost now that mining ended
@@ -6087,8 +6096,19 @@ async function startMiningOnBackend() {
             return html;
         }
         
-        // Cache for referrals - only fetch once per app session
+        // Cache for referrals - 1 hour validity with localStorage persistence
         let cachedReferralsData = null;
+        let cachedReferralsTimestamp = 0;
+        
+        // Load cache from localStorage
+        try {
+            const savedCache = localStorage.getItem('referralsCache_' + (currentUser?.email || ''));
+            const savedTimestamp = parseInt(localStorage.getItem('referralsCacheTime_' + (currentUser?.email || '')) || '0');
+            if (savedCache && savedTimestamp) {
+                cachedReferralsData = JSON.parse(savedCache);
+                cachedReferralsTimestamp = savedTimestamp;
+            }
+        } catch (e) {}
         
         async function getReferralsPageContent() {
             // Get current user from backend
@@ -6103,10 +6123,15 @@ async function startMiningOnBackend() {
             let activeRefs = [];
             let inactiveRefs = [];
             
+            // Check if cache is valid (less than 1 hour old)
+            const cacheAge = now - cachedReferralsTimestamp;
+            const oneHour = 60 * 60 * 1000; // 1 hour in milliseconds
+            const isCacheValid = cachedReferralsData && cacheAge < oneHour;
+            
             try {
-                // Use cache if available
-                if (cachedReferralsData) {
-                    console.log('✅ Using cached referrals data');
+                // Use cache if available and valid
+                if (isCacheValid) {
+                    console.log('✅ Using cached referrals data (age: ' + Math.round(cacheAge / 1000 / 60) + ' minutes)');
                     activeRefs = cachedReferralsData.activeRefs;
                     inactiveRefs = cachedReferralsData.inactiveRefs;
                 } else {
@@ -6131,9 +6156,14 @@ async function startMiningOnBackend() {
                         
                         console.log('Active:', activeRefs.length, 'Inactive:', inactiveRefs.length);
                         
-                        // Cache the results
+                        // Cache the results in memory and localStorage
                         cachedReferralsData = { activeRefs, inactiveRefs };
-                        console.log('✅ Referrals cached:', { active: activeRefs.length, inactive: inactiveRefs.length });
+                        cachedReferralsTimestamp = now;
+                        
+                        localStorage.setItem('referralsCache_' + currentEmail, JSON.stringify(cachedReferralsData));
+                        localStorage.setItem('referralsCacheTime_' + currentEmail, now.toString());
+                        
+                        console.log('✅ Referrals cached for 1 hour:', { active: activeRefs.length, inactive: inactiveRefs.length });
                     } else {
                         console.error('Failed to get referrals:', refData);
                     }
