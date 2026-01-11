@@ -3599,6 +3599,13 @@ window.__resetEmail = email;
             const hasPendingDaily = pendingRewardsData.some(r => r.rewardType === 'daily');
             dailyRewardAvailable = hasPendingDaily;
             
+            console.log('🎁 Pending rewards check:', {
+                totalPendingRewards: pendingRewardsData.length,
+                hasPendingDaily: hasPendingDaily,
+                dailyRewardAvailable: dailyRewardAvailable,
+                allRewards: pendingRewardsData.map(r => ({ type: r.rewardType, amount: r.amount }))
+            });
+            
             // Load balance visibility preference
             const savedBalanceVisible = localStorage.getItem('balanceVisible_' + currentUser.email);
             if (savedBalanceVisible !== null) {
@@ -4303,8 +4310,11 @@ async function startMiningOnBackend() {
                 }
             } catch(e) {}
 
-            // Reload user data to get updated balance from backend
-            initApp();
+            // Reload user data to get updated balance from backend and check for daily reward
+            initApp().then(() => {
+                // After initApp completes, render to show the claim button if daily reward is available
+                render();
+            });
         }
         
         async function claimDailyReward() {
@@ -6084,6 +6094,9 @@ async function startMiningOnBackend() {
             const users = JSON.parse(localStorage.getItem('users') || '{}');
             const currentEmail = localStorage.getItem('currentUser');
             
+            console.log('📋 getReferralsPageContent - Loading referrals...');
+            console.log('Current user:', currentUser.userId);
+            
             // Get referrals from backend OR cache
             const now = Date.now();
             let activeRefs = [];
@@ -6099,19 +6112,29 @@ async function startMiningOnBackend() {
                     console.log('🔄 Fetching referrals from backend...');
                     
                     // Get all referrals with isActive field
-                    const refResponse = await fetch(API_ENDPOINTS.getReferrals + '?userId=' + currentUser.userId);
+                    const refResponse = await fetch(API_ENDPOINTS.getReferrals + '?userId=' + currentUser.userId, {
+                        headers: getApiHeaders()
+                    });
                     const refData = await refResponse.json();
+                    
+                    console.log('Backend response:', refResponse.ok, refData);
                     
                     if (refResponse.ok && refData.referrals) {
                         const allReferrals = refData.referrals;
+                        
+                        console.log('Total referrals:', allReferrals.length);
                         
                         // Backend now provides isActive field for each referral
                         activeRefs = allReferrals.filter(r => r.isActive === true);
                         inactiveRefs = allReferrals.filter(r => r.isActive === false);
                         
+                        console.log('Active:', activeRefs.length, 'Inactive:', inactiveRefs.length);
+                        
                         // Cache the results
                         cachedReferralsData = { activeRefs, inactiveRefs };
                         console.log('✅ Referrals cached:', { active: activeRefs.length, inactive: inactiveRefs.length });
+                    } else {
+                        console.error('Failed to get referrals:', refData);
                     }
                 }
             } catch (err) {
