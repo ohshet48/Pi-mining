@@ -3079,8 +3079,8 @@ window.__resetEmail = email;
         // Scroll to top immediately
         window.scrollTo({ top: 0, behavior: 'smooth' });
         
-        // Show loading message immediately
-        showToast('⏳ Waiting for server response...');
+        // Show loading message indefinitely (duration = 999999)
+        showToast('⏳ Waiting for server response...', false, 999999);
 	
     const email = document.getElementById('signupEmail').value;
     const password = document.getElementById('signupPassword').value;
