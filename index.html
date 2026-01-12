@@ -2410,6 +2410,7 @@ async function requestNotificationPermission() {
   }
 }
 
+/* DISABLED - NOT USING NOTIFICATIONS
 // Handle foreground messages
 messaging.onMessage((payload) => {
   console.log('Foreground message:', payload);
@@ -2419,6 +2420,7 @@ messaging.onMessage((payload) => {
     payload.data
   );
 });
+*/
 
 // Show custom notification
 function showCustomNotification(title, body, data) {
@@ -8250,7 +8252,4 @@ try {
   }
 
   document.addEventListener('DOMContentLoaded', bindResetHandlers);
-  bindResetHandlers();
-  }
-})();
-</script>
+  
