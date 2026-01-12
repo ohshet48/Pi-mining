@@ -6840,7 +6840,7 @@ async function startMiningOnBackend() {
                     headers: getApiHeaders(),
                     body: JSON.stringify({
                         userId: currentUser.userId,
-                        type: 'task',
+                        rewardType: 'task',
                         amount: reward,
                         metadata: { taskId: taskId }
                     })
