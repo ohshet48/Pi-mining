@@ -3745,9 +3745,14 @@ window.__resetEmail = email;
         // Check for new announcements and unclaimed airdrops
         async function checkNotifications() {
             try {
-                // Check announcements
-                const announcementsSnap = await db.collection('announcements').limit(1).get();
-                const hasAnnouncements = !announcementsSnap.empty;
+                const lastViewedAnnouncements = localStorage.getItem('lastViewedAnnouncements_' + currentUser.userId) || '0';
+                
+                // Check announcements (newer than last viewed)
+                const announcementsSnap = await db.collection('announcements')
+                    .where('createdAt', '>', new Date(parseInt(lastViewedAnnouncements)))
+                    .limit(1)
+                    .get();
+                const hasNewAnnouncements = !announcementsSnap.empty;
                 
                 // Check airdrops
                 const airdropsSnap = await db.collection('airdrops')
@@ -3763,7 +3768,7 @@ window.__resetEmail = email;
                 const menuButton = document.getElementById('menuButton');
                 
                 if (announcementsMenuItem) {
-                    if (hasAnnouncements) {
+                    if (hasNewAnnouncements) {
                         announcementsMenuItem.classList.add('menu-item-highlight');
                     } else {
                         announcementsMenuItem.classList.remove('menu-item-highlight');
@@ -3780,7 +3785,7 @@ window.__resetEmail = email;
                 
                 // Update hamburger button
                 if (menuButton) {
-                    if (hasAnnouncements || hasAirdrops) {
+                    if (hasNewAnnouncements || hasAirdrops) {
                         menuButton.style.border = '2px solid #10b981';
                         menuButton.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.5)';
                     } else {
@@ -3792,6 +3797,7 @@ window.__resetEmail = email;
                 console.error('Error checking notifications:', error);
             }
         }
+
         
         function calculateActiveRefs() {
             // Backend'den gelen active referrals count'u kullan
@@ -5342,19 +5348,15 @@ async function startMiningOnBackend() {
                     pageTitle.textContent = 'Announcements';
                     pageContent.innerHTML = '<div style="text-align: center; padding: 60px 20px; color: #00d4ff;">Loading...</div>';
                     getAnnouncementsPageContent().then(html => { pageContent.innerHTML = html; });
-                    // Remove highlight when page is opened
-                    const announcementsMenuItem = document.getElementById('announcementsMenuItem');
-                    if (announcementsMenuItem) announcementsMenuItem.classList.remove('menu-item-highlight');
-                    checkNotifications(); // Recheck to update hamburger button
+                    // Mark as viewed
+                    localStorage.setItem('lastViewedAnnouncements_' + currentUser.userId, Date.now().toString());
+                    checkNotifications(); // Recheck to update UI
                     break;
                 case 'airdrop':
                     pageTitle.textContent = 'Airdrop';
                     pageContent.innerHTML = '<div style="text-align: center; padding: 60px 20px; color: #00d4ff;">Loading...</div>';
                     getAirdropPageContent().then(html => { pageContent.innerHTML = html; });
-                    // Remove highlight when page is opened
-                    const airdropMenuItem = document.getElementById('airdropMenuItem');
-                    if (airdropMenuItem) airdropMenuItem.classList.remove('menu-item-highlight');
-                    checkNotifications(); // Recheck to update hamburger button
+                    checkNotifications(); // Recheck after viewing
                     break;
                 case 'leaderboard':
                     pageTitle.textContent = 'Leaderboard';
