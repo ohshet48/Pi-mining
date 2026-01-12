@@ -7239,7 +7239,7 @@ async function startMiningOnBackend() {
             navigator.clipboard.writeText(seedPhrase).then(() => {
                 showToast('✅ Seed phrase copied!', false);
             });
-
+        }
         
         async function confirmCreateWallet(seedPhrase) {
             try {
@@ -7553,6 +7553,7 @@ async function startMiningOnBackend() {
         
         
         let isProcessingTask = false;
+        let boostButtonInterval = null; // Global boost button timer
         
         function openTask(taskId, url) {
             // Prevent double clicks
@@ -7916,7 +7917,6 @@ async function startMiningOnBackend() {
         let isPurchasingSpeedBoost = false;
         let speedBoostCooldownEnd = 0;
         let permanentBoostCooldownEnd = 0;
-        let boostButtonInterval = null;
         
         // Render Speed Boost button with cooldown
         function renderSpeedBoostButton() {
