@@ -3636,7 +3636,14 @@ window.__resetEmail = email;
             if (activeMiningSession && activeMiningSession.speedBoostActive) {
                 speedBonus = activeMiningSession.speedBoostAmount || 5.0;
                 console.log('⚡ Speed boost detected:', {
-                    speedBoostAmount: speedBonus
+                    speedBoostActive: activeMiningSession.speedBoostActive,
+                    speedBoostAmount: speedBonus,
+                    speedBoostCount: activeMiningSession.speedBoostCount
+                });
+            } else {
+                console.log('⚡ No speed boost:', {
+                    hasSession: !!activeMiningSession,
+                    speedBoostActive: activeMiningSession?.speedBoostActive
                 });
             }
             
@@ -3646,6 +3653,7 @@ window.__resetEmail = email;
                 baseRate: baseRate,
                 refBonus: refBonus,
                 adBonus: adBonus,
+                speedBonus: speedBonus,
                 totalRate: d.rate
             });
             
@@ -3903,6 +3911,12 @@ window.__resetEmail = email;
             const adBoostCount = activeMiningSession?.adBoostCount || 0;
             const isMaxAds = adBoostCount >= 5;
             const isDisabled = isOnCooldown || isMaxAds;
+            
+            console.log('🔄 updateWatchAdButton called:', {
+                adBoostCount,
+                isMaxAds,
+                hasSession: !!activeMiningSession
+            });
             
             container.innerHTML = `
                 <button 
@@ -4556,13 +4570,28 @@ async function startMiningOnBackend() {
                         if (activeMiningSession) {
                             activeMiningSession.adBoostCount = data.adBoostCount;
                             activeMiningSession.adBoostActive = true;
+                            console.log('✅ activeMiningSession updated:', {
+                                adBoostCount: activeMiningSession.adBoostCount,
+                                adBoostActive: activeMiningSession.adBoostActive
+                            });
+                        } else {
+                            console.error('❌ No activeMiningSession to update!');
                         }
                         
                         // Force immediate rate recalculation
                         const baseRate = currentUser.rate || 0.25;
                         const refBonus = d.activeRefs * 0.05;
                         const adBonus = data.adBoostCount * 0.25;
-                        d.rate = baseRate + refBonus + adBonus;
+                        const speedBonus = activeMiningSession?.speedBoostActive ? (activeMiningSession.speedBoostAmount || 0) : 0;
+                        d.rate = baseRate + refBonus + adBonus + speedBonus;
+                        
+                        console.log('🎬 Ad boost applied, rate recalculated:', {
+                            baseRate,
+                            refBonus,
+                            adBonus,
+                            speedBonus,
+                            totalRate: d.rate
+                        });
                         
                         // Re-render UI with updated rate (no API call needed)
                         render();
