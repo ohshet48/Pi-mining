@@ -5632,7 +5632,7 @@ async function startMiningOnBackend() {
             showToast(enabled ? '🔔 Notifications enabled' : '🔕 Notifications disabled');
         }
         
-        function getAnnouncementsPageContent() {
+        async function getAnnouncementsPageContent() {
             // TODO: Replace this with server API call
             // Example: fetch('/api/announcements').then(res => res.json()).then(data => ...)
             
