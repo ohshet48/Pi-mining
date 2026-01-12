@@ -3896,6 +3896,11 @@ window.__resetEmail = email;
                 return; // Skip update
             }
             
+            // Wait for activeMiningSession to load
+            if (!activeMiningSession) {
+                return; // Skip update until session is loaded
+            }
+            
             // Only show if mining
             if (!d || !d.mining) {
                 container.innerHTML = '';
@@ -3911,12 +3916,6 @@ window.__resetEmail = email;
             const adBoostCount = activeMiningSession?.adBoostCount || 0;
             const isMaxAds = adBoostCount >= 5;
             const isDisabled = isOnCooldown || isMaxAds;
-            
-            console.log('🔄 updateWatchAdButton called:', {
-                adBoostCount,
-                isMaxAds,
-                hasSession: !!activeMiningSession
-            });
             
             container.innerHTML = `
                 <button 
