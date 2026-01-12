@@ -4342,6 +4342,10 @@ window.__resetEmail = email;
             // Clear ad cooldown
             localStorage.removeItem('adCooldown_' + currentUser.email);
             
+            // Create temporary sessionId (will be replaced by backend's real sessionId)
+            const tempSessionId = 'temp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('currentSessionId_' + currentUser.email, tempSessionId);
+            
             // Clear referrals cache
             cachedReferralsData = null;
             cachedReferralsTimestamp = 0;
@@ -4351,6 +4355,9 @@ window.__resetEmail = email;
             
             save();
             render(); // ⚡ INSTANT UPDATE!
+            
+            // Update Watch Ad button immediately (don't wait for backend)
+            updateWatchAdButton();
             
             // Backend call in background (user won't wait for this)
             startMiningOnBackend().catch(err => {
@@ -4559,7 +4566,7 @@ async function startMiningOnBackend() {
             const sessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
             
             if (!sessionId) {
-                showToast('❌ No active mining session', true);
+                showToast('❌ No active session! Please try again after 3 seconds.', true);
                 return;
             }
             
