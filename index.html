@@ -8202,6 +8202,26 @@ try {
   }
 })();
 
+        
+
+
+        
+        function showLoading(message) {
+            const existing = document.getElementById('loadingOverlay');
+            if (existing) existing.remove();
+            
+            const overlay = document.createElement('div');
+            overlay.id = 'loadingOverlay';
+            overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 99999;';
+            overlay.innerHTML = '<div style="background: rgba(0,0,0,0.9); padding: 30px; border-radius: 20px; text-align: center;"><div style="font-size: 40px; margin-bottom: 15px;">⏳</div><div style="color: white; font-size: 18px; font-weight: 700;">' + message + '</div></div>';
+            document.body.appendChild(overlay);
+        }
+        
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) overlay.remove();
+        }
+
         async function claimAllAirdrops() {
             if (isClaimingAirdrop) {
                 showToast('Already claiming...', true);
@@ -8247,21 +8267,21 @@ try {
                 
                 currentUser.balance += totalClaimed;
                 localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                updateUI();
+                render();
                 
                 hideLoading();
                 isClaimingAirdrop = false;
-                showToast('Claimed ' + totalClaimed.toFixed(2) + ' ARCA!');
+                showToast('✓ Claimed ' + totalClaimed.toFixed(2) + ' ARCA!');
                 
                 setTimeout(() => {
                     openPage('airdrop');
-                }, 1000);
+                }, 1500);
                 
             } catch (error) {
                 console.error('Error claiming airdrops:', error);
                 hideLoading();
                 isClaimingAirdrop = false;
-                showToast('Failed to claim airdrops', true);
+                showToast('Failed to claim airdrops: ' + error.message, true);
             }
         }
 
