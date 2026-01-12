@@ -1923,6 +1923,10 @@ console.log('Initializing Firebase...');
 firebase.initializeApp(firebaseConfig);
 console.log('Firebase initialized:', firebase.apps.length);
 const messaging = firebase.messaging();
+
+// Global initApp forward declaration
+let initApp;
+
 // Auto-login when DOM is ready  
 document.addEventListener('DOMContentLoaded', async function() {
     // Auto-reload when internet connection restored
@@ -3478,7 +3482,7 @@ window.__resetEmail = email;
                 console.error('❌ Error sending backend notification:', error);
             }
         }
-        async function initApp() {
+        initApp = async function() {
     requestAnimationFrame(() => {  });
     const appEl = document.getElementById('app');
     if (appEl) appEl.style.display = 'block';
