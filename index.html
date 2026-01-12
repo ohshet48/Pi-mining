@@ -3705,9 +3705,14 @@ window.__resetEmail = email;
             render();
             startTimer();
             
-            // CRITICAL: Hide login loading after everything is ready
+            // CRITICAL: Hide login loading and close toast after everything is ready
             if (typeof hideLoginLoading === 'function') {
-                setTimeout(() => hideLoginLoading(), 100);
+                setTimeout(() => {
+                    hideLoginLoading();
+                    // Close any loading toasts
+                    const toasts = document.querySelectorAll('.toast');
+                    toasts.forEach(toast => toast.remove());
+                }, 100);
             }
         }
         
@@ -3956,7 +3961,7 @@ window.__resetEmail = email;
                         `🔒 Max Ads (${adBoostCount}/5)` : 
                         (isOnCooldown ? 
                             `⏳ Wait for reward ${cooldownRemaining}s` : 
-                            `📺 Watch Ad +${nextReward.toFixed(2)} (${adBoostCount}/5)`
+                            `📺 Watch Ad +${nextReward.toFixed(2)}/h (${adBoostCount}/5)`
                         )
                     }
                 </button>
@@ -4359,6 +4364,18 @@ async function startMiningOnBackend() {
                 if (response.ok) {
                     const data = await response.json();
                     localStorage.setItem('currentSessionId_' + currentUser.email, data.session.sessionId);
+                    
+                    // Update activeMiningSession
+                    activeMiningSession = {
+                        sessionId: data.session.sessionId,
+                        adBoostCount: 0,
+                        adBoostActive: false,
+                        adBoostTotal: 0
+                    };
+                    
+                    // Update Watch Ad button
+                    updateWatchAdButton();
+                    
                     console.log('✓ Mining started on backend');
                 } else if (response.status === 400) {
                     // Check if it's "Mining already in progress" error
@@ -4372,6 +4389,17 @@ async function startMiningOnBackend() {
                         const endTimeData = errorData.session.endTime;
                         const endTimeMs = endTimeData._seconds ? endTimeData._seconds * 1000 : endTimeData;
                         localStorage.setItem('miningEndTime_' + currentUser.email, endTimeMs);
+                        
+                        // Update activeMiningSession with existing session data
+                        activeMiningSession = {
+                            sessionId: errorData.session.sessionId,
+                            adBoostCount: errorData.session.adBoostCount || 0,
+                            adBoostActive: errorData.session.adBoostActive || false,
+                            adBoostTotal: errorData.session.adBoostTotal || 0
+                        };
+                        
+                        // Update Watch Ad button
+                        updateWatchAdButton();
                     }
                 }
             } catch (error) {
