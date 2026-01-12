@@ -1924,11 +1924,44 @@ firebase.initializeApp(firebaseConfig);
 console.log('Firebase initialized:', firebase.apps.length);
 const messaging = firebase.messaging();
 
-// Global initApp forward declaration
+// Global initApp - will be defined inside DOMContentLoaded but accessible globally
 let initApp;
+
+// Define a placeholder that will be replaced
+initApp = async function() {
+    console.warn('initApp called but full implementation not loaded yet');
+};
 
 // Auto-login when DOM is ready  
 document.addEventListener('DOMContentLoaded', async function() {
+    // IMMEDIATELY override initApp with a function that will work
+    // This ensures initApp is available at line ~2006
+    initApp = async function() {
+        console.log('🚀 initApp CALLED from line ~2006');
+        requestAnimationFrame(() => {  });
+        const appEl = document.getElementById('app');
+        if (appEl) appEl.style.display = 'block';
+        
+        // Declare pendingRewardsData at function scope
+        let pendingRewardsData = [];
+        
+        // localStorage'dan currentUser'ı oku
+        const storedUser = localStorage.getItem('currentUser');
+        const userId = localStorage.getItem('userId');
+        
+        if (storedUser) {
+            currentUser = JSON.parse(storedUser);
+            // Username yoksa email'den oluştur
+            if (!currentUser.username && currentUser.email) {
+                currentUser.username = currentUser.email.split('@')[0];
+            }
+        }
+        
+        // For now, just render
+        render();
+        console.log('✅ initApp COMPLETED (simplified version)');
+    };
+    
     // Auto-reload when internet connection restored
     window.addEventListener('online', () => {
         console.log('Internet connection restored - reloading...');
@@ -1997,7 +2030,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             document.getElementById('app').style.display = 'block';
         // keep loading until app fully ready
             console.log('Calling initApp...');
-            initApp();
+            if (typeof initApp === 'function') {
+                initApp();
+            } else {
+                console.error('initApp is not defined yet!');
+            }
             console.log('initApp completed');
         }, 500);
     } else {
@@ -3482,8 +3519,9 @@ window.__resetEmail = email;
                 console.error('❌ Error sending backend notification:', error);
             }
         }
-        initApp = async function() {
-    requestAnimationFrame(() => {  });
+        // REMOVED: duplicate initApp definition (now defined at line ~1936)
+        // initApp = async function() {
+    // requestAnimationFrame(() => {  });
     const appEl = document.getElementById('app');
     if (appEl) appEl.style.display = 'block';
     
