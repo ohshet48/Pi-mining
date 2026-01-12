@@ -2967,10 +2967,6 @@ function hideLoginLoading() {
         }
         
         function showError(msg) {
-            // Close any waiting toasts
-            const toasts = document.querySelectorAll('.toast-notification');
-            toasts.forEach(toast => toast.remove());
-            
             const el = document.getElementById('errorMsg');
             el.className = 'error-msg';
             el.textContent = msg;
@@ -3140,7 +3136,7 @@ window.__resetEmail = email;
     }
     
     if (!/^[a-zA-Z0-9]+$/.test(username)) {
-        showError('Username: only English letters and numbers allowed');
+        showError('Username can only contain letters and numbers');
         return;
     }
     if (!email || !password || !confirmPassword) {
@@ -5836,6 +5832,17 @@ async function startMiningOnBackend() {
         // Cache for leaderboard - only fetch once per app session
         let cachedLeaderboardData = null;
         
+        // Format balance with K/M abbreviation
+        function formatBalance(balance) {
+            if (balance >= 1000000) {
+                return (balance / 1000000).toFixed(2) + 'M';
+            } else if (balance >= 1000) {
+                return (balance / 1000).toFixed(2) + 'K';
+            } else {
+                return balance.toFixed(2);
+            }
+        }
+        
         async function getLeaderboardPageContent() {
             let leaderboardData = [];
             
@@ -6008,6 +6015,13 @@ async function startMiningOnBackend() {
                                 </div>
                             </div>
                             <div style="display: flex; align-items: center; gap: 6px;">
+                                <!-- Balance Bar -->
+                                <div class="level-progress-bar" style="width: 70px; height: 16px; background: rgba(10, 20, 40, 0.85); border-radius: 8px; overflow: hidden; position: relative; border: 1px solid rgba(251, 191, 36, 0.3);">
+                                    <div class="level-progress-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8px; font-weight: 700; color: white; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);">
+                                        ${formatBalance(currentUser?.balance || 0)}
+                                    </div>
+                                </div>
+                                <!-- Days Bar -->
                                 <div class="level-progress-bar" style="width: 70px; height: 16px; background: rgba(10, 20, 40, 0.85); border-radius: 8px; overflow: hidden; position: relative; border: 1px solid rgba(16, 185, 129, 0.3);">
                                     <div class="level-progress-fill" style="height: 100%; background: linear-gradient(90deg, #10b981, #059669); width: ${userProgressPercent}%;"></div>
                                     <div class="level-progress-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8px; font-weight: 700; color: white; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);">
@@ -6208,6 +6222,13 @@ async function startMiningOnBackend() {
                                 </div>
                             </div>
                             <div style="display: flex; align-items: center; gap: 6px;">
+                                <!-- Balance Bar -->
+                                <div class="level-progress-bar" style="width: 70px; height: 16px; background: rgba(10, 20, 40, 0.85); border-radius: 8px; overflow: hidden; position: relative; border: 1px solid rgba(0, 255, 255, 0.3);">
+                                    <div class="level-progress-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8px; font-weight: 700; color: white; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);">
+                                        ${formatBalance(user.balance || 0)}
+                                    </div>
+                                </div>
+                                <!-- Days Bar -->
                                 <div class="level-progress-bar" style="width: 70px; height: 16px; background: rgba(10, 20, 40, 0.85); border-radius: 8px; overflow: hidden; position: relative; border: 1px solid rgba(16, 185, 129, 0.3);">
                                     <div class="level-progress-fill" style="height: 100%; background: linear-gradient(90deg, #10b981, #059669); width: ${progressPercent}%;"></div>
                                     <div class="level-progress-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8px; font-weight: 700; color: white; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);">
@@ -6840,7 +6861,7 @@ async function startMiningOnBackend() {
                     headers: getApiHeaders(),
                     body: JSON.stringify({
                         userId: currentUser.userId,
-                        rewardType: 'task',
+                        type: 'task',
                         amount: reward,
                         metadata: { taskId: taskId }
                     })
@@ -6882,9 +6903,9 @@ async function startMiningOnBackend() {
                 <div style="padding: 20px 0;">
                     <!-- Header Info -->
                     <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.15)); border: 2px solid rgba(139, 92, 246, 0.3); border-radius: 16px; padding: 20px; margin-bottom: 24px; text-align: center;">
-                        <h3 style="color: #fff; font-size: 18px; font-weight: 800; margin-bottom: 8px;">🚀 Speed Up Your Progress</h3>
+                        <h3 style="color: #fff; font-size: 18px; font-weight: 800; margin-bottom: 8px;">🚀 Boost Your Progress</h3>
                         <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin: 0; line-height: 1.5;">
-                            Temporarily increase your speed for 24 hours, or upgrade permanently
+                            Temporarily enhance your in-app progress speed for 24 hours
                         </p>
                     </div>
                     
@@ -6976,7 +6997,7 @@ async function startMiningOnBackend() {
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 12px;">
                                     <span style="color: #00ffff; font-size: 20px;">✓</span>
-                                    <span style="color: rgba(255, 255, 255, 0.9); font-size: 14px;">Multiple purchases allowed, effects stack</span>
+                                    <span style="color: rgba(255, 255, 255, 0.9); font-size: 14px;">One-time activation, time-limited in-app benefit</span>
                                 </div>
                             </div>
                             
