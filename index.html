@@ -2015,6 +2015,8 @@ const API_ENDPOINTS = {
   claimReward: `${FUNCTIONS_BASE_URL}/claimReward`,
   getUserData: `${FUNCTIONS_BASE_URL}/getUserData`,
   getAllUserData: `${FUNCTIONS_BASE_URL}/getAllUserData`,  // NEW: Optimized single request
+  createWallet: `${FUNCTIONS_BASE_URL}/createWallet`,
+  importWallet: `${FUNCTIONS_BASE_URL}/importWallet`,
   getMiningSessions: `${FUNCTIONS_BASE_URL}/getMiningSessions`,
   sendMiningNotification: `${FUNCTIONS_BASE_URL}/sendMiningNotification`,
   updateLevel: `${FUNCTIONS_BASE_URL}/updateLevel`,
@@ -6604,17 +6606,93 @@ async function startMiningOnBackend() {
         
         
         
+        
+        // Wallet word list (BIP39 simplified - 100 words)
+        const WALLET_WORDS = [
+            'ability', 'able', 'about', 'above', 'absent', 'absorb', 'abstract', 'absurd', 'abuse', 'access',
+            'accident', 'account', 'accuse', 'achieve', 'acid', 'acoustic', 'acquire', 'across', 'act', 'action',
+            'actor', 'actress', 'actual', 'adapt', 'add', 'addict', 'address', 'adjust', 'admit', 'adult',
+            'advance', 'advice', 'aerobic', 'affair', 'afford', 'afraid', 'again', 'age', 'agent', 'agree',
+            'ahead', 'aim', 'air', 'airport', 'aisle', 'alarm', 'album', 'alcohol', 'alert', 'alien',
+            'all', 'alley', 'allow', 'almost', 'alone', 'alpha', 'already', 'also', 'alter', 'always',
+            'amateur', 'amazing', 'among', 'amount', 'amused', 'analyst', 'anchor', 'ancient', 'anger', 'angle',
+            'angry', 'animal', 'ankle', 'announce', 'annual', 'another', 'answer', 'antenna', 'antique', 'anxiety',
+            'any', 'apart', 'apology', 'appear', 'apple', 'approve', 'april', 'arch', 'arctic', 'area',
+            'arena', 'argue', 'arm', 'armed', 'armor', 'army', 'around', 'arrange', 'arrest', 'arrive'
+        ];
+        
+        function generateSeedPhrase() {
+            const words = [];
+            for (let i = 0; i < 10; i++) {
+                const randomIndex = Math.floor(Math.random() * WALLET_WORDS.length);
+                words.push(WALLET_WORDS[randomIndex]);
+            }
+            return words.join(' ');
+        }
+        
+        function hashSeedPhrase(seedPhrase) {
+            // Simple hash (in production, use crypto.subtle.digest)
+            let hash = 0;
+            for (let i = 0; i < seedPhrase.length; i++) {
+                const char = seedPhrase.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return Math.abs(hash).toString(36);
+        }
+        
         function getWalletPageContent() {
-            // Get wallet address from currentUser (backend'den geldi)
-            const walletAddress = currentUser.walletAddress || 'N/A';
+            const walletCreated = currentUser.walletCreated || false;
+            const isWalletActive = localStorage.getItem('walletActive_' + currentUser.email) === 'true';
             
-            // Get transaction history
+            if (!walletCreated || !isWalletActive) {
+                // Show Create/Import screen
+                return `
+                    <div style="padding: 20px 0;">
+                        <div style="text-align: center; padding: 40px 20px;">
+                            <div style="font-size: 64px; margin-bottom: 20px;">👛</div>
+                            <h2 style="color: #fff; font-size: 24px; font-weight: 800; margin-bottom: 12px;">Wallet Not Active</h2>
+                            <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-bottom: 32px;">
+                                Create a new wallet or import an existing one to start managing your ARCASTRA
+                            </p>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 16px; max-width: 400px; margin: 0 auto;">
+                                <button onclick="showCreateWallet()" style="
+                                    padding: 16px;
+                                    background: linear-gradient(135deg, #00bcd4, #0097a7);
+                                    border: none;
+                                    border-radius: 12px;
+                                    color: white;
+                                    font-size: 16px;
+                                    font-weight: 800;
+                                    cursor: pointer;
+                                    box-shadow: 0 4px 12px rgba(0, 188, 212, 0.4);
+                                ">🆕 CREATE NEW WALLET</button>
+                                
+                                <button onclick="showImportWallet()" style="
+                                    padding: 16px;
+                                    background: rgba(0, 188, 212, 0.2);
+                                    border: 1px solid rgba(0, 188, 212, 0.4);
+                                    border-radius: 12px;
+                                    color: #00ffff;
+                                    font-size: 16px;
+                                    font-weight: 800;
+                                    cursor: pointer;
+                                ">📥 IMPORT WALLET</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Show active wallet
+            const walletAddress = currentUser.walletAddress || 'N/A';
+            const balance = d.balance || 0;
+            const availableBalance = balance;
+            
             const transactions = JSON.parse(localStorage.getItem('transactions_' + currentUser.email) || '[]');
             const showAll = localStorage.getItem('showAllTransactions_' + currentUser.email) === 'true';
             const displayTransactions = showAll ? transactions : transactions.slice(0, 5);
-            
-            const balance = d.balance || 0;
-            const availableBalance = balance; // For now, available = total
             
             return `
                 <div style="padding: 20px 0;">
@@ -6629,7 +6707,7 @@ async function startMiningOnBackend() {
                         </div>
                         
                         <!-- Buttons -->
-                        <div style="display: flex; gap: 12px;">
+                        <div style="display: flex; gap: 12px; margin-bottom: 16px;">
                             <button onclick="openSendModal()" style="
                                 flex: 1;
                                 padding: 14px;
@@ -6655,6 +6733,19 @@ async function startMiningOnBackend() {
                                 cursor: not-allowed;
                             ">💰 WITHDRAW</button>
                         </div>
+                        
+                        <!-- Logout Wallet Button -->
+                        <button onclick="logoutWallet()" style="
+                            width: 100%;
+                            padding: 12px;
+                            background: rgba(255, 68, 68, 0.2);
+                            border: 1px solid rgba(255, 68, 68, 0.4);
+                            border-radius: 12px;
+                            color: #ff4444;
+                            font-size: 14px;
+                            font-weight: 700;
+                            cursor: pointer;
+                        ">🚪 LOGOUT WALLET</button>
                     </div>
                     
                     <!-- Wallet Address -->
@@ -6755,6 +6846,234 @@ async function startMiningOnBackend() {
             `;
         }
         
+        function showCreateWallet() {
+            const seedPhrase = generateSeedPhrase();
+            
+            const pageContent = document.getElementById('fullPageContent');
+            pageContent.innerHTML = `
+                <div style="padding: 20px;">
+                    <div style="text-align: center; margin-bottom: 24px;">
+                        <h2 style="color: #fff; font-size: 20px; font-weight: 800; margin-bottom: 8px;">🔑 Your Seed Phrase</h2>
+                        <p style="color: rgba(255, 255, 255, 0.7); font-size: 13px;">
+                            Write down these 10 words in order. You'll need them to recover your wallet.
+                        </p>
+                    </div>
+                    
+                    <div style="background: rgba(255, 165, 0, 0.1); border: 2px solid rgba(255, 165, 0, 0.4); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                        <div style="color: #ffa500; font-size: 12px; font-weight: 700; margin-bottom: 8px;">⚠️ IMPORTANT</div>
+                        <div style="color: rgba(255, 255, 255, 0.8); font-size: 12px; line-height: 1.5;">
+                            Never share your seed phrase with anyone. Store it safely offline. If you lose it, you cannot recover your wallet!
+                        </div>
+                    </div>
+                    
+                    <div id="seedPhraseDisplay" style="
+                        background: rgba(0, 0, 0, 0.4);
+                        border: 2px solid rgba(0, 255, 255, 0.3);
+                        border-radius: 12px;
+                        padding: 20px;
+                        margin-bottom: 20px;
+                    ">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                            ${seedPhrase.split(' ').map((word, i) => `
+                                <div style="
+                                    background: rgba(0, 188, 212, 0.1);
+                                    border: 1px solid rgba(0, 188, 212, 0.3);
+                                    border-radius: 8px;
+                                    padding: 12px;
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 8px;
+                                ">
+                                    <span style="color: rgba(255, 255, 255, 0.5); font-size: 12px; font-weight: 700;">${i + 1}.</span>
+                                    <span style="color: #00ffff; font-size: 14px; font-weight: 700;">${word}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <button onclick="copySeedPhrase('${seedPhrase}')" style="
+                        width: 100%;
+                        padding: 14px;
+                        background: rgba(0, 188, 212, 0.2);
+                        border: 1px solid rgba(0, 188, 212, 0.4);
+                        border-radius: 12px;
+                        color: #00ffff;
+                        font-size: 14px;
+                        font-weight: 700;
+                        cursor: pointer;
+                        margin-bottom: 12px;
+                    ">📋 COPY SEED PHRASE</button>
+                    
+                    <button onclick="confirmCreateWallet('${seedPhrase}')" style="
+                        width: 100%;
+                        padding: 16px;
+                        background: linear-gradient(135deg, #00bcd4, #0097a7);
+                        border: none;
+                        border-radius: 12px;
+                        color: white;
+                        font-size: 16px;
+                        font-weight: 800;
+                        cursor: pointer;
+                        box-shadow: 0 4px 12px rgba(0, 188, 212, 0.4);
+                    ">✅ I'VE SAVED IT - CREATE WALLET</button>
+                </div>
+            `;
+        }
+        
+        function copySeedPhrase(seedPhrase) {
+            navigator.clipboard.writeText(seedPhrase).then(() => {
+                showToast('✅ Seed phrase copied!', false);
+            });
+        }
+        
+        async function confirmCreateWallet(seedPhrase) {
+            try {
+                showToast('🔄 Creating wallet...', false, 999999);
+                
+                const seedHash = hashSeedPhrase(seedPhrase);
+                
+                const response = await fetch(API_ENDPOINTS.createWallet, {
+                    method: 'POST',
+                    headers: getApiHeaders(),
+                    body: JSON.stringify({
+                        userId: currentUser.userId,
+                        seedPhraseHash: seedHash
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Store locally that wallet is active
+                    localStorage.setItem('walletActive_' + currentUser.email, 'true');
+                    
+                    showToast('✅ Wallet created successfully!', false);
+                    
+                    // Refresh user data
+                    await initApp();
+                    openPage('wallet');
+                } else {
+                    showToast(`❌ ${data.error || 'Failed to create wallet'}`, true);
+                }
+            } catch (error) {
+                console.error('Create wallet error:', error);
+                showToast('❌ Failed to create wallet', true);
+            }
+        }
+        
+        function showImportWallet() {
+            const pageContent = document.getElementById('fullPageContent');
+            pageContent.innerHTML = `
+                <div style="padding: 20px;">
+                    <div style="text-align: center; margin-bottom: 24px;">
+                        <h2 style="color: #fff; font-size: 20px; font-weight: 800; margin-bottom: 8px;">📥 Import Wallet</h2>
+                        <p style="color: rgba(255, 255, 255, 0.7); font-size: 13px;">
+                            Enter your 10-word seed phrase to recover your wallet
+                        </p>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="color: rgba(255, 255, 255, 0.7); font-size: 13px; font-weight: 600; display: block; margin-bottom: 8px;">SEED PHRASE (10 words)</label>
+                        <textarea id="importSeedInput" placeholder="word1 word2 word3..." style="
+                            width: 100%;
+                            min-height: 120px;
+                            background: rgba(0, 0, 0, 0.4);
+                            border: 2px solid rgba(0, 255, 255, 0.3);
+                            border-radius: 12px;
+                            padding: 16px;
+                            color: #00ffff;
+                            font-size: 14px;
+                            font-family: monospace;
+                            resize: vertical;
+                        "></textarea>
+                    </div>
+                    
+                    <button onclick="confirmImportWallet()" style="
+                        width: 100%;
+                        padding: 16px;
+                        background: linear-gradient(135deg, #00bcd4, #0097a7);
+                        border: none;
+                        border-radius: 12px;
+                        color: white;
+                        font-size: 16px;
+                        font-weight: 800;
+                        cursor: pointer;
+                        box-shadow: 0 4px 12px rgba(0, 188, 212, 0.4);
+                        margin-bottom: 12px;
+                    ">✅ IMPORT WALLET</button>
+                    
+                    <button onclick="openPage('wallet')" style="
+                        width: 100%;
+                        padding: 14px;
+                        background: rgba(100, 100, 100, 0.2);
+                        border: 1px solid rgba(150, 150, 150, 0.3);
+                        border-radius: 12px;
+                        color: rgba(255, 255, 255, 0.6);
+                        font-size: 14px;
+                        font-weight: 700;
+                        cursor: pointer;
+                    ">CANCEL</button>
+                </div>
+            `;
+        }
+        
+        async function confirmImportWallet() {
+            try {
+                const seedInput = document.getElementById('importSeedInput');
+                const seedPhrase = seedInput.value.trim().toLowerCase();
+                
+                if (!seedPhrase) {
+                    showToast('❌ Please enter your seed phrase', true);
+                    return;
+                }
+                
+                const words = seedPhrase.split(/\s+/);
+                if (words.length !== 10) {
+                    showToast('❌ Seed phrase must be exactly 10 words', true);
+                    return;
+                }
+                
+                showToast('🔄 Importing wallet...', false, 999999);
+                
+                const seedHash = hashSeedPhrase(seedPhrase);
+                
+                const response = await fetch(API_ENDPOINTS.importWallet, {
+                    method: 'POST',
+                    headers: getApiHeaders(),
+                    body: JSON.stringify({
+                        userId: currentUser.userId,
+                        seedPhraseHash: seedHash
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Store locally that wallet is active
+                    localStorage.setItem('walletActive_' + currentUser.email, 'true');
+                    
+                    showToast('✅ Wallet imported successfully!', false);
+                    
+                    // Refresh user data
+                    await initApp();
+                    openPage('wallet');
+                } else {
+                    showToast(`❌ ${data.error || 'Invalid seed phrase'}`, true);
+                }
+            } catch (error) {
+                console.error('Import wallet error:', error);
+                showToast('❌ Failed to import wallet', true);
+            }
+        }
+        
+        function logoutWallet() {
+            if (confirm('Are you sure you want to logout from your wallet? You will need your seed phrase to access it again.')) {
+                localStorage.removeItem('walletActive_' + currentUser.email);
+                closePage();
+                showToast('✅ Wallet logged out', false);
+            }
+        }
+        
         function copyWalletAddress(address) {
             navigator.clipboard.writeText(address).then(() => {
                 showToast('✅ Address copied to clipboard!', false);
@@ -6774,10 +7093,8 @@ async function startMiningOnBackend() {
         }
         
         function openSendModal() {
-            // TODO: Implement send modal
             showToast('🚧 Send feature coming soon!', false);
         }
-        
         function getTasksPageContent() {
             // Check which tasks are completed
             const completedTasks = JSON.parse(localStorage.getItem('completedTasks_' + currentUser.email) || '{}');
