@@ -2031,6 +2031,8 @@ const API_ENDPOINTS = {
   addPendingReward: `${FUNCTIONS_BASE_URL}/addPendingReward`,
   getPendingRewards: `${FUNCTIONS_BASE_URL}/getPendingRewards`,
   claimPendingReward: `${FUNCTIONS_BASE_URL}/claimPendingReward`,
+  purchaseSpeedBoost: `${FUNCTIONS_BASE_URL}/purchaseSpeedBoost`,
+  purchasePermanentSpeedBoost: `${FUNCTIONS_BASE_URL}/purchasePermanentSpeedBoost`,
 };
 
 // API Key for mobile app security
@@ -2659,6 +2661,35 @@ function hideLoginLoading() {
         </div>
         <div class="menu-items">
             <div class="menu-item" onclick="openPage('profile')">Profile</div>
+            <div class="menu-item" onclick="openPage('upgrades')">
+                <span style="display: flex; align-items: center; gap: 8px;">
+                    <span>Upgrades / Boosts</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" style="transform: rotate(45deg);" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Flame (filled) -->
+                        <ellipse cx="12" cy="20" rx="2" ry="3" fill="#ff6b00" opacity="0.7"/>
+                        <ellipse cx="10.5" cy="21" rx="1" ry="2" fill="#ffaa00" opacity="0.6"/>
+                        <ellipse cx="13.5" cy="21" rx="1" ry="2" fill="#ffaa00" opacity="0.6"/>
+                        
+                        <!-- Rocket outline -->
+                        <g stroke="#00ffff" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <!-- Body -->
+                            <path d="M 10 6 L 10 18 L 14 18 L 14 6"/>
+                            
+                            <!-- Nose -->
+                            <path d="M 10 6 L 12 2 L 14 6"/>
+                            
+                            <!-- Window -->
+                            <circle cx="12" cy="10" r="1.5"/>
+                            
+                            <!-- Left fin -->
+                            <path d="M 10 15 L 8 18 L 10 17"/>
+                            
+                            <!-- Right fin -->
+                            <path d="M 14 15 L 16 18 L 14 17"/>
+                        </g>
+                    </svg>
+                </span>
+            </div>
             <div class="menu-item" onclick="openPage('announcements')">Announcements</div>
             <div class="menu-item" id="airdropMenuItem" onclick="openPage('airdrop')">Airdrop</div>
             <div class="menu-item" onclick="openPage('leaderboard')">Leaderboard</div>
@@ -3584,7 +3615,7 @@ window.__resetEmail = email;
             // Calculate active mining referrals
             d.activeRefs = calculateActiveRefs();
             
-            // Calculate dynamic rate: base rate + referral bonus + ad boost
+            // Calculate dynamic rate: base rate + referral bonus + ad boost + speed boost
             // Base rate includes level bonuses only (permanent)
             const baseRate = currentUser.rate || 0.25;
             const refBonus = d.activeRefs * 0.05;
@@ -3600,7 +3631,16 @@ window.__resetEmail = email;
                 });
             }
             
-            d.rate = baseRate + refBonus + adBonus;
+            // Check if current session has speed boost active (purchased)
+            let speedBonus = 0;
+            if (activeMiningSession && activeMiningSession.speedBoostActive) {
+                speedBonus = activeMiningSession.speedBoostAmount || 5.0;
+                console.log('⚡ Speed boost detected:', {
+                    speedBoostAmount: speedBonus
+                });
+            }
+            
+            d.rate = baseRate + refBonus + adBonus + speedBonus;
             
             console.log('💰 Final rate calculated:', {
                 baseRate: baseRate,
@@ -3860,8 +3900,9 @@ window.__resetEmail = email;
             const now = Date.now();
             const cooldownRemaining = Math.max(0, Math.ceil((adCooldownEnd - now) / 1000));
             const isOnCooldown = cooldownRemaining > 0;
-            const isMaxRate = currentRate >= 5.0;
-            const isDisabled = isOnCooldown || isMaxRate;
+            const adBoostCount = activeMiningSession?.adBoostCount || 0;
+            const isMaxAds = adBoostCount >= 5;
+            const isDisabled = isOnCooldown || isMaxAds;
             
             container.innerHTML = `
                 <button 
@@ -3871,8 +3912,8 @@ window.__resetEmail = email;
                     style="
                         width: 100%; 
                         height: 45px; 
-                        background: ${isMaxRate ? 'rgba(100, 100, 100, 0.3)' : (isOnCooldown ? 'rgba(0, 255, 255, 0.1)' : 'rgba(0, 255, 255, 0.15)')}; 
-                        border: 1px solid ${isMaxRate ? 'rgba(150, 150, 150, 0.3)' : (isOnCooldown ? 'rgba(0, 255, 255, 0.3)' : 'rgba(0, 255, 255, 0.4)')}; 
+                        background: ${isMaxAds ? 'rgba(100, 100, 100, 0.3)' : (isOnCooldown ? 'rgba(0, 255, 255, 0.1)' : 'rgba(0, 255, 255, 0.15)')}; 
+                        border: 1px solid ${isMaxAds ? 'rgba(150, 150, 150, 0.3)' : (isOnCooldown ? 'rgba(0, 255, 255, 0.3)' : 'rgba(0, 255, 255, 0.4)')}; 
                         border-radius: 12px; 
                         color: ${isDisabled ? 'rgba(255, 255, 255, 0.4)' : '#00ffff'}; 
                         font-size: 13px; 
@@ -3886,11 +3927,11 @@ window.__resetEmail = email;
                     "
                     ${isDisabled ? 'disabled' : ''}
                 >
-                    ${isMaxRate ? 
-                        '🔒 Max Rate Reached (5.0 MR)' : 
+                    ${isMaxAds ? 
+                        `🔒 Max Ads (${adBoostCount}/5)` : 
                         (isOnCooldown ? 
                             `⏳ Wait for reward ${cooldownRemaining}s` : 
-                            '📺 Watch Ad +0.25 MR'
+                            `📺 Watch Ad +0.25 (${adBoostCount}/5)`
                         )
                     }
                 </button>
@@ -5208,6 +5249,10 @@ async function startMiningOnBackend() {
                     pageTitle.textContent = 'Profile';
                     pageContent.innerHTML = getProfilePageContent();
                     break;
+                case 'upgrades':
+                    pageTitle.textContent = 'Upgrades / Boosts';
+                    pageContent.innerHTML = getUpgradesPageContent();
+                    break;
                 case 'announcements':
                     pageTitle.textContent = 'Announcements';
                     pageContent.innerHTML = getAnnouncementsPageContent();
@@ -6486,6 +6531,332 @@ async function startMiningOnBackend() {
                     <button class="profile-action-btn profile-delete-btn" onclick="showDeleteAccount()">🗑️ Delete Account</button>
                 </div>
             `;
+        }
+        
+        function getUpgradesPageContent() {
+            const isPermanentPurchased = currentUser.permanentBoostPurchased || false;
+            
+            return `
+                <div style="padding: 20px 0;">
+                    <!-- Header Info -->
+                    <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.15)); border: 2px solid rgba(139, 92, 246, 0.3); border-radius: 16px; padding: 20px; margin-bottom: 24px; text-align: center;">
+                        <h3 style="color: #fff; font-size: 18px; font-weight: 800; margin-bottom: 8px;">🚀 Boost Your Progress</h3>
+                        <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin: 0; line-height: 1.5;">
+                            Temporarily enhance your in-app progress speed for 24 hours
+                        </p>
+                    </div>
+                    
+                    <!-- Booster Card -->
+                    <div style="background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2)); border: 2px solid rgba(0, 255, 255, 0.3); border-radius: 20px; padding: 24px; box-shadow: 0 8px 32px rgba(0, 255, 255, 0.2); position: relative; overflow: hidden;">
+                        
+                        <!-- Decorative glow -->
+                        <div style="position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(0, 255, 255, 0.1) 0%, transparent 70%); pointer-events: none;"></div>
+                        
+                        <!-- Content -->
+                        <div style="position: relative; z-index: 1;">
+                            <!-- Rocket SVG -->
+                            <div style="display: flex; justify-content: center; margin-bottom: 20px;">
+                                <svg width="120" height="120" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                                    <!-- Flame (static) -->
+                                    <g>
+                                        <ellipse cx="100" cy="170" rx="15" ry="25" fill="url(#flameGradient)" opacity="0.9"/>
+                                        <ellipse cx="85" cy="175" rx="8" ry="15" fill="url(#flameGradient2)" opacity="0.8"/>
+                                        <ellipse cx="115" cy="175" rx="8" ry="15" fill="url(#flameGradient2)" opacity="0.8"/>
+                                    </g>
+                                    
+                                    <!-- Rocket Body -->
+                                    <path d="M 85 150 Q 85 100 100 40 Q 115 100 115 150 Z" fill="url(#rocketBody)" stroke="#00ffff" stroke-width="2"/>
+                                    
+                                    <!-- Rocket Nose -->
+                                    <path d="M 100 20 L 85 50 Q 100 40 115 50 Z" fill="url(#rocketNose)" stroke="#00ffff" stroke-width="2"/>
+                                    
+                                    <!-- Window -->
+                                    <circle cx="100" cy="80" r="15" fill="url(#window)" stroke="#00d4ff" stroke-width="2"/>
+                                    <circle cx="100" cy="80" r="10" fill="rgba(0, 200, 255, 0.3)"/>
+                                    
+                                    <!-- Fins -->
+                                    <path d="M 85 130 L 65 155 L 85 150 Z" fill="url(#fin)" stroke="#00ffff" stroke-width="2"/>
+                                    <path d="M 115 130 L 135 155 L 115 150 Z" fill="url(#fin)" stroke="#00ffff" stroke-width="2"/>
+                                    
+                                    <!-- Details -->
+                                    <rect x="88" y="100" width="24" height="3" rx="1.5" fill="#00ffff" opacity="0.6"/>
+                                    <rect x="88" y="110" width="24" height="3" rx="1.5" fill="#00ffff" opacity="0.6"/>
+                                    <rect x="88" y="120" width="24" height="3" rx="1.5" fill="#00ffff" opacity="0.6"/>
+                                    
+                                    <!-- Gradients -->
+                                    <defs>
+                                        <linearGradient id="rocketBody" x1="0%" y1="0%" x2="0%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:1" />
+                                            <stop offset="100%" style="stop-color:#0088cc;stop-opacity:1" />
+                                        </linearGradient>
+                                        <linearGradient id="rocketNose" x1="0%" y1="0%" x2="0%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#00ffff;stop-opacity:1" />
+                                            <stop offset="100%" style="stop-color:#00d4ff;stop-opacity:1" />
+                                        </linearGradient>
+                                        <radialGradient id="window">
+                                            <stop offset="0%" style="stop-color:#00ffff;stop-opacity:0.8" />
+                                            <stop offset="100%" style="stop-color:#0066cc;stop-opacity:1" />
+                                        </radialGradient>
+                                        <linearGradient id="fin" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" style="stop-color:#0088cc;stop-opacity:1" />
+                                            <stop offset="100%" style="stop-color:#00d4ff;stop-opacity:1" />
+                                        </linearGradient>
+                                        <linearGradient id="flameGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#ff6b00;stop-opacity:1" />
+                                            <stop offset="50%" style="stop-color:#ff3300;stop-opacity:1" />
+                                            <stop offset="100%" style="stop-color:#ffaa00;stop-opacity:0.7" />
+                                        </linearGradient>
+                                        <linearGradient id="flameGradient2" x1="0%" y1="0%" x2="0%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#ffaa00;stop-opacity:1" />
+                                            <stop offset="100%" style="stop-color:#ff3300;stop-opacity:0.5" />
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                            </div>
+                            
+                            <!-- Booster Info -->
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <h2 style="color: #fff; font-size: 24px; font-weight: 900; margin-bottom: 8px;">Speed Boost +5.00</h2>
+                                <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin: 0;">
+                                    Provides a 24-hour in-app speed enhancement
+                                </p>
+                            </div>
+                            
+                            <!-- Features -->
+                            <div style="background: rgba(0, 255, 255, 0.05); border: 1px solid rgba(0, 255, 255, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                                    <span style="color: #00ffff; font-size: 20px;">✓</span>
+                                    <span style="color: rgba(255, 255, 255, 0.9); font-size: 14px;">24-hour temporary speed enhancement</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                                    <span style="color: #00ffff; font-size: 20px;">✓</span>
+                                    <span style="color: rgba(255, 255, 255, 0.9); font-size: 14px;">Works in addition to your current progress speed</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <span style="color: #00ffff; font-size: 20px;">✓</span>
+                                    <span style="color: rgba(255, 255, 255, 0.9); font-size: 14px;">One-time activation, time-limited in-app benefit</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Price & Button -->
+                            <div style="text-align: center;">
+                                <div style="color: #8b5cf6; font-size: 16px; font-weight: 600; margin-bottom: 12px;">
+                                    Price: <span style="color: #00ffff; font-size: 20px; font-weight: 900;">$0.99</span>
+                                </div>
+                                <button onclick="purchaseBooster()" style="width: 100%; background: linear-gradient(135deg, #00ffff, #0088cc); border: none; border-radius: 12px; padding: 16px; color: #000; font-size: 18px; font-weight: 900; cursor: pointer; box-shadow: 0 4px 20px rgba(0, 255, 255, 0.4); transition: all 0.3s;">
+                                    🚀 ACTIVATE BOOST
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Second Booster Card (Permanent) -->
+                    <div style="background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2)); border: 2px solid rgba(255, 215, 0, 0.4); border-radius: 20px; padding: 24px; margin-top: 24px; box-shadow: 0 8px 32px rgba(255, 215, 0, 0.2); position: relative; overflow: hidden;">
+                        
+                        <!-- Decorative glow -->
+                        <div style="position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(0, 255, 255, 0.1) 0%, transparent 70%); pointer-events: none;"></div>
+                        
+                        <!-- Content -->
+                        <div style="position: relative; z-index: 1;">
+                            <!-- Rocket SVG (Bigger & More Powerful) -->
+                            <div style="display: flex; justify-content: center; margin-bottom: 20px;">
+                                <svg width="140" height="140" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                                    <!-- Triple Flame (more powerful) -->
+                                    <g>
+                                        <!-- Center flame -->
+                                        <ellipse cx="100" cy="175" rx="18" ry="30" fill="url(#flameGradient)" opacity="0.95"/>
+                                        <!-- Left flame -->
+                                        <ellipse cx="80" cy="180" rx="10" ry="20" fill="url(#flameGradient2)" opacity="0.85"/>
+                                        <!-- Right flame -->
+                                        <ellipse cx="120" cy="180" rx="10" ry="20" fill="url(#flameGradient2)" opacity="0.85"/>
+                                        <!-- Extra glow -->
+                                        <ellipse cx="100" cy="170" rx="25" ry="15" fill="#ff6b00" opacity="0.3"/>
+                                    </g>
+                                    
+                                    <!-- Rocket Body (Thicker) -->
+                                    <path d="M 80 155 Q 80 100 100 30 Q 120 100 120 155 Z" fill="url(#rocketBody)" stroke="#00ffff" stroke-width="3"/>
+                                    
+                                    <!-- Rocket Nose (Sharper) -->
+                                    <path d="M 100 15 L 80 45 Q 100 35 120 45 Z" fill="url(#rocketNose)" stroke="#00ffff" stroke-width="3"/>
+                                    
+                                    <!-- Window (Bigger) -->
+                                    <circle cx="100" cy="75" r="18" fill="url(#window)" stroke="#00d4ff" stroke-width="2.5"/>
+                                    <circle cx="100" cy="75" r="12" fill="rgba(0, 200, 255, 0.4)"/>
+                                    
+                                    <!-- Fins (Bigger) -->
+                                    <path d="M 80 135 L 55 165 L 80 155 Z" fill="url(#fin)" stroke="#00ffff" stroke-width="2.5"/>
+                                    <path d="M 120 135 L 145 165 L 120 155 Z" fill="url(#fin)" stroke="#00ffff" stroke-width="2.5"/>
+                                    
+                                    <!-- Details (More lines) -->
+                                    <rect x="85" y="95" width="30" height="3" rx="1.5" fill="#00ffff" opacity="0.7"/>
+                                    <rect x="85" y="105" width="30" height="3" rx="1.5" fill="#00ffff" opacity="0.7"/>
+                                    <rect x="85" y="115" width="30" height="3" rx="1.5" fill="#00ffff" opacity="0.7"/>
+                                    <rect x="85" y="125" width="30" height="3" rx="1.5" fill="#00ffff" opacity="0.7"/>
+                                    
+                                    <!-- Boosters on sides -->
+                                    <rect x="75" y="140" width="5" height="15" rx="2" fill="url(#rocketBody)" stroke="#00ffff" stroke-width="1.5"/>
+                                    <rect x="120" y="140" width="5" height="15" rx="2" fill="url(#rocketBody)" stroke="#00ffff" stroke-width="1.5"/>
+                                    
+                                    <!-- Gradients -->
+                                    <defs>
+                                        <linearGradient id="rocketBody" x1="0%" y1="0%" x2="0%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:1" />
+                                            <stop offset="100%" style="stop-color:#0088cc;stop-opacity:1" />
+                                        </linearGradient>
+                                        <linearGradient id="rocketNose" x1="0%" y1="0%" x2="0%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#00ffff;stop-opacity:1" />
+                                            <stop offset="100%" style="stop-color:#00d4ff;stop-opacity:1" />
+                                        </linearGradient>
+                                        <radialGradient id="window">
+                                            <stop offset="0%" style="stop-color:#00ffff;stop-opacity:0.8" />
+                                            <stop offset="100%" style="stop-color:#0066cc;stop-opacity:1" />
+                                        </radialGradient>
+                                        <linearGradient id="fin" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" style="stop-color:#0088cc;stop-opacity:1" />
+                                            <stop offset="100%" style="stop-color:#00d4ff;stop-opacity:1" />
+                                        </linearGradient>
+                                        <linearGradient id="flameGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#ff6b00;stop-opacity:1" />
+                                            <stop offset="50%" style="stop-color:#ff3300;stop-opacity:1" />
+                                            <stop offset="100%" style="stop-color:#ffaa00;stop-opacity:0.7" />
+                                        </linearGradient>
+                                        <linearGradient id="flameGradient2" x1="0%" y1="0%" x2="0%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#ffaa00;stop-opacity:1" />
+                                            <stop offset="100%" style="stop-color:#ff3300;stop-opacity:0.5" />
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                            </div>
+                            
+                            <!-- Booster Info -->
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <h2 style="color: #fff; font-size: 24px; font-weight: 900; margin-bottom: 8px;">Permanent Speed Boost +5.00</h2>
+                                <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin: 0;">
+                                    Provides a permanent in-app speed enhancement
+                                </p>
+                            </div>
+                            
+                            <!-- Features -->
+                            <div style="background: rgba(0, 255, 255, 0.05); border: 1px solid rgba(0, 255, 255, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                                    <span style="color: #00ffff; font-size: 20px;">✓</span>
+                                    <span style="color: rgba(255, 255, 255, 0.9); font-size: 14px;">Permanent speed enhancement (+5.00)</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                                    <span style="color: #00ffff; font-size: 20px;">✓</span>
+                                    <span style="color: rgba(255, 255, 255, 0.9); font-size: 14px;">Works in addition to your current progress speed</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <span style="color: #00ffff; font-size: 20px;">✓</span>
+                                    <span style="color: rgba(255, 255, 255, 0.9); font-size: 14px;">One-time purchase, lifetime benefit</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Price & Button -->
+                            <div style="text-align: center;">
+                                <div style="color: #8b5cf6; font-size: 16px; font-weight: 600; margin-bottom: 12px;">
+                                    Price: <span style="color: #00ffff; font-size: 20px; font-weight: 900;">$9.99</span>
+                                </div>
+                                <button 
+                                    onclick="${isPermanentPurchased ? '' : 'purchasePermanentBooster()'}" 
+                                    style="
+                                        width: 100%; 
+                                        background: ${isPermanentPurchased ? 'rgba(100, 100, 100, 0.3)' : 'linear-gradient(135deg, #00ffff, #0088cc)'}; 
+                                        border: none; 
+                                        border-radius: 12px; 
+                                        padding: 16px; 
+                                        color: ${isPermanentPurchased ? 'rgba(255, 255, 255, 0.5)' : '#000'}; 
+                                        font-size: 18px; 
+                                        font-weight: 900; 
+                                        cursor: ${isPermanentPurchased ? 'not-allowed' : 'pointer'}; 
+                                        box-shadow: 0 4px 20px rgba(0, 255, 255, ${isPermanentPurchased ? '0.1' : '0.4'}); 
+                                        transition: all 0.3s;
+                                        opacity: ${isPermanentPurchased ? '0.6' : '1'};
+                                    "
+                                    ${isPermanentPurchased ? 'disabled' : ''}
+                                >
+                                    ${isPermanentPurchased ? '✅ ALREADY PURCHASED' : '🚀 ACTIVATE BOOST'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        async function purchaseBooster() {
+            // Check if mining is active
+            const sessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
+            if (!sessionId) {
+                showToast('❌ Please start mining first!', true);
+                return;
+            }
+            
+            try {
+                showToast('🔄 Processing purchase...', false, 999999);
+                
+                // TODO: Google Play In-App Purchase integration
+                // const purchaseToken = await initiatePurchase('speed_boost_24h');
+                
+                // TEMPORARY: Generate unique test token (will be replaced with real Google Play token)
+                const testToken = 'test_speed_boost_' + Date.now() + '_' + Math.random().toString(36).substring(7);
+                
+                const response = await fetch(API_ENDPOINTS.purchaseSpeedBoost, {
+                    method: 'POST',
+                    headers: getApiHeaders(),
+                    body: JSON.stringify({
+                        userId: currentUser.userId,
+                        purchaseToken: testToken
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast(`🚀 Speed Boost activated! Total: +${data.totalBoostAmount.toFixed(2)} (${data.boostCount}x purchases)`, false);
+                    // Refresh data to show new rate
+                    await initApp();
+                } else {
+                    showToast(`❌ ${data.error || 'Purchase failed'}`, true);
+                }
+            } catch (error) {
+                console.error('Purchase error:', error);
+                showToast('❌ Purchase failed. Please try again.', true);
+            }
+        }
+        
+        async function purchasePermanentBooster() {
+            try {
+                showToast('🔄 Processing purchase...', false, 999999);
+                
+                // TODO: Google Play In-App Purchase integration
+                // const purchaseToken = await initiatePurchase('permanent_speed_boost');
+                
+                // TEMPORARY: Generate unique test token (will be replaced with real Google Play token)
+                const testToken = 'test_permanent_boost_' + Date.now() + '_' + Math.random().toString(36).substring(7);
+                
+                const response = await fetch(API_ENDPOINTS.purchasePermanentSpeedBoost, {
+                    method: 'POST',
+                    headers: getApiHeaders(),
+                    body: JSON.stringify({
+                        userId: currentUser.userId,
+                        purchaseToken: testToken
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast(`⭐ Permanent Speed Boost activated! Rate: ${data.oldRate.toFixed(2)} → ${data.newRate.toFixed(2)}`, false);
+                    // Refresh data to show new rate
+                    await initApp();
+                } else {
+                    showToast(`❌ ${data.error || 'Purchase failed'}`, true);
+                }
+            } catch (error) {
+                console.error('Purchase error:', error);
+                showToast('❌ Purchase failed. Please try again.', true);
+            }
         }
         
         function toggleEditInfoPage() {
