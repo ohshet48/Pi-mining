@@ -2020,6 +2020,7 @@ const API_ENDPOINTS = {
   getMiningSessions: `${FUNCTIONS_BASE_URL}/getMiningSessions`,
   sendMiningNotification: `${FUNCTIONS_BASE_URL}/sendMiningNotification`,
   updateLevel: `${FUNCTIONS_BASE_URL}/updateLevel`,
+  claimLevelReward: `${FUNCTIONS_BASE_URL}/claimLevelReward`,
   claimDailyReward: `${FUNCTIONS_BASE_URL}/claimDailyReward`,
   claimReferralEarnings: `${FUNCTIONS_BASE_URL}/claimReferralEarnings`,
   getReferrals: `${FUNCTIONS_BASE_URL}/getReferrals`,
@@ -3856,108 +3857,56 @@ window.__resetEmail = email;
         }
         
         async function claimLevelReward() {
-            // Prevent double-claiming
             if (isClaimingLevel) return;
             if (!d.pendingLevelUp) return;
-            if (d.pendingLevelUp > 20) return;
             
-            const reward = levelRewards[d.pendingLevelUp];
-            if (!reward) return;
-            
-            // Set lock
             isClaimingLevel = true;
-            
-            // Store old values for rollback
-            const oldBalance = d.balance;
-            const oldLevel = d.level;
-            const oldPendingLevelUp = d.pendingLevelUp;
-            
-            // ⚡ OPTIMISTIC UI - Update immediately (0ms)
-            d.balance += reward.coins;
             const claimedLevel = d.pendingLevelUp;
-            d.level = d.pendingLevelUp;
-            d.pendingLevelUp = null;
             
-            // Calculate new rate
-            const baseRate = 0.25;
-            const levelBonus = (claimedLevel - 1) * 0.05;
-            const newBaseRate = baseRate + levelBonus;
-            
-            // Update user's base rate
-            const users = JSON.parse(localStorage.getItem('users') || '{}');
-            const userEmail = localStorage.getItem('currentUser');
-            if (users[userEmail]) {
-                const activeRefs = calculateActiveRefs();
-                const totalRate = newBaseRate + (activeRefs * 0.05);
+            try {
+                showToast('Claiming level reward...');
                 
-                if (totalRate > 5.0) {
-                    users[userEmail].rate = Math.min(newBaseRate, 5.0 - (activeRefs * 0.05));
-                } else {
-                    users[userEmail].rate = newBaseRate;
+                const response = await fetch(API_ENDPOINTS.claimLevelReward, {
+                    method: 'POST',
+                    headers: getApiHeaders(),
+                    body: JSON.stringify({
+                        userId: currentUser.userId,
+                        level: claimedLevel
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to claim level reward');
                 }
                 
-                localStorage.setItem('users', JSON.stringify(users));
-                currentUser = users[userEmail];
+                const data = await response.json();
+                
+                // Update local data
+                d.balance = data.balance;
+                d.level = claimedLevel;
+                d.pendingLevelUp = null;
+                currentUser.balance = data.balance;
+                currentUser.rate = data.rate;
+                currentUser.level = claimedLevel;
+                
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                
+                render();
+                showToast(`✓ Claimed Level ${claimedLevel} reward!`);
+                
+                // Reload to refresh
+                await initApp();
+                if (d.level < 20) checkLevelUp();
+                render();
+                
+            } catch (error) {
+                console.error('Level reward error:', error);
+                showToast('Failed to claim level reward', true);
+            } finally {
+                isClaimingLevel = false;
             }
-            
-            save();
-            
-            // Update UI instantly
-            render();
-            showToast(`✓ Claimed Level ${claimedLevel} reward: +${reward.coins} Coins!`);
-            
-            // ⚡ PARALLEL backend calls (all at once!)
-            (async () => {
-                try {
-                    // 🔥 BOTH REQUESTS IN PARALLEL - NO WAITING!
-                    const [updateResponse, userDataResponse] = await Promise.all([
-                        fetch(API_ENDPOINTS.updateLevel, {
-                            method: 'POST',
-                            headers: getApiHeaders(),
-                            body: JSON.stringify({
-                                userId: currentUser.userId,
-                                newLevel: claimedLevel,
-                                coinsReward: reward.coins,
-                                newRate: newBaseRate
-                            })
-                        }),
-                        fetch(API_ENDPOINTS.getUserData, {
-                            method: 'POST',
-                            headers: getApiHeaders(),
-                            body: JSON.stringify({ userId: currentUser.userId })
-                        })
-                    ]);
-                    
-                    if (!updateResponse.ok) {
-                        throw new Error('Backend update failed');
-                    }
-                    
-                    // Backend automatically claims pending reward ✅
-                    
-                    // Reload app to refresh pending rewards
-                    await initApp();
-                    
-                    if (d.level < 20) {
-                        checkLevelUp();
-                    }
-                    
-                    render();
-                    
-                } catch (err) {
-                    console.error('Level reward backend error:', err);
-                    // Rollback on error
-                    d.balance = oldBalance;
-                    d.level = oldLevel;
-                    d.pendingLevelUp = oldPendingLevelUp;
-                    render();
-                    showToast('❌ Failed to claim level reward', true);
-                } finally {
-                    setTimeout(() => {
-                        isClaimingLevel = false;
-                    }, 1000);
-                }
-            })();
         }
+
 
         function fmt(s) {
             const h = Math.floor(s / 3600).toString().padStart(2, '0');
