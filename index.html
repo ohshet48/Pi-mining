@@ -1923,40 +1923,8 @@ console.log('Initializing Firebase...');
 firebase.initializeApp(firebaseConfig);
 console.log('Firebase initialized:', firebase.apps.length);
 const messaging = firebase.messaging();
-
-// Global initApp - will be defined inside DOMContentLoaded but accessible globally
-let initApp;
-
 // Auto-login when DOM is ready  
 document.addEventListener('DOMContentLoaded', async function() {
-    // IMMEDIATELY override initApp with a function that will work
-    // This ensures initApp is available at line ~2006
-    initApp = async function() {
-        console.log('🚀 initApp CALLED from line ~2006');
-        requestAnimationFrame(() => {  });
-        const appEl = document.getElementById('app');
-        if (appEl) appEl.style.display = 'block';
-        
-        // Declare pendingRewardsData at function scope
-        let pendingRewardsData = [];
-        
-        // localStorage'dan currentUser'ı oku
-        const storedUser = localStorage.getItem('currentUser');
-        const userId = localStorage.getItem('userId');
-        
-        if (storedUser) {
-            currentUser = JSON.parse(storedUser);
-            // Username yoksa email'den oluştur
-            if (!currentUser.username && currentUser.email) {
-                currentUser.username = currentUser.email.split('@')[0];
-            }
-        }
-        
-        // For now, just show the app (render will be called elsewhere)
-        // render(); // REMOVED: render is defined later at line ~4024
-        console.log('✅ initApp COMPLETED (simplified version)');
-    };
-    
     // Auto-reload when internet connection restored
     window.addEventListener('online', () => {
         console.log('Internet connection restored - reloading...');
@@ -2025,11 +1993,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             document.getElementById('app').style.display = 'block';
         // keep loading until app fully ready
             console.log('Calling initApp...');
-            if (typeof initApp === 'function') {
-                initApp();
-            } else {
-                console.error('initApp is not defined yet!');
-            }
+            initApp();
             console.log('initApp completed');
         }, 500);
     } else {
@@ -2051,8 +2015,6 @@ const API_ENDPOINTS = {
   claimReward: `${FUNCTIONS_BASE_URL}/claimReward`,
   getUserData: `${FUNCTIONS_BASE_URL}/getUserData`,
   getAllUserData: `${FUNCTIONS_BASE_URL}/getAllUserData`,  // NEW: Optimized single request
-  createWallet: `${FUNCTIONS_BASE_URL}/createWallet`,
-  importWallet: `${FUNCTIONS_BASE_URL}/importWallet`,
   getMiningSessions: `${FUNCTIONS_BASE_URL}/getMiningSessions`,
   sendMiningNotification: `${FUNCTIONS_BASE_URL}/sendMiningNotification`,
   updateLevel: `${FUNCTIONS_BASE_URL}/updateLevel`,
@@ -2731,7 +2693,6 @@ function hideLoginLoading() {
                     </svg>
                 </span>
             </div>
-            <div class="menu-item" onclick="openPage('wallet')">Wallet</div>
             <div class="menu-item" onclick="openPage('tasks')">Tasks</div>
             <div class="menu-item" onclick="openPage('leaderboard')">Leaderboard</div>
             <div class="menu-item" onclick="openPage('announcements')">Announcements</div>
@@ -3514,10 +3475,507 @@ window.__resetEmail = email;
                 console.error('❌ Error sending backend notification:', error);
             }
         }
-        /*
-        REMOVED: Old initApp definition is now at line ~1936
-        Keeping this commented block for reference
-        */
+        async function initApp() {
+    requestAnimationFrame(() => {  });
+    const appEl = document.getElementById('app');
+    if (appEl) appEl.style.display = 'block';
+    
+    // Declare pendingRewardsData at function scope
+    let pendingRewardsData = [];
+    
+    // localStorage'dan currentUser'ı oku
+    const storedUser = localStorage.getItem('currentUser');
+    const userId = localStorage.getItem('userId');
+    
+    if (storedUser) {
+        currentUser = JSON.parse(storedUser);
+        // Username yoksa email'den oluştur
+        if (!currentUser.username && currentUser.email) {
+            currentUser.username = currentUser.email.split('@')[0];
+        }
+    }
+    
+    // Backend'den TÜM verileri çek - TEK İSTEK (OPTİMİZE EDİLDİ!)
+    if (userId) {
+        try {
+            console.log('🔄 Backend veriler çekiliyor (optimize edilmiş tek istek)...');
+            
+            // OPTİMİZE: 4 istek yerine TEK istek!
+            const response = await fetch(API_ENDPOINTS.getAllUserData, {
+                method: 'POST',
+                headers: getApiHeaders(),
+                body: JSON.stringify({ userId: userId })
+            });
+            
+            console.log('📡 Response status:', response.status);
+            console.log('📡 Response ok:', response.ok);
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ Response not ok:', response.status, errorText);
+                throw new Error(`Failed to fetch user data: ${response.status} - ${errorText}`);
+            }
+            
+            const allData = await response.json();
+            
+            // Process User Data
+            currentUser = allData.user;
+            activeMiningSession = allData.activeMiningSession || null;
+            localStorage.setItem('currentUser', JSON.stringify(allData.user));
+            
+            // Aktif mining session varsa yükle
+            if (allData.activeMiningSession) {
+                const session = allData.activeMiningSession;
+                const endTime = session.endTime._seconds ? session.endTime._seconds * 1000 : session.endTime;
+                const startTime = session.startTime._seconds ? session.startTime._seconds * 1000 : session.startTime;
+                localStorage.setItem('miningEndTime_' + currentUser.email, endTime);
+                localStorage.setItem('miningStartTime_' + currentUser.email, startTime);
+                localStorage.setItem('currentSessionId_' + currentUser.email, session.sessionId);
+                
+                // Debug: Log ad boost status
+                console.log('✅ Active mining session loaded:', {
+                    sessionId: session.sessionId,
+                    adBoostActive: session.adBoostActive,
+                    adBoostCount: session.adBoostCount
+                });
+            } else {
+                console.log('✓ No active mining session');
+            }
+            
+            console.log('✅ User data yüklendi');
+            
+            // Process Referral Counts (no detailed list - modal will fetch that)
+            localStorage.setItem('activeReferralsCount_' + currentUser.email, allData.activeCount || 0);
+            localStorage.setItem('totalReferralsCount_' + currentUser.email, allData.totalCount || 0);
+            console.log('✅ Referral counts loaded:', {
+                active: allData.activeCount || 0,
+                total: allData.totalCount || 0
+            });
+            
+            // Process Pending Rewards
+            pendingRewardsData = allData.pendingRewards || [];
+            
+            if (pendingRewardsData.length > 0) {
+                console.log(`📦 ${pendingRewardsData.length} pending reward bulundu`);
+                
+                // Restore flags from pending rewards
+                for (const reward of pendingRewardsData) {
+                    if (reward.rewardType === 'daily') {
+                        dailyRewardAvailable = true;
+                        console.log('✅ Daily reward flag set');
+                    } else if (reward.rewardType === 'levelUp') {
+                        const metadata = reward.metadata || {};
+                        const level = metadata.level || (currentUser.level + 1);
+                        tempPendingLevelUp = level;
+                        console.log(`✅ Level up flag set: Level ${level}`);
+                    }
+                }
+                
+                // Calculate total pending referral earnings from pendingRewards
+                const referralRewards = pendingRewardsData.filter(r => r.rewardType === 'referral');
+                const totalReferralEarnings = referralRewards.reduce((sum, r) => sum + (r.amount || 0), 0);
+                if (totalReferralEarnings > 0) {
+                    currentUser.pendingReferralEarnings = totalReferralEarnings;
+                    console.log(`✅ Referral earnings calculated: ${totalReferralEarnings}`);
+                }
+            } else {
+                console.log('✓ No pending rewards');
+            }
+            
+            console.log('✅ TÜM BACKEND VERİLER YÜKLENDİ (tek istek - optimize!)');
+            
+        } catch (error) {
+            console.error('❌ Backend veri çekme hatası:', error);
+            console.error('Error message:', error.message);
+            if (error.response) {
+                const errorData = await error.response.json().catch(() => ({}));
+                console.error('Backend error response:', errorData);
+            }
+        }
+    }
+    
+            // CRITICAL: Check if currentUser exists before creating d object
+            if (!currentUser) {
+                console.error('❌ currentUser is undefined! Redirecting to login...');
+                document.getElementById('authScreen').style.display = 'flex';
+                document.getElementById('app').style.display = 'none';
+                return;
+            }
+    
+            d = {
+                balance: currentUser.balance || 0,
+                level: currentUser.level || 1,
+                refs: parseInt(localStorage.getItem('totalReferralsCount_' + currentUser.email)) || 0,
+                activeRefs: parseInt(localStorage.getItem('activeReferralsCount_' + currentUser.email)) || 0,
+                streak: currentUser.streak || 0,
+                lastDate: currentUser.lastDate || null,
+                refCode: currentUser.referralCode || currentUser.refCode,
+                fullName: currentUser.fullName || '',
+                country: currentUser.country || '',
+                birthDate: currentUser.birthDate || '',
+                mining: false,
+                timeLeft: 0,
+                miningDays: currentUser.miningDays || 0,
+                pendingLevelUp: tempPendingLevelUp || currentUser.pendingLevelUp || null,
+                pendingReferralEarnings: currentUser.pendingReferralEarnings || 0
+            };
+            
+            // Calculate active mining referrals
+            d.activeRefs = calculateActiveRefs();
+            
+            // Calculate dynamic rate: base rate + referral bonus + ad boost + speed boost
+            // Base rate includes level bonuses only (permanent)
+            const baseRate = currentUser.rate || 0.25;
+            const refBonus = d.activeRefs * 0.05;
+            
+            // Check if current session has ad boost active
+            let adBonus = 0;
+            if (activeMiningSession && activeMiningSession.adBoostActive) {
+                adBonus = activeMiningSession.adBoostTotal || 0;  // Use total cumulative boost
+                console.log('🚀 Ad boost detected:', {
+                    adBoostCount: activeMiningSession.adBoostCount,
+                    adBoostTotal: adBonus
+                });
+            }
+            
+            // Check if current session has speed boost active (purchased)
+            let speedBonus = 0;
+            if (activeMiningSession && activeMiningSession.speedBoostActive) {
+                speedBonus = activeMiningSession.speedBoostAmount || 5.0;
+                console.log('⚡ Speed boost detected:', {
+                    speedBoostActive: activeMiningSession.speedBoostActive,
+                    speedBoostAmount: speedBonus,
+                    speedBoostCount: activeMiningSession.speedBoostCount
+                });
+            } else {
+                console.log('⚡ No speed boost:', {
+                    hasSession: !!activeMiningSession,
+                    speedBoostActive: activeMiningSession?.speedBoostActive
+                });
+            }
+            
+            d.rate = baseRate + refBonus + adBonus + speedBonus;
+            
+            console.log('💰 Final rate calculated:', {
+                baseRate: baseRate,
+                refBonus: refBonus,
+                adBonus: adBonus,
+                speedBonus: speedBonus,
+                totalRate: d.rate
+            });
+            
+            // Check for pending airdrops
+            hasPendingAirdrops = (currentUser.pendingAirdrops && currentUser.pendingAirdrops.length > 0) || false;
+            
+            // Set dailyRewardAvailable - ONLY use pending rewards system
+            // Backend's dailyRewardAvailable may be stale, so ignore it
+            // If there's a pending daily reward → available = true
+            // If no pending daily reward → available = false
+            const hasPendingDaily = pendingRewardsData.some(r => r.rewardType === 'daily');
+            dailyRewardAvailable = hasPendingDaily;
+            
+            console.log('🎁 Pending rewards check:', {
+                totalPendingRewards: pendingRewardsData.length,
+                hasPendingDaily: hasPendingDaily,
+                dailyRewardAvailable: dailyRewardAvailable,
+                allRewards: pendingRewardsData.map(r => ({ type: r.rewardType, amount: r.amount }))
+            });
+            
+            // Load balance visibility preference
+            const savedBalanceVisible = localStorage.getItem('balanceVisible_' + currentUser.email);
+            if (savedBalanceVisible !== null) {
+                balanceVisible = savedBalanceVisible === 'true';
+            }
+            
+            console.log('🚀 [DEBUG] About to call requestNotificationPermission...');
+            
+            // Request notification permission
+            requestNotificationPermission();
+            
+            console.log('✅ [DEBUG] requestNotificationPermission called');
+            
+          document.getElementById('authScreen').style.display = 'none';
+           // Hide loading screen
+          document.getElementById('app').style.display = 'block';
+          
+          // Hide splash screen after data is loaded
+          const splashScreen = document.getElementById('splashScreen');
+          if (splashScreen) {
+              splashScreen.classList.add('fade-out');
+              setTimeout(() => {
+                  splashScreen.style.display = 'none';
+              }, 800);
+          }
+          
+        // keep loading until app fully ready  
+            checkMining();
+            checkLevelUp(); // Level up kontrolü ekle
+            render();
+            startTimer();
+            
+            // CRITICAL: Hide login loading and close toast after everything is ready
+            if (typeof hideLoginLoading === 'function') {
+                setTimeout(() => {
+                    hideLoginLoading();
+                    // Close any loading toasts
+                    const toasts = document.querySelectorAll('.toast');
+                    toasts.forEach(toast => toast.remove());
+                }, 100);
+            }
+        }
+        
+        function calculateActiveRefs() {
+            // Backend'den gelen active referrals count'u kullan
+            return parseInt(localStorage.getItem('activeReferralsCount_' + currentUser.email)) || 0;
+        }
+
+        function save() {
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            const userEmail = localStorage.getItem('currentUser');
+            
+            if (users[userEmail]) {
+                users[userEmail].balance = d.balance;
+                users[userEmail].rate = (currentUser.rate || 0.25); // Save base rate only (no referral/ad session bonuses)
+                users[userEmail].level = d.level;
+                users[userEmail].refs = d.refs;
+                users[userEmail].streak = d.streak;
+                users[userEmail].lastDate = d.lastDate;
+                users[userEmail].miningDays = d.miningDays;
+                users[userEmail].pendingLevelUp = d.pendingLevelUp;
+                users[userEmail].dailyRewardAvailable = dailyRewardAvailable;
+                
+                localStorage.setItem('users', JSON.stringify(users));
+                currentUser = users[userEmail];
+                
+                // CRITICAL: Also update currentUser in localStorage to prevent balance reset
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            }
+        }
+        
+        function getLevelProgress() {
+            const currentReq = levelRequirements[d.level];
+            const nextReq = levelRequirements[d.level + 1];
+            
+            if (!nextReq) return { progress: 100, current: d.miningDays, required: d.miningDays };
+            
+            const progress = ((d.miningDays - currentReq) / (nextReq - currentReq)) * 100;
+            return {
+                progress: Math.min(progress, 100),
+                current: d.miningDays,
+                required: nextReq
+            };
+        }
+        
+        async function checkLevelUp() {
+            if (d.level >= 20) return;
+            
+            const nextReq = levelRequirements[d.level + 1];
+            if (d.miningDays >= nextReq && !d.pendingLevelUp) {
+                d.pendingLevelUp = d.level + 1;
+                save();
+                
+                // Save pending level up reward
+                const levelReward = levelRewards[d.level + 1];
+                if (levelReward && currentUser && currentUser.userId) {
+                    await addPendingReward('levelUp', levelReward.coins, {
+                        level: d.level + 1,
+                        miningDays: d.miningDays
+                    });
+                }
+                
+                render();
+            }
+        }
+        
+        async function claimLevelReward() {
+            // Prevent double-claiming
+            if (isClaimingLevel) return;
+            if (!d.pendingLevelUp) return;
+            if (d.pendingLevelUp > 20) return;
+            
+            const reward = levelRewards[d.pendingLevelUp];
+            if (!reward) return;
+            
+            // Set lock
+            isClaimingLevel = true;
+            
+            // Store old values for rollback
+            const oldBalance = d.balance;
+            const oldLevel = d.level;
+            const oldPendingLevelUp = d.pendingLevelUp;
+            
+            // ⚡ OPTIMISTIC UI - Update immediately (0ms)
+            d.balance += reward.coins;
+            const claimedLevel = d.pendingLevelUp;
+            d.level = d.pendingLevelUp;
+            d.pendingLevelUp = null;
+            
+            // Calculate new rate
+            const baseRate = 0.25;
+            const levelBonus = (claimedLevel - 1) * 0.05;
+            const newBaseRate = baseRate + levelBonus;
+            
+            // Update user's base rate
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            const userEmail = localStorage.getItem('currentUser');
+            if (users[userEmail]) {
+                const activeRefs = calculateActiveRefs();
+                const totalRate = newBaseRate + (activeRefs * 0.05);
+                
+                if (totalRate > 5.0) {
+                    users[userEmail].rate = Math.min(newBaseRate, 5.0 - (activeRefs * 0.05));
+                } else {
+                    users[userEmail].rate = newBaseRate;
+                }
+                
+                localStorage.setItem('users', JSON.stringify(users));
+                currentUser = users[userEmail];
+            }
+            
+            save();
+            
+            // Update UI instantly
+            render();
+            showToast(`✓ Claimed Level ${claimedLevel} reward: +${reward.coins} Coins!`);
+            
+            // ⚡ PARALLEL backend calls (all at once!)
+            (async () => {
+                try {
+                    // 🔥 BOTH REQUESTS IN PARALLEL - NO WAITING!
+                    const [updateResponse, userDataResponse] = await Promise.all([
+                        fetch(API_ENDPOINTS.updateLevel, {
+                            method: 'POST',
+                            headers: getApiHeaders(),
+                            body: JSON.stringify({
+                                userId: currentUser.userId,
+                                newLevel: claimedLevel,
+                                coinsReward: reward.coins,
+                                newRate: newBaseRate
+                            })
+                        }),
+                        fetch(API_ENDPOINTS.getUserData, {
+                            method: 'POST',
+                            headers: getApiHeaders(),
+                            body: JSON.stringify({ userId: currentUser.userId })
+                        })
+                    ]);
+                    
+                    if (!updateResponse.ok) {
+                        throw new Error('Backend update failed');
+                    }
+                    
+                    // Backend automatically claims pending reward ✅
+                    
+                    // Reload app to refresh pending rewards
+                    await initApp();
+                    
+                    if (d.level < 20) {
+                        checkLevelUp();
+                    }
+                    
+                    render();
+                    
+                } catch (err) {
+                    console.error('Level reward backend error:', err);
+                    // Rollback on error
+                    d.balance = oldBalance;
+                    d.level = oldLevel;
+                    d.pendingLevelUp = oldPendingLevelUp;
+                    render();
+                    showToast('❌ Failed to claim level reward', true);
+                } finally {
+                    setTimeout(() => {
+                        isClaimingLevel = false;
+                    }, 1000);
+                }
+            })();
+        }
+
+        function fmt(s) {
+            const h = Math.floor(s / 3600).toString().padStart(2, '0');
+            const m = Math.floor((s % 3600) / 60).toString().padStart(2, '0');
+            const sec = (s % 60).toString().padStart(2, '0');
+            return h + ':' + m + ':' + sec;
+        }
+
+        function updateWatchAdButton() {
+            const container = document.getElementById('adBoostContainer');
+            if (!container) return;
+            
+            // Don't update if locked (countdown in progress)
+            const existingBtn = document.getElementById('watchAdButton');
+            if (existingBtn && existingBtn.getAttribute('data-locked') === 'true') {
+                return; // Skip update
+            }
+            
+            // Wait for activeMiningSession to load
+            if (!activeMiningSession) {
+                return; // Skip update until session is loaded
+            }
+            
+            // Only show if mining
+            if (!d || !d.mining) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            const currentRate = d.rate;
+            const adCooldownKey = 'adCooldown_' + currentUser.email;
+            const adCooldownEnd = parseInt(localStorage.getItem(adCooldownKey) || '0');
+            const now = Date.now();
+            const cooldownRemaining = Math.max(0, Math.ceil((adCooldownEnd - now) / 1000));
+            const isOnCooldown = cooldownRemaining > 0;
+            const adBoostCount = activeMiningSession?.adBoostCount || 0;
+            const isMaxAds = adBoostCount >= 5;
+            const isDisabled = isOnCooldown || isMaxAds;
+            
+            // Calculate next reward
+            let nextReward = 0;
+            const nextCount = adBoostCount + 1;
+            if (nextCount <= 2) {
+                nextReward = 0.25;
+            } else if (nextCount === 3) {
+                nextReward = 0.50;
+            } else if (nextCount === 4) {
+                nextReward = 0.75;
+            } else if (nextCount === 5) {
+                nextReward = 1.00;
+            }
+            
+            container.innerHTML = `
+                <button 
+                    id="watchAdButton"
+                    data-locked="false"
+                    onclick="${isDisabled ? '' : 'watchAdBoost()'}" 
+                    style="
+                        width: 100%; 
+                        height: 45px; 
+                        background: ${isMaxAds ? 'rgba(100, 100, 100, 0.3)' : (isOnCooldown ? 'rgba(0, 255, 255, 0.1)' : 'rgba(0, 255, 255, 0.15)')}; 
+                        border: 1px solid ${isMaxAds ? 'rgba(150, 150, 150, 0.3)' : (isOnCooldown ? 'rgba(0, 255, 255, 0.3)' : 'rgba(0, 255, 255, 0.4)')}; 
+                        border-radius: 12px; 
+                        color: ${isDisabled ? 'rgba(255, 255, 255, 0.4)' : '#00ffff'}; 
+                        font-size: 13px; 
+                        font-weight: 700; 
+                        cursor: ${isDisabled ? 'not-allowed' : 'pointer'}; 
+                        display: flex; 
+                        align-items: center; 
+                        justify-content: center; 
+                        gap: 8px;
+                        opacity: ${isDisabled ? '0.6' : '1'};
+                    "
+                    ${isDisabled ? 'disabled' : ''}
+                >
+                    ${isMaxAds ? 
+                        `🔒 Max Ads (${adBoostCount}/5)` : 
+                        (isOnCooldown ? 
+                            `⏳ Wait for reward ${cooldownRemaining}s` : 
+                            `📺 Watch Ad +${nextReward.toFixed(2)}/h (${adBoostCount}/5)`
+                        )
+                    }
+                </button>
+            `;
+        }
+
         function render() {
             // Update menu username
             const menuUsername = document.getElementById('menuUsername');
@@ -4852,10 +5310,6 @@ async function startMiningOnBackend() {
                         startBoostButtonUpdates();
                     }, 0);
                     break;
-                case 'wallet':
-                    pageTitle.textContent = 'Wallet';
-                    pageContent.innerHTML = getWalletPageContent();
-                    break;
                 case 'tasks':
                     pageTitle.textContent = 'Tasks';
                     pageContent.innerHTML = getTasksPageContent();
@@ -6144,813 +6598,6 @@ async function startMiningOnBackend() {
         }
         
         
-        
-        
-        // Wallet word list (BIP39 simplified - 100 words)
-        const WALLET_WORDS = [
-            'ability', 'able', 'about', 'above', 'absent', 'absorb', 'abstract', 'absurd', 'abuse', 'access',
-            'accident', 'account', 'accuse', 'achieve', 'acid', 'acoustic', 'acquire', 'across', 'act', 'action',
-            'actor', 'actress', 'actual', 'adapt', 'add', 'addict', 'address', 'adjust', 'admit', 'adult',
-            'advance', 'advice', 'aerobic', 'affair', 'afford', 'afraid', 'again', 'age', 'agent', 'agree',
-            'ahead', 'aim', 'air', 'airport', 'aisle', 'alarm', 'album', 'alcohol', 'alert', 'alien',
-            'all', 'alley', 'allow', 'almost', 'alone', 'alpha', 'already', 'also', 'alter', 'always',
-            'amateur', 'amazing', 'among', 'amount', 'amused', 'analyst', 'anchor', 'ancient', 'anger', 'angle',
-            'angry', 'animal', 'ankle', 'announce', 'annual', 'another', 'answer', 'antenna', 'antique', 'anxiety',
-            'any', 'apart', 'apology', 'appear', 'apple', 'approve', 'april', 'arch', 'arctic', 'area',
-            'arena', 'argue', 'arm', 'armed', 'armor', 'army', 'around', 'arrange', 'arrest', 'arrive'
-        ];
-        
-        function generateSeedPhrase() {
-            const words = [];
-            for (let i = 0; i < 10; i++) {
-                const randomIndex = Math.floor(Math.random() * WALLET_WORDS.length);
-                words.push(WALLET_WORDS[randomIndex]);
-            }
-            return words.join(' ');
-        }
-        
-        function hashSeedPhrase(seedPhrase) {
-            let hash = 0;
-            for (let i = 0; i < seedPhrase.length; i++) {
-                const char = seedPhrase.charCodeAt(i);
-                hash = ((hash << 5) - hash) + char;
-                hash = hash & hash;
-            }
-            return Math.abs(hash).toString(36);
-        }
-        
-        function getWalletPageContent() {
-            const walletCreated = currentUser.walletCreated || false;
-            const isWalletActive = localStorage.getItem('walletActive_' + currentUser.email) === 'true';
-            
-            if (!walletCreated || !isWalletActive) {
-                // Premium Create/Import screen
-                return `
-                    <div style="padding: 20px 0;">
-                        <div style="text-align: center; padding: 60px 20px 40px;">
-                            <!-- Premium Wallet Icon -->
-                            <svg width="120" height="120" viewBox="0 0 200 200" style="margin-bottom: 24px;" xmlns="http://www.w3.org/2000/svg">
-                                <defs>
-                                    <linearGradient id="walletGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" style="stop-color:#00bcd4;stop-opacity:1" />
-                                        <stop offset="100%" style="stop-color:#0097a7;stop-opacity:1" />
-                                    </linearGradient>
-                                </defs>
-                                <!-- Wallet body -->
-                                <rect x="40" y="60" width="120" height="90" rx="8" fill="none" stroke="url(#walletGradient)" stroke-width="4"/>
-                                <!-- Wallet flap -->
-                                <path d="M 40 60 L 40 45 C 40 40 45 35 50 35 L 150 35 C 155 35 160 40 160 45 L 160 60" fill="none" stroke="url(#walletGradient)" stroke-width="4" stroke-linecap="round"/>
-                                <!-- Card slot -->
-                                <rect x="55" y="90" width="50" height="35" rx="3" fill="none" stroke="url(#walletGradient)" stroke-width="3" opacity="0.7"/>
-                                <line x1="60" y1="100" x2="95" y2="100" stroke="url(#walletGradient)" stroke-width="2" opacity="0.5"/>
-                                <line x1="60" y1="108" x2="85" y2="108" stroke="url(#walletGradient)" stroke-width="2" opacity="0.5"/>
-                                <!-- Coin pocket -->
-                                <circle cx="135" cy="110" r="18" fill="none" stroke="url(#walletGradient)" stroke-width="3"/>
-                                <text x="135" y="118" text-anchor="middle" fill="url(#walletGradient)" font-size="20" font-weight="bold">A</text>
-                            </svg>
-                            
-                            <h2 style="color: #fff; font-size: 24px; font-weight: 800; margin-bottom: 12px;">Secure Wallet</h2>
-                            <p style="color: rgba(255, 255, 255, 0.6); font-size: 14px; max-width: 320px; margin: 0 auto 40px; line-height: 1.6;">
-                                Create a new wallet or import an existing one to manage your ARCASTRA tokens
-                            </p>
-                            
-                            <div style="max-width: 400px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px;">
-                                <button onclick="showCreateWallet()" class="reward-claim-btn" style="
-                                    padding: 18px;
-                                    background: linear-gradient(135deg, #00bcd4, #0097a7);
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    gap: 12px;
-                                    box-shadow: 0 4px 20px rgba(0, 188, 212, 0.4);
-                                ">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                                        <circle cx="12" cy="12" r="10"/>
-                                        <line x1="12" y1="8" x2="12" y2="16"/>
-                                        <line x1="8" y1="12" x2="16" y2="12"/>
-                                    </svg>
-                                    <span style="font-size: 16px;">CREATE NEW WALLET</span>
-                                </button>
-                                
-                                <button onclick="showImportWallet()" style="
-                                    padding: 18px;
-                                    background: rgba(0, 188, 212, 0.15);
-                                    border: 2px solid rgba(0, 188, 212, 0.4);
-                                    border-radius: 12px;
-                                    color: #00bcd4;
-                                    font-size: 16px;
-                                    font-weight: 800;
-                                    cursor: pointer;
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    gap: 12px;
-                                    transition: all 0.3s;
-                                ">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                        <polyline points="7 10 12 15 17 10"/>
-                                        <line x1="12" y1="15" x2="12" y2="3"/>
-                                    </svg>
-                                    <span>IMPORT WALLET</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            // Active wallet - Premium design
-            const walletAddress = currentUser.walletAddress || 'N/A';
-            const balance = d.balance || 0;
-            const availableBalance = balance;
-            
-            const transactions = JSON.parse(localStorage.getItem('transactions_' + currentUser.email) || '[]');
-            const showAll = localStorage.getItem('showAllTransactions_' + currentUser.email) === 'true';
-            const displayTransactions = showAll ? transactions : transactions.slice(0, 5);
-            
-            return `
-                <div style="padding: 20px 0;">
-                    <!-- Premium Balance Card -->
-                    <div class="card" style="margin-bottom: 24px; padding: 32px 24px;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
-                            <div>
-                                <div style="color: rgba(255, 255, 255, 0.5); font-size: 12px; font-weight: 700; letter-spacing: 1px; margin-bottom: 8px;">TOTAL BALANCE</div>
-                                <div style="color: #fff; font-size: 40px; font-weight: 900; line-height: 1;">
-                                    ${balance.toFixed(2)}
-                                    <span style="font-size: 16px; color: rgba(255, 255, 255, 0.5); font-weight: 600; margin-left: 4px;">ARCASTRA</span>
-                                </div>
-                            </div>
-                            <svg width="40" height="40" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                                <defs>
-                                    <linearGradient id="miniWallet" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" style="stop-color:#00bcd4;stop-opacity:0.8" />
-                                        <stop offset="100%" style="stop-color:#0097a7;stop-opacity:0.8" />
-                                    </linearGradient>
-                                </defs>
-                                <rect x="20" y="35" width="60" height="45" rx="4" fill="none" stroke="url(#miniWallet)" stroke-width="3"/>
-                                <path d="M 20 35 L 20 28 C 20 25 23 22 26 22 L 74 22 C 77 22 80 25 80 28 L 80 35" fill="none" stroke="url(#miniWallet)" stroke-width="3"/>
-                                <circle cx="65" cy="57" r="6" fill="none" stroke="url(#miniWallet)" stroke-width="2"/>
-                            </svg>
-                        </div>
-                        
-                        <!-- Available Balance -->
-                        <div style="background: rgba(0, 188, 212, 0.1); border: 1px solid rgba(0, 188, 212, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
-                            <div style="color: rgba(255, 255, 255, 0.5); font-size: 11px; font-weight: 700; letter-spacing: 1px; margin-bottom: 6px;">AVAILABLE</div>
-                            <div style="color: #00bcd4; font-size: 24px; font-weight: 900;">${availableBalance.toFixed(2)} <span style="font-size: 13px; opacity: 0.7;">ARCASTRA</span></div>
-                        </div>
-                        
-                        <!-- Action Buttons -->
-                        <div style="display: flex; gap: 12px; margin-bottom: 16px;">
-                            <button onclick="openSendModal()" class="reward-claim-btn" style="flex: 1; padding: 16px; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                                    <line x1="22" y1="2" x2="11" y2="13"/>
-                                    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                                </svg>
-                                <span>SEND</span>
-                            </button>
-                            
-                            <button disabled style="
-                                flex: 1;
-                                padding: 16px;
-                                background: rgba(100, 100, 100, 0.2);
-                                border: 1px solid rgba(150, 150, 150, 0.2);
-                                border-radius: 12px;
-                                color: rgba(255, 255, 255, 0.3);
-                                font-size: 14px;
-                                font-weight: 800;
-                                cursor: not-allowed;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                gap: 8px;
-                            ">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-                                </svg>
-                                <span>WITHDRAW</span>
-                            </button>
-                        </div>
-                        
-                        <!-- Logout Wallet -->
-                        <button onclick="logoutWallet()" style="
-                            width: 100%;
-                            padding: 14px;
-                            background: rgba(239, 68, 68, 0.1);
-                            border: 1px solid rgba(239, 68, 68, 0.3);
-                            border-radius: 10px;
-                            color: #ef4444;
-                            font-size: 13px;
-                            font-weight: 700;
-                            cursor: pointer;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            gap: 8px;
-                            transition: all 0.3s;
-                        ">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                                <polyline points="16 17 21 12 16 7"/>
-                                <line x1="21" y1="12" x2="9" y2="12"/>
-                            </svg>
-                            <span>LOGOUT WALLET</span>
-                        </button>
-                    </div>
-                    
-                    <!-- Wallet Address Card -->
-                    <div class="card" style="margin-bottom: 24px; padding: 24px;">
-                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00bcd4" stroke-width="2">
-                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                            </svg>
-                            <div style="color: rgba(255, 255, 255, 0.5); font-size: 12px; font-weight: 700; letter-spacing: 1px;">YOUR ADDRESS</div>
-                        </div>
-                        <div style="
-                            background: rgba(0, 0, 0, 0.3);
-                            border: 1px solid rgba(0, 188, 212, 0.2);
-                            border-radius: 10px;
-                            padding: 14px;
-                            color: #00bcd4;
-                            font-size: 11px;
-                            font-family: 'Courier New', monospace;
-                            word-break: break-all;
-                            margin-bottom: 12px;
-                            line-height: 1.6;
-                        ">${walletAddress}</div>
-                        <button onclick="copyWalletAddress('${walletAddress}')" style="
-                            width: 100%;
-                            padding: 12px;
-                            background: rgba(0, 188, 212, 0.15);
-                            border: 1px solid rgba(0, 188, 212, 0.3);
-                            border-radius: 10px;
-                            color: #00bcd4;
-                            font-size: 13px;
-                            font-weight: 700;
-                            cursor: pointer;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            gap: 8px;
-                            transition: all 0.3s;
-                        ">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                            </svg>
-                            <span>COPY ADDRESS</span>
-                        </button>
-                    </div>
-                    
-                    <!-- Transaction History -->
-                    <div class="card" style="padding: 24px;">
-                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00bcd4" stroke-width="2">
-                                <line x1="12" y1="1" x2="12" y2="23"/>
-                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                            </svg>
-                            <h3 style="color: #fff; font-size: 16px; font-weight: 800; letter-spacing: 0.5px; margin: 0;">TRANSACTIONS</h3>
-                        </div>
-                        
-                        ${transactions.length === 0 ? `
-                            <div style="text-align: center; padding: 60px 20px; color: rgba(255, 255, 255, 0.3);">
-                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin: 0 auto 16px; opacity: 0.3;">
-                                    <circle cx="12" cy="12" r="10"/>
-                                    <line x1="12" y1="8" x2="12" y2="12"/>
-                                    <line x1="12" y1="16" x2="12.01" y2="16"/>
-                                </svg>
-                                <div style="font-size: 14px; font-weight: 600;">No transactions yet</div>
-                                <div style="font-size: 12px; margin-top: 6px; opacity: 0.7;">Your transaction history will appear here</div>
-                            </div>
-                        ` : `
-                            <div style="display: flex; flex-direction: column; gap: 12px;">
-                                ${displayTransactions.map(tx => `
-                                    <div style="
-                                        background: rgba(0, 0, 0, 0.2);
-                                        border: 1px solid rgba(255, 255, 255, 0.05);
-                                        border-radius: 12px;
-                                        padding: 16px;
-                                        transition: all 0.3s;
-                                    ">
-                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                            <div style="display: flex; align-items: center; gap: 10px;">
-                                                <div style="
-                                                    width: 36px;
-                                                    height: 36px;
-                                                    border-radius: 10px;
-                                                    background: ${tx.type === 'send' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)'};
-                                                    border: 1px solid ${tx.type === 'send' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)'};
-                                                    display: flex;
-                                                    align-items: center;
-                                                    justify-content: center;
-                                                ">
-                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${tx.type === 'send' ? '#ef4444' : '#10b981'}" stroke-width="2">
-                                                        ${tx.type === 'send' ? 
-                                                            '<line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>' :
-                                                            '<line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>'
-                                                        }
-                                                    </svg>
-                                                </div>
-                                                <div>
-                                                    <div style="color: #fff; font-size: 14px; font-weight: 700; margin-bottom: 2px;">
-                                                        ${tx.type === 'send' ? 'Sent' : 'Received'}
-                                                    </div>
-                                                    <div style="color: rgba(255, 255, 255, 0.4); font-size: 11px;">
-                                                        ${new Date(tx.timestamp).toLocaleDateString()}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div style="text-align: right;">
-                                                <div style="color: ${tx.type === 'send' ? '#ef4444' : '#10b981'}; font-size: 18px; font-weight: 900;">
-                                                    ${tx.type === 'send' ? '-' : '+'}${tx.amount.toFixed(2)}
-                                                </div>
-                                                <div style="color: rgba(255, 255, 255, 0.3); font-size: 10px; margin-top: 2px;">ARCASTRA</div>
-                                            </div>
-                                        </div>
-                                        <div style="
-                                            color: rgba(255, 255, 255, 0.4);
-                                            font-size: 10px;
-                                            font-family: 'Courier New', monospace;
-                                            padding: 8px;
-                                            background: rgba(0, 0, 0, 0.2);
-                                            border-radius: 6px;
-                                            word-break: break-all;
-                                        ">
-                                            ${tx.type === 'send' ? 'To: ' : 'From: '}${tx.type === 'send' ? tx.to : tx.from}
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                            
-                            ${transactions.length > 5 && !showAll ? `
-                                <button onclick="showAllTransactions()" style="
-                                    width: 100%;
-                                    padding: 14px;
-                                    background: rgba(0, 188, 212, 0.1);
-                                    border: 1px solid rgba(0, 188, 212, 0.2);
-                                    border-radius: 10px;
-                                    color: #00bcd4;
-                                    font-size: 13px;
-                                    font-weight: 700;
-                                    cursor: pointer;
-                                    margin-top: 12px;
-                                    transition: all 0.3s;
-                                ">SHOW ${transactions.length - 5} MORE</button>
-                            ` : ''}
-                            
-                            ${showAll && transactions.length > 5 ? `
-                                <button onclick="showLessTransactions()" style="
-                                    width: 100%;
-                                    padding: 14px;
-                                    background: rgba(0, 188, 212, 0.1);
-                                    border: 1px solid rgba(0, 188, 212, 0.2);
-                                    border-radius: 10px;
-                                    color: #00bcd4;
-                                    font-size: 13px;
-                                    font-weight: 700;
-                                    cursor: pointer;
-                                    margin-top: 12px;
-                                ">SHOW LESS</button>
-                            ` : ''}
-                        `}
-                    </div>
-                </div>
-            `;
-        }
-        
-        function showCreateWallet() {
-            const seedPhrase = generateSeedPhrase();
-            
-            const pageContent = document.getElementById('fullPageContent');
-            pageContent.innerHTML = `
-                <div style="padding: 20px;">
-                    <div style="text-align: center; margin-bottom: 32px;">
-                        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#00bcd4" stroke-width="1.5" style="margin: 0 auto 20px;">
-                            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-                            <line x1="1" y1="10" x2="23" y2="10"/>
-                        </svg>
-                        <h2 style="color: #fff; font-size: 22px; font-weight: 900; margin-bottom: 10px; letter-spacing: 0.5px;">Secret Recovery Phrase</h2>
-                        <p style="color: rgba(255, 255, 255, 0.5); font-size: 13px; max-width: 340px; margin: 0 auto; line-height: 1.6;">
-                            Write down these 10 words in order and store them safely
-                        </p>
-                    </div>
-                    
-                    <div style="background: linear-gradient(135deg, rgba(255, 165, 0, 0.1), rgba(255, 68, 68, 0.1)); border: 2px solid rgba(255, 165, 0, 0.3); border-radius: 14px; padding: 18px; margin-bottom: 24px;">
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffa500" stroke-width="2">
-                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                                <line x1="12" y1="9" x2="12" y2="13"/>
-                                <line x1="12" y1="17" x2="12.01" y2="17"/>
-                            </svg>
-                            <div style="color: #ffa500; font-size: 13px; font-weight: 800; letter-spacing: 0.5px;">IMPORTANT</div>
-                        </div>
-                        <div style="color: rgba(255, 255, 255, 0.7); font-size: 12px; line-height: 1.7;">
-                            Never share your recovery phrase. Anyone with these words can access your wallet. Store it offline in a secure location.
-                        </div>
-                    </div>
-                    
-                    <div class="card" style="padding: 20px; margin-bottom: 20px;">
-                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-                            ${seedPhrase.split(' ').map((word, i) => `
-                                <div style="
-                                    background: rgba(0, 188, 212, 0.08);
-                                    border: 1px solid rgba(0, 188, 212, 0.2);
-                                    border-radius: 10px;
-                                    padding: 14px;
-                                    display: flex;
-                                    align-items: center;
-                                    gap: 10px;
-                                ">
-                                    <span style="
-                                        color: rgba(255, 255, 255, 0.3);
-                                        font-size: 11px;
-                                        font-weight: 800;
-                                        min-width: 20px;
-                                    ">${i + 1}.</span>
-                                    <span style="color: #00bcd4; font-size: 15px; font-weight: 700;">${word}</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                    
-                    <button onclick="copySeedPhrase('${seedPhrase}')" style="
-                        width: 100%;
-                        padding: 16px;
-                        background: rgba(0, 188, 212, 0.15);
-                        border: 1px solid rgba(0, 188, 212, 0.3);
-                        border-radius: 12px;
-                        color: #00bcd4;
-                        font-size: 14px;
-                        font-weight: 800;
-                        cursor: pointer;
-                        margin-bottom: 12px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 10px;
-                    ">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                        </svg>
-                        <span>COPY PHRASE</span>
-                    </button>
-                    
-                    <button onclick="confirmCreateWallet('${seedPhrase}')" class="reward-claim-btn" style="padding: 18px; display: flex; align-items: center; justify-content: center; gap: 10px;">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
-                            <polyline points="20 6 9 17 4 12"/>
-                        </svg>
-                        <span style="font-size: 15px;">I'VE SAVED IT SECURELY</span>
-                    </button>
-                </div>
-            `;
-        }
-        
-        function copySeedPhrase(seedPhrase) {
-            navigator.clipboard.writeText(seedPhrase).then(() => {
-                showToast('✅ Seed phrase copied!', false);
-            });
-        }
-        
-        async function confirmCreateWallet(seedPhrase) {
-            try {
-                showToast('🔄 Creating wallet...', false, 999999);
-                
-                const seedHash = hashSeedPhrase(seedPhrase);
-                
-                const response = await fetch(API_ENDPOINTS.createWallet, {
-                    method: 'POST',
-                    headers: getApiHeaders(),
-                    body: JSON.stringify({
-                        userId: currentUser.userId,
-                        seedPhraseHash: seedHash
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    localStorage.setItem('walletActive_' + currentUser.email, 'true');
-                    showToast('✅ Wallet created successfully!', false);
-                    await initApp();
-                    openPage('wallet');
-                } else {
-                    showToast(`❌ ${data.error || 'Failed to create wallet'}`, true);
-                }
-            } catch (error) {
-                console.error('Create wallet error:', error);
-                showToast('❌ Failed to create wallet', true);
-            }
-        }
-        
-        function showImportWallet() {
-            const pageContent = document.getElementById('fullPageContent');
-            pageContent.innerHTML = `
-                <div style="padding: 20px;">
-                    <div style="text-align: center; margin-bottom: 32px;">
-                        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#00bcd4" stroke-width="1.5" style="margin: 0 auto 20px;">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                            <polyline points="7 10 12 15 17 10"/>
-                            <line x1="12" y1="15" x2="12" y2="3"/>
-                        </svg>
-                        <h2 style="color: #fff; font-size: 22px; font-weight: 900; margin-bottom: 10px; letter-spacing: 0.5px;">Import Wallet</h2>
-                        <p style="color: rgba(255, 255, 255, 0.5); font-size: 13px; max-width: 320px; margin: 0 auto; line-height: 1.6;">
-                            Enter your 10-word recovery phrase to restore access
-                        </p>
-                    </div>
-                    
-                    <div style="margin-bottom: 24px;">
-                        <label style="color: rgba(255, 255, 255, 0.5); font-size: 12px; font-weight: 700; letter-spacing: 1px; display: block; margin-bottom: 12px;">RECOVERY PHRASE</label>
-                        <textarea id="importSeedInput" placeholder="Enter your 10 words separated by spaces..." style="
-                            width: 100%;
-                            min-height: 140px;
-                            background: rgba(0, 0, 0, 0.3);
-                            border: 2px solid rgba(0, 188, 212, 0.3);
-                            border-radius: 12px;
-                            padding: 18px;
-                            color: #00bcd4;
-                            font-size: 14px;
-                            font-family: 'Courier New', monospace;
-                            resize: vertical;
-                            line-height: 1.8;
-                        "></textarea>
-                    </div>
-                    
-                    <button onclick="confirmImportWallet()" class="reward-claim-btn" style="padding: 18px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 10px;">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                            <polyline points="7 10 12 15 17 10"/>
-                            <line x1="12" y1="15" x2="12" y2="3"/>
-                        </svg>
-                        <span style="font-size: 15px;">IMPORT WALLET</span>
-                    </button>
-                    
-                    <button onclick="openPage('wallet')" style="
-                        width: 100%;
-                        padding: 16px;
-                        background: rgba(100, 100, 100, 0.15);
-                        border: 1px solid rgba(150, 150, 150, 0.2);
-                        border-radius: 12px;
-                        color: rgba(255, 255, 255, 0.5);
-                        font-size: 14px;
-                        font-weight: 700;
-                        cursor: pointer;
-                    ">CANCEL</button>
-                </div>
-            `;
-        }
-        
-        async function confirmImportWallet() {
-            try {
-                const seedInput = document.getElementById('importSeedInput');
-                const seedPhrase = seedInput.value.trim().toLowerCase();
-                
-                if (!seedPhrase) {
-                    showToast('❌ Please enter your seed phrase', true);
-                    return;
-                }
-                
-                const words = seedPhrase.split(/\s+/);
-                if (words.length !== 10) {
-                    showToast('❌ Seed phrase must be exactly 10 words', true);
-                    return;
-                }
-                
-                showToast('🔄 Importing wallet...', false, 999999);
-                
-                const seedHash = hashSeedPhrase(seedPhrase);
-                
-                const response = await fetch(API_ENDPOINTS.importWallet, {
-                    method: 'POST',
-                    headers: getApiHeaders(),
-                    body: JSON.stringify({
-                        userId: currentUser.userId,
-                        seedPhraseHash: seedHash
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    localStorage.setItem('walletActive_' + currentUser.email, 'true');
-                    showToast('✅ Wallet imported successfully!', false);
-                    await initApp();
-                    openPage('wallet');
-                } else {
-                    showToast(`❌ ${data.error || 'Invalid seed phrase'}`, true);
-                }
-            } catch (error) {
-                console.error('Import wallet error:', error);
-                showToast('❌ Failed to import wallet', true);
-            }
-        }
-        
-        function logoutWallet() {
-            if (confirm('Are you sure you want to logout? You will need your recovery phrase to access your wallet again.')) {
-                localStorage.removeItem('walletActive_' + currentUser.email);
-                closePage();
-                showToast('✅ Wallet logged out', false);
-            }
-        }
-        
-        function copyWalletAddress(address) {
-            navigator.clipboard.writeText(address).then(() => {
-                showToast('✅ Address copied!', false);
-            }).catch(() => {
-                showToast('❌ Failed to copy', true);
-            });
-        }
-        
-        function showAllTransactions() {
-            localStorage.setItem('showAllTransactions_' + currentUser.email, 'true');
-            openPage('wallet');
-        }
-        
-        function showLessTransactions() {
-            localStorage.setItem('showAllTransactions_' + currentUser.email, 'false');
-            openPage('wallet');
-        }
-        
-        function openSendModal() {
-            showToast('🚧 Send feature coming soon!', false);
-        }
-        
-        function copySeedPhrase(seedPhrase) {
-            navigator.clipboard.writeText(seedPhrase).then(() => {
-                showToast('✅ Seed phrase copied!', false);
-            });
-        }
-        
-        async function confirmCreateWallet(seedPhrase) {
-            try {
-                showToast('🔄 Creating wallet...', false, 999999);
-                
-                const seedHash = hashSeedPhrase(seedPhrase);
-                
-                const response = await fetch(API_ENDPOINTS.createWallet, {
-                    method: 'POST',
-                    headers: getApiHeaders(),
-                    body: JSON.stringify({
-                        userId: currentUser.userId,
-                        seedPhraseHash: seedHash
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    // Store locally that wallet is active
-                    localStorage.setItem('walletActive_' + currentUser.email, 'true');
-                    
-                    showToast('✅ Wallet created successfully!', false);
-                    
-                    // Refresh user data
-                    await initApp();
-                    openPage('wallet');
-                } else {
-                    showToast(`❌ ${data.error || 'Failed to create wallet'}`, true);
-                }
-            } catch (error) {
-                console.error('Create wallet error:', error);
-                showToast('❌ Failed to create wallet', true);
-            }
-        }
-        
-        function showImportWallet() {
-            const pageContent = document.getElementById('fullPageContent');
-            pageContent.innerHTML = `
-                <div style="padding: 20px;">
-                    <div style="text-align: center; margin-bottom: 24px;">
-                        <h2 style="color: #fff; font-size: 20px; font-weight: 800; margin-bottom: 8px;">📥 Import Wallet</h2>
-                        <p style="color: rgba(255, 255, 255, 0.7); font-size: 13px;">
-                            Enter your 10-word seed phrase to recover your wallet
-                        </p>
-                    </div>
-                    
-                    <div style="margin-bottom: 20px;">
-                        <label style="color: rgba(255, 255, 255, 0.7); font-size: 13px; font-weight: 600; display: block; margin-bottom: 8px;">SEED PHRASE (10 words)</label>
-                        <textarea id="importSeedInput" placeholder="word1 word2 word3..." style="
-                            width: 100%;
-                            min-height: 120px;
-                            background: rgba(0, 0, 0, 0.4);
-                            border: 2px solid rgba(0, 255, 255, 0.3);
-                            border-radius: 12px;
-                            padding: 16px;
-                            color: #00ffff;
-                            font-size: 14px;
-                            font-family: monospace;
-                            resize: vertical;
-                        "></textarea>
-                    </div>
-                    
-                    <button onclick="confirmImportWallet()" style="
-                        width: 100%;
-                        padding: 16px;
-                        background: linear-gradient(135deg, #00bcd4, #0097a7);
-                        border: none;
-                        border-radius: 12px;
-                        color: white;
-                        font-size: 16px;
-                        font-weight: 800;
-                        cursor: pointer;
-                        box-shadow: 0 4px 12px rgba(0, 188, 212, 0.4);
-                        margin-bottom: 12px;
-                    ">✅ IMPORT WALLET</button>
-                    
-                    <button onclick="openPage('wallet')" style="
-                        width: 100%;
-                        padding: 14px;
-                        background: rgba(100, 100, 100, 0.2);
-                        border: 1px solid rgba(150, 150, 150, 0.3);
-                        border-radius: 12px;
-                        color: rgba(255, 255, 255, 0.6);
-                        font-size: 14px;
-                        font-weight: 700;
-                        cursor: pointer;
-                    ">CANCEL</button>
-                </div>
-            `;
-        }
-        
-        async function confirmImportWallet() {
-            try {
-                const seedInput = document.getElementById('importSeedInput');
-                const seedPhrase = seedInput.value.trim().toLowerCase();
-                
-                if (!seedPhrase) {
-                    showToast('❌ Please enter your seed phrase', true);
-                    return;
-                }
-                
-                const words = seedPhrase.split(/\s+/);
-                if (words.length !== 10) {
-                    showToast('❌ Seed phrase must be exactly 10 words', true);
-                    return;
-                }
-                
-                showToast('🔄 Importing wallet...', false, 999999);
-                
-                const seedHash = hashSeedPhrase(seedPhrase);
-                
-                const response = await fetch(API_ENDPOINTS.importWallet, {
-                    method: 'POST',
-                    headers: getApiHeaders(),
-                    body: JSON.stringify({
-                        userId: currentUser.userId,
-                        seedPhraseHash: seedHash
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    // Store locally that wallet is active
-                    localStorage.setItem('walletActive_' + currentUser.email, 'true');
-                    
-                    showToast('✅ Wallet imported successfully!', false);
-                    
-                    // Refresh user data
-                    await initApp();
-                    openPage('wallet');
-                } else {
-                    showToast(`❌ ${data.error || 'Invalid seed phrase'}`, true);
-                }
-            } catch (error) {
-                console.error('Import wallet error:', error);
-                showToast('❌ Failed to import wallet', true);
-            }
-        }
-        
-        function logoutWallet() {
-            if (confirm('Are you sure you want to logout from your wallet? You will need your seed phrase to access it again.')) {
-                localStorage.removeItem('walletActive_' + currentUser.email);
-                closePage();
-                showToast('✅ Wallet logged out', false);
-            }
-        }
-        
-        function copyWalletAddress(address) {
-            navigator.clipboard.writeText(address).then(() => {
-                showToast('✅ Address copied to clipboard!', false);
-            }).catch(() => {
-                showToast('❌ Failed to copy address', true);
-            });
-        }
-        
-        function showAllTransactions() {
-            localStorage.setItem('showAllTransactions_' + currentUser.email, 'true');
-            openPage('wallet');
-        }
-        
-        function showLessTransactions() {
-            localStorage.setItem('showAllTransactions_' + currentUser.email, 'false');
-            openPage('wallet');
-        }
-        
-        function openSendModal() {
-            showToast('🚧 Send feature coming soon!', false);
-        }
         function getTasksPageContent() {
             // Check which tasks are completed
             const completedTasks = JSON.parse(localStorage.getItem('completedTasks_' + currentUser.email) || '{}');
@@ -7094,7 +6741,6 @@ async function startMiningOnBackend() {
         
         
         let isProcessingTask = false;
-        let boostButtonInterval = null; // Global boost button timer
         
         function openTask(taskId, url) {
             // Prevent double clicks
@@ -7458,6 +7104,7 @@ async function startMiningOnBackend() {
         let isPurchasingSpeedBoost = false;
         let speedBoostCooldownEnd = 0;
         let permanentBoostCooldownEnd = 0;
+        let boostButtonInterval = null;
         
         // Render Speed Boost button with cooldown
         function renderSpeedBoostButton() {
