@@ -2663,7 +2663,7 @@ function hideLoginLoading() {
             <div class="menu-item" onclick="openPage('profile')">Profile</div>
             <div class="menu-item" onclick="openPage('upgrades')">
                 <span style="display: flex; align-items: center; gap: 8px;">
-                    <span>Upgrades / Boosts</span>
+                    <span>Upgrades</span>
                     <svg width="18" height="18" viewBox="0 0 24 24" style="transform: rotate(45deg);" xmlns="http://www.w3.org/2000/svg">
                         <!-- Flame (filled) -->
                         <ellipse cx="12" cy="20" rx="2" ry="3" fill="#ff6b00" opacity="0.7"/>
@@ -6784,13 +6784,23 @@ async function startMiningOnBackend() {
             `;
         }
         
+        let isPurchasingSpeedBoost = false;
+        
         async function purchaseBooster() {
+            // Prevent multiple clicks
+            if (isPurchasingSpeedBoost) {
+                showToast('⏳ Purchase in progress, please wait...', false);
+                return;
+            }
+            
             // Check if mining is active
             const sessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
             if (!sessionId) {
                 showToast('❌ Please start mining first!', true);
                 return;
             }
+            
+            isPurchasingSpeedBoost = true;
             
             try {
                 showToast('🔄 Processing purchase...', false, 999999);
@@ -6822,10 +6832,25 @@ async function startMiningOnBackend() {
             } catch (error) {
                 console.error('Purchase error:', error);
                 showToast('❌ Purchase failed. Please try again.', true);
+            } finally {
+                // Reset flag after 2 seconds to allow retry if needed
+                setTimeout(() => {
+                    isPurchasingSpeedBoost = false;
+                }, 2000);
             }
         }
         
+        let isPurchasingPermanentBoost = false;
+        
         async function purchasePermanentBooster() {
+            // Prevent multiple clicks
+            if (isPurchasingPermanentBoost) {
+                showToast('⏳ Purchase in progress, please wait...', false);
+                return;
+            }
+            
+            isPurchasingPermanentBoost = true;
+            
             try {
                 showToast('🔄 Processing purchase...', false, 999999);
                 
@@ -6856,6 +6881,11 @@ async function startMiningOnBackend() {
             } catch (error) {
                 console.error('Purchase error:', error);
                 showToast('❌ Purchase failed. Please try again.', true);
+            } finally {
+                // Reset flag after 2 seconds to allow retry if needed
+                setTimeout(() => {
+                    isPurchasingPermanentBoost = false;
+                }, 2000);
             }
         }
         
