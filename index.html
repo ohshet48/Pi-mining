@@ -2693,10 +2693,11 @@ function hideLoginLoading() {
                     </svg>
                 </span>
             </div>
+            <div class="menu-item" onclick="openPage('wallet')">Wallet</div>
             <div class="menu-item" onclick="openPage('tasks')">Tasks</div>
+            <div class="menu-item" onclick="openPage('leaderboard')">Leaderboard</div>
             <div class="menu-item" onclick="openPage('announcements')">Announcements</div>
             <div class="menu-item" id="airdropMenuItem" onclick="openPage('airdrop')">Airdrop</div>
-            <div class="menu-item" onclick="openPage('leaderboard')">Leaderboard</div>
             <div class="menu-item menu-item-disabled">
                 <span>KYC</span>
                 <span style="font-size: 11px; color: #666; margin-left: 8px;">Coming Soon</span>
@@ -5310,6 +5311,10 @@ async function startMiningOnBackend() {
                         startBoostButtonUpdates();
                     }, 0);
                     break;
+                case 'wallet':
+                    pageTitle.textContent = 'Wallet';
+                    pageContent.innerHTML = getWalletPageContent();
+                    break;
                 case 'tasks':
                     pageTitle.textContent = 'Tasks';
                     pageContent.innerHTML = getTasksPageContent();
@@ -6597,6 +6602,181 @@ async function startMiningOnBackend() {
             `;
         }
         
+        
+        
+        function getWalletPageContent() {
+            // Get wallet address from currentUser (backend'den geldi)
+            const walletAddress = currentUser.walletAddress || 'N/A';
+            
+            // Get transaction history
+            const transactions = JSON.parse(localStorage.getItem('transactions_' + currentUser.email) || '[]');
+            const showAll = localStorage.getItem('showAllTransactions_' + currentUser.email) === 'true';
+            const displayTransactions = showAll ? transactions : transactions.slice(0, 5);
+            
+            const balance = d.balance || 0;
+            const availableBalance = balance; // For now, available = total
+            
+            return `
+                <div style="padding: 20px 0;">
+                    <!-- Balance Card -->
+                    <div style="background: linear-gradient(135deg, rgba(0, 188, 212, 0.2), rgba(0, 150, 136, 0.2)); border: 2px solid rgba(0, 188, 212, 0.4); border-radius: 20px; padding: 28px; margin-bottom: 24px; text-align: center;">
+                        <div style="color: rgba(255, 255, 255, 0.7); font-size: 14px; font-weight: 600; margin-bottom: 8px;">BALANCE</div>
+                        <div style="color: #fff; font-size: 36px; font-weight: 900; margin-bottom: 16px;">${balance.toFixed(2)} <span style="font-size: 18px; color: rgba(255, 255, 255, 0.6);">ARCASTRA</span></div>
+                        
+                        <div style="background: rgba(0, 0, 0, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                            <div style="color: rgba(255, 255, 255, 0.6); font-size: 12px; font-weight: 600; margin-bottom: 4px;">AVAILABLE BALANCE</div>
+                            <div style="color: #00ffff; font-size: 24px; font-weight: 800;">${availableBalance.toFixed(2)} <span style="font-size: 14px;">ARCASTRA</span></div>
+                        </div>
+                        
+                        <!-- Buttons -->
+                        <div style="display: flex; gap: 12px;">
+                            <button onclick="openSendModal()" style="
+                                flex: 1;
+                                padding: 14px;
+                                background: linear-gradient(135deg, #00bcd4, #0097a7);
+                                border: none;
+                                border-radius: 12px;
+                                color: white;
+                                font-size: 15px;
+                                font-weight: 800;
+                                cursor: pointer;
+                                box-shadow: 0 4px 12px rgba(0, 188, 212, 0.4);
+                            ">📤 SEND</button>
+                            
+                            <button disabled style="
+                                flex: 1;
+                                padding: 14px;
+                                background: rgba(100, 100, 100, 0.3);
+                                border: 1px solid rgba(150, 150, 150, 0.3);
+                                border-radius: 12px;
+                                color: rgba(255, 255, 255, 0.4);
+                                font-size: 15px;
+                                font-weight: 800;
+                                cursor: not-allowed;
+                            ">💰 WITHDRAW</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Wallet Address -->
+                    <div style="background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2)); border: 2px solid rgba(0, 255, 255, 0.3); border-radius: 16px; padding: 20px; margin-bottom: 24px;">
+                        <div style="color: rgba(255, 255, 255, 0.7); font-size: 13px; font-weight: 600; margin-bottom: 8px;">YOUR WALLET ADDRESS</div>
+                        <div style="
+                            background: rgba(0, 0, 0, 0.4);
+                            border: 1px solid rgba(0, 255, 255, 0.2);
+                            border-radius: 8px;
+                            padding: 12px;
+                            color: #00ffff;
+                            font-size: 11px;
+                            font-family: monospace;
+                            word-break: break-all;
+                            margin-bottom: 12px;
+                        ">${walletAddress}</div>
+                        <button onclick="copyWalletAddress('${walletAddress}')" style="
+                            width: 100%;
+                            padding: 10px;
+                            background: rgba(0, 188, 212, 0.2);
+                            border: 1px solid rgba(0, 188, 212, 0.4);
+                            border-radius: 8px;
+                            color: #00ffff;
+                            font-size: 13px;
+                            font-weight: 700;
+                            cursor: pointer;
+                        ">📋 COPY ADDRESS</button>
+                    </div>
+                    
+                    <!-- Transaction History -->
+                    <div style="background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2)); border: 2px solid rgba(0, 255, 255, 0.3); border-radius: 16px; padding: 20px;">
+                        <h3 style="color: #fff; font-size: 16px; font-weight: 800; margin-bottom: 16px;">📊 TRANSACTION HISTORY</h3>
+                        
+                        ${transactions.length === 0 ? `
+                            <div style="text-align: center; padding: 40px 20px; color: rgba(255, 255, 255, 0.5);">
+                                <div style="font-size: 48px; margin-bottom: 12px;">📭</div>
+                                <div style="font-size: 14px; font-weight: 600;">No transactions yet</div>
+                            </div>
+                        ` : `
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                ${displayTransactions.map(tx => `
+                                    <div style="
+                                        background: rgba(0, 0, 0, 0.3);
+                                        border: 1px solid rgba(0, 255, 255, 0.2);
+                                        border-radius: 12px;
+                                        padding: 16px;
+                                    ">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                            <div style="color: #fff; font-size: 14px; font-weight: 700;">
+                                                ${tx.type === 'send' ? '📤 Sent' : '📥 Received'}
+                                            </div>
+                                            <div style="color: ${tx.type === 'send' ? '#ff4444' : '#00ff00'}; font-size: 16px; font-weight: 800;">
+                                                ${tx.type === 'send' ? '-' : '+'}${tx.amount.toFixed(2)}
+                                            </div>
+                                        </div>
+                                        <div style="color: rgba(255, 255, 255, 0.6); font-size: 11px; font-family: monospace; margin-bottom: 4px;">
+                                            ${tx.type === 'send' ? 'To: ' + tx.to : 'From: ' + tx.from}
+                                        </div>
+                                        <div style="color: rgba(255, 255, 255, 0.4); font-size: 11px;">
+                                            ${new Date(tx.timestamp).toLocaleString()}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            
+                            ${transactions.length > 5 && !showAll ? `
+                                <button onclick="showAllTransactions()" style="
+                                    width: 100%;
+                                    padding: 12px;
+                                    background: rgba(0, 188, 212, 0.2);
+                                    border: 1px solid rgba(0, 188, 212, 0.4);
+                                    border-radius: 8px;
+                                    color: #00ffff;
+                                    font-size: 13px;
+                                    font-weight: 700;
+                                    cursor: pointer;
+                                    margin-top: 12px;
+                                ">SHOW MORE (${transactions.length - 5})</button>
+                            ` : ''}
+                            
+                            ${showAll && transactions.length > 5 ? `
+                                <button onclick="showLessTransactions()" style="
+                                    width: 100%;
+                                    padding: 12px;
+                                    background: rgba(0, 188, 212, 0.2);
+                                    border: 1px solid rgba(0, 188, 212, 0.4);
+                                    border-radius: 8px;
+                                    color: #00ffff;
+                                    font-size: 13px;
+                                    font-weight: 700;
+                                    cursor: pointer;
+                                    margin-top: 12px;
+                                ">SHOW LESS</button>
+                            ` : ''}
+                        `}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function copyWalletAddress(address) {
+            navigator.clipboard.writeText(address).then(() => {
+                showToast('✅ Address copied to clipboard!', false);
+            }).catch(() => {
+                showToast('❌ Failed to copy address', true);
+            });
+        }
+        
+        function showAllTransactions() {
+            localStorage.setItem('showAllTransactions_' + currentUser.email, 'true');
+            openPage('wallet');
+        }
+        
+        function showLessTransactions() {
+            localStorage.setItem('showAllTransactions_' + currentUser.email, 'false');
+            openPage('wallet');
+        }
+        
+        function openSendModal() {
+            // TODO: Implement send modal
+            showToast('🚧 Send feature coming soon!', false);
+        }
         
         function getTasksPageContent() {
             // Check which tasks are completed
