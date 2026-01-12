@@ -1922,7 +1922,7 @@ console.log('Initializing Firebase...');
 
 firebase.initializeApp(firebaseConfig);
 console.log('Firebase initialized:', firebase.apps.length);
-const messaging = firebase.messaging();
+// const messaging = firebase.messaging(); // DISABLED - Not using notifications
 // Auto-login when DOM is ready  
 document.addEventListener('DOMContentLoaded', async function() {
     // Auto-reload when internet connection restored
@@ -2241,6 +2241,10 @@ let fcmToken = null;
 
 // Request notification permission and get FCM token - CRITICAL for mobile notifications!
 async function requestNotificationPermission() {
+  console.log('🔔 [FCM] Notifications disabled - skipping permission request');
+  return null;
+  
+  /* DISABLED - NOT USING NOTIFICATIONS
   console.log('🔔 [FCM] Starting notification permission request...');
   
   try {
@@ -2339,6 +2343,7 @@ async function requestNotificationPermission() {
     console.error('❌ [FCM] Error in requestNotificationPermission:', error);
     return null;
   }
+  */
 }
 
 // Save FCM token to backend - CRITICAL for receiving notifications!
