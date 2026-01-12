@@ -6035,17 +6035,19 @@ async function startMiningOnBackend() {
                                 </div>
                             </div>
                             <div style="display: flex; align-items: center; gap: 6px;">
-                                <!-- Balance Bar -->
-                                <div class="level-progress-bar" style="width: 70px; height: 16px; background: rgba(10, 20, 40, 0.85); border-radius: 8px; overflow: hidden; position: relative; border: 1px solid rgba(251, 191, 36, 0.3);">
-                                    <div class="level-progress-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8px; font-weight: 700; color: white; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);">
-                                        ${formatBalance(currentUser?.balance || 0)}
+                                <div style="display: flex; flex-direction: column; gap: 3px;">
+                                    <!-- Balance Bar -->
+                                    <div class="level-progress-bar" style="width: 70px; height: 16px; background: rgba(10, 20, 40, 0.85); border-radius: 8px; overflow: hidden; position: relative; border: 1px solid rgba(251, 191, 36, 0.3);">
+                                        <div class="level-progress-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8px; font-weight: 700; color: white; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);">
+                                            ${formatBalance(currentUser?.balance || 0)}
+                                        </div>
                                     </div>
-                                </div>
-                                <!-- Days Bar -->
-                                <div class="level-progress-bar" style="width: 70px; height: 16px; background: rgba(10, 20, 40, 0.85); border-radius: 8px; overflow: hidden; position: relative; border: 1px solid rgba(16, 185, 129, 0.3);">
-                                    <div class="level-progress-fill" style="height: 100%; background: linear-gradient(90deg, #10b981, #059669); width: ${userProgressPercent}%;"></div>
-                                    <div class="level-progress-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8px; font-weight: 700; color: white; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);">
-                                        ${currentUserData.miningDays}/365 Days
+                                    <!-- Days Bar -->
+                                    <div class="level-progress-bar" style="width: 70px; height: 16px; background: rgba(10, 20, 40, 0.85); border-radius: 8px; overflow: hidden; position: relative; border: 1px solid rgba(16, 185, 129, 0.3);">
+                                        <div class="level-progress-fill" style="height: 100%; background: linear-gradient(90deg, #10b981, #059669); width: ${userProgressPercent}%;"></div>
+                                        <div class="level-progress-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8px; font-weight: 700; color: white; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);">
+                                            ${currentUserData.miningDays}/365 Days
+                                        </div>
                                     </div>
                                 </div>
                                 <div style="text-align: right;">
@@ -6242,17 +6244,19 @@ async function startMiningOnBackend() {
                                 </div>
                             </div>
                             <div style="display: flex; align-items: center; gap: 6px;">
-                                <!-- Balance Bar -->
-                                <div class="level-progress-bar" style="width: 70px; height: 16px; background: rgba(10, 20, 40, 0.85); border-radius: 8px; overflow: hidden; position: relative; border: 1px solid rgba(0, 255, 255, 0.3);">
-                                    <div class="level-progress-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8px; font-weight: 700; color: white; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);">
-                                        ${formatBalance(user.balance || 0)}
+                                <div style="display: flex; flex-direction: column; gap: 3px;">
+                                    <!-- Balance Bar -->
+                                    <div class="level-progress-bar" style="width: 70px; height: 16px; background: rgba(10, 20, 40, 0.85); border-radius: 8px; overflow: hidden; position: relative; border: 1px solid rgba(0, 255, 255, 0.3);">
+                                        <div class="level-progress-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8px; font-weight: 700; color: white; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);">
+                                            ${formatBalance(user.balance || 0)}
+                                        </div>
                                     </div>
-                                </div>
-                                <!-- Days Bar -->
-                                <div class="level-progress-bar" style="width: 70px; height: 16px; background: rgba(10, 20, 40, 0.85); border-radius: 8px; overflow: hidden; position: relative; border: 1px solid rgba(16, 185, 129, 0.3);">
-                                    <div class="level-progress-fill" style="height: 100%; background: linear-gradient(90deg, #10b981, #059669); width: ${progressPercent}%;"></div>
-                                    <div class="level-progress-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8px; font-weight: 700; color: white; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);">
-                                        ${user.miningDays}/365 Days
+                                    <!-- Days Bar -->
+                                    <div class="level-progress-bar" style="width: 70px; height: 16px; background: rgba(10, 20, 40, 0.85); border-radius: 8px; overflow: hidden; position: relative; border: 1px solid rgba(16, 185, 129, 0.3);">
+                                        <div class="level-progress-fill" style="height: 100%; background: linear-gradient(90deg, #10b981, #059669); width: ${progressPercent}%;"></div>
+                                        <div class="level-progress-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8px; font-weight: 700; color: white; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);">
+                                            ${user.miningDays}/365 Days
+                                        </div>
                                     </div>
                                 </div>
                                 <div style="text-align: right;">
@@ -7696,13 +7700,35 @@ async function startMiningOnBackend() {
 
     obs.observe(document.documentElement, { childList: true, subtree: true });
 
-    // İlk çalıştırma + periyodik garanti
+    // İlk çalıştırma
     hookAdFunction();
     enforce();
+    
+    // Sadece son 1 dakikada 500ms interval aç (performans için)
+    let lockInterval = null;
     setInterval(() => {
-      hookAdFunction();
-      enforce();
-    }, 300);
+      const end = miningEndTime();
+      if (!end) return;
+      
+      const timeLeft = end - Date.now();
+      const oneMinute = 60 * 1000;
+      
+      // Son 1 dakikaya girildiğinde
+      if (timeLeft > 0 && timeLeft <= oneMinute && !lockInterval) {
+        console.log('🔒 Ad lock active - last minute protection');
+        lockInterval = setInterval(() => {
+          hookAdFunction();
+          enforce();
+        }, 500);
+      }
+      
+      // Mining bittiyse interval'ı temizle
+      if (timeLeft <= 0 && lockInterval) {
+        clearInterval(lockInterval);
+        lockInterval = null;
+        console.log('🔓 Ad lock released');
+      }
+    }, 5000); // Her 5 saniyede kontrol yeterli
 
   } catch (e) {
     console.warn("Perma ad lock failed", e);
@@ -8252,4 +8278,7 @@ try {
   }
 
   document.addEventListener('DOMContentLoaded', bindResetHandlers);
-  
+  bindResetHandlers();
+  }
+})();
+</script>
