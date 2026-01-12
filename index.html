@@ -5861,9 +5861,9 @@ async function startMiningOnBackend() {
                     if (response.ok && data.leaderboard) {
                         leaderboardData = data.leaderboard;
 
-                        // SORT: only by miningDays (higher first)
+                        // SORT: by balance (higher first)
                         leaderboardData.sort((a, b) => {
-                            return (b.miningDays || 0) - (a.miningDays || 0);
+                            return (b.balance || 0) - (a.balance || 0);
                         });
                         
                         // Cache the results
