@@ -6631,7 +6631,6 @@ async function startMiningOnBackend() {
         }
         
         function hashSeedPhrase(seedPhrase) {
-            // Simple hash (in production, use crypto.subtle.digest)
             let hash = 0;
             for (let i = 0; i < seedPhrase.length; i++) {
                 const char = seedPhrase.charCodeAt(i);
@@ -6646,46 +6645,83 @@ async function startMiningOnBackend() {
             const isWalletActive = localStorage.getItem('walletActive_' + currentUser.email) === 'true';
             
             if (!walletCreated || !isWalletActive) {
-                // Show Create/Import screen
+                // Premium Create/Import screen
                 return `
                     <div style="padding: 20px 0;">
-                        <div style="text-align: center; padding: 40px 20px;">
-                            <div style="font-size: 64px; margin-bottom: 20px;">👛</div>
-                            <h2 style="color: #fff; font-size: 24px; font-weight: 800; margin-bottom: 12px;">Wallet Not Active</h2>
-                            <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-bottom: 32px;">
-                                Create a new wallet or import an existing one to start managing your ARCASTRA
+                        <div style="text-align: center; padding: 60px 20px 40px;">
+                            <!-- Premium Wallet Icon -->
+                            <svg width="120" height="120" viewBox="0 0 200 200" style="margin-bottom: 24px;" xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <linearGradient id="walletGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#00bcd4;stop-opacity:1" />
+                                        <stop offset="100%" style="stop-color:#0097a7;stop-opacity:1" />
+                                    </linearGradient>
+                                </defs>
+                                <!-- Wallet body -->
+                                <rect x="40" y="60" width="120" height="90" rx="8" fill="none" stroke="url(#walletGradient)" stroke-width="4"/>
+                                <!-- Wallet flap -->
+                                <path d="M 40 60 L 40 45 C 40 40 45 35 50 35 L 150 35 C 155 35 160 40 160 45 L 160 60" fill="none" stroke="url(#walletGradient)" stroke-width="4" stroke-linecap="round"/>
+                                <!-- Card slot -->
+                                <rect x="55" y="90" width="50" height="35" rx="3" fill="none" stroke="url(#walletGradient)" stroke-width="3" opacity="0.7"/>
+                                <line x1="60" y1="100" x2="95" y2="100" stroke="url(#walletGradient)" stroke-width="2" opacity="0.5"/>
+                                <line x1="60" y1="108" x2="85" y2="108" stroke="url(#walletGradient)" stroke-width="2" opacity="0.5"/>
+                                <!-- Coin pocket -->
+                                <circle cx="135" cy="110" r="18" fill="none" stroke="url(#walletGradient)" stroke-width="3"/>
+                                <text x="135" y="118" text-anchor="middle" fill="url(#walletGradient)" font-size="20" font-weight="bold">A</text>
+                            </svg>
+                            
+                            <h2 style="color: #fff; font-size: 24px; font-weight: 800; margin-bottom: 12px;">Secure Wallet</h2>
+                            <p style="color: rgba(255, 255, 255, 0.6); font-size: 14px; max-width: 320px; margin: 0 auto 40px; line-height: 1.6;">
+                                Create a new wallet or import an existing one to manage your ARCASTRA tokens
                             </p>
                             
-                            <div style="display: flex; flex-direction: column; gap: 16px; max-width: 400px; margin: 0 auto;">
-                                <button onclick="showCreateWallet()" style="
-                                    padding: 16px;
+                            <div style="max-width: 400px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px;">
+                                <button onclick="showCreateWallet()" class="reward-claim-btn" style="
+                                    padding: 18px;
                                     background: linear-gradient(135deg, #00bcd4, #0097a7);
-                                    border: none;
-                                    border-radius: 12px;
-                                    color: white;
-                                    font-size: 16px;
-                                    font-weight: 800;
-                                    cursor: pointer;
-                                    box-shadow: 0 4px 12px rgba(0, 188, 212, 0.4);
-                                ">🆕 CREATE NEW WALLET</button>
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    gap: 12px;
+                                    box-shadow: 0 4px 20px rgba(0, 188, 212, 0.4);
+                                ">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <line x1="12" y1="8" x2="12" y2="16"/>
+                                        <line x1="8" y1="12" x2="16" y2="12"/>
+                                    </svg>
+                                    <span style="font-size: 16px;">CREATE NEW WALLET</span>
+                                </button>
                                 
                                 <button onclick="showImportWallet()" style="
-                                    padding: 16px;
-                                    background: rgba(0, 188, 212, 0.2);
-                                    border: 1px solid rgba(0, 188, 212, 0.4);
+                                    padding: 18px;
+                                    background: rgba(0, 188, 212, 0.15);
+                                    border: 2px solid rgba(0, 188, 212, 0.4);
                                     border-radius: 12px;
-                                    color: #00ffff;
+                                    color: #00bcd4;
                                     font-size: 16px;
                                     font-weight: 800;
                                     cursor: pointer;
-                                ">📥 IMPORT WALLET</button>
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    gap: 12px;
+                                    transition: all 0.3s;
+                                ">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                        <polyline points="7 10 12 15 17 10"/>
+                                        <line x1="12" y1="15" x2="12" y2="3"/>
+                                    </svg>
+                                    <span>IMPORT WALLET</span>
+                                </button>
                             </div>
                         </div>
                     </div>
                 `;
             }
             
-            // Show active wallet
+            // Active wallet - Premium design
             const walletAddress = currentUser.walletAddress || 'N/A';
             const balance = d.balance || 0;
             const availableBalance = balance;
@@ -6696,116 +6732,213 @@ async function startMiningOnBackend() {
             
             return `
                 <div style="padding: 20px 0;">
-                    <!-- Balance Card -->
-                    <div style="background: linear-gradient(135deg, rgba(0, 188, 212, 0.2), rgba(0, 150, 136, 0.2)); border: 2px solid rgba(0, 188, 212, 0.4); border-radius: 20px; padding: 28px; margin-bottom: 24px; text-align: center;">
-                        <div style="color: rgba(255, 255, 255, 0.7); font-size: 14px; font-weight: 600; margin-bottom: 8px;">BALANCE</div>
-                        <div style="color: #fff; font-size: 36px; font-weight: 900; margin-bottom: 16px;">${balance.toFixed(2)} <span style="font-size: 18px; color: rgba(255, 255, 255, 0.6);">ARCASTRA</span></div>
-                        
-                        <div style="background: rgba(0, 0, 0, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
-                            <div style="color: rgba(255, 255, 255, 0.6); font-size: 12px; font-weight: 600; margin-bottom: 4px;">AVAILABLE BALANCE</div>
-                            <div style="color: #00ffff; font-size: 24px; font-weight: 800;">${availableBalance.toFixed(2)} <span style="font-size: 14px;">ARCASTRA</span></div>
+                    <!-- Premium Balance Card -->
+                    <div class="card" style="margin-bottom: 24px; padding: 32px 24px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
+                            <div>
+                                <div style="color: rgba(255, 255, 255, 0.5); font-size: 12px; font-weight: 700; letter-spacing: 1px; margin-bottom: 8px;">TOTAL BALANCE</div>
+                                <div style="color: #fff; font-size: 40px; font-weight: 900; line-height: 1;">
+                                    ${balance.toFixed(2)}
+                                    <span style="font-size: 16px; color: rgba(255, 255, 255, 0.5); font-weight: 600; margin-left: 4px;">ARCASTRA</span>
+                                </div>
+                            </div>
+                            <svg width="40" height="40" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <linearGradient id="miniWallet" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#00bcd4;stop-opacity:0.8" />
+                                        <stop offset="100%" style="stop-color:#0097a7;stop-opacity:0.8" />
+                                    </linearGradient>
+                                </defs>
+                                <rect x="20" y="35" width="60" height="45" rx="4" fill="none" stroke="url(#miniWallet)" stroke-width="3"/>
+                                <path d="M 20 35 L 20 28 C 20 25 23 22 26 22 L 74 22 C 77 22 80 25 80 28 L 80 35" fill="none" stroke="url(#miniWallet)" stroke-width="3"/>
+                                <circle cx="65" cy="57" r="6" fill="none" stroke="url(#miniWallet)" stroke-width="2"/>
+                            </svg>
                         </div>
                         
-                        <!-- Buttons -->
+                        <!-- Available Balance -->
+                        <div style="background: rgba(0, 188, 212, 0.1); border: 1px solid rgba(0, 188, 212, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+                            <div style="color: rgba(255, 255, 255, 0.5); font-size: 11px; font-weight: 700; letter-spacing: 1px; margin-bottom: 6px;">AVAILABLE</div>
+                            <div style="color: #00bcd4; font-size: 24px; font-weight: 900;">${availableBalance.toFixed(2)} <span style="font-size: 13px; opacity: 0.7;">ARCASTRA</span></div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
                         <div style="display: flex; gap: 12px; margin-bottom: 16px;">
-                            <button onclick="openSendModal()" style="
-                                flex: 1;
-                                padding: 14px;
-                                background: linear-gradient(135deg, #00bcd4, #0097a7);
-                                border: none;
-                                border-radius: 12px;
-                                color: white;
-                                font-size: 15px;
-                                font-weight: 800;
-                                cursor: pointer;
-                                box-shadow: 0 4px 12px rgba(0, 188, 212, 0.4);
-                            ">📤 SEND</button>
+                            <button onclick="openSendModal()" class="reward-claim-btn" style="flex: 1; padding: 16px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                    <line x1="22" y1="2" x2="11" y2="13"/>
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                                </svg>
+                                <span>SEND</span>
+                            </button>
                             
                             <button disabled style="
                                 flex: 1;
-                                padding: 14px;
-                                background: rgba(100, 100, 100, 0.3);
-                                border: 1px solid rgba(150, 150, 150, 0.3);
+                                padding: 16px;
+                                background: rgba(100, 100, 100, 0.2);
+                                border: 1px solid rgba(150, 150, 150, 0.2);
                                 border-radius: 12px;
-                                color: rgba(255, 255, 255, 0.4);
-                                font-size: 15px;
+                                color: rgba(255, 255, 255, 0.3);
+                                font-size: 14px;
                                 font-weight: 800;
                                 cursor: not-allowed;
-                            ">💰 WITHDRAW</button>
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 8px;
+                            ">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                                </svg>
+                                <span>WITHDRAW</span>
+                            </button>
                         </div>
                         
-                        <!-- Logout Wallet Button -->
+                        <!-- Logout Wallet -->
                         <button onclick="logoutWallet()" style="
                             width: 100%;
-                            padding: 12px;
-                            background: rgba(255, 68, 68, 0.2);
-                            border: 1px solid rgba(255, 68, 68, 0.4);
-                            border-radius: 12px;
-                            color: #ff4444;
-                            font-size: 14px;
-                            font-weight: 700;
-                            cursor: pointer;
-                        ">🚪 LOGOUT WALLET</button>
-                    </div>
-                    
-                    <!-- Wallet Address -->
-                    <div style="background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2)); border: 2px solid rgba(0, 255, 255, 0.3); border-radius: 16px; padding: 20px; margin-bottom: 24px;">
-                        <div style="color: rgba(255, 255, 255, 0.7); font-size: 13px; font-weight: 600; margin-bottom: 8px;">YOUR WALLET ADDRESS</div>
-                        <div style="
-                            background: rgba(0, 0, 0, 0.4);
-                            border: 1px solid rgba(0, 255, 255, 0.2);
-                            border-radius: 8px;
-                            padding: 12px;
-                            color: #00ffff;
-                            font-size: 11px;
-                            font-family: monospace;
-                            word-break: break-all;
-                            margin-bottom: 12px;
-                        ">${walletAddress}</div>
-                        <button onclick="copyWalletAddress('${walletAddress}')" style="
-                            width: 100%;
-                            padding: 10px;
-                            background: rgba(0, 188, 212, 0.2);
-                            border: 1px solid rgba(0, 188, 212, 0.4);
-                            border-radius: 8px;
-                            color: #00ffff;
+                            padding: 14px;
+                            background: rgba(239, 68, 68, 0.1);
+                            border: 1px solid rgba(239, 68, 68, 0.3);
+                            border-radius: 10px;
+                            color: #ef4444;
                             font-size: 13px;
                             font-weight: 700;
                             cursor: pointer;
-                        ">📋 COPY ADDRESS</button>
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 8px;
+                            transition: all 0.3s;
+                        ">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                <polyline points="16 17 21 12 16 7"/>
+                                <line x1="21" y1="12" x2="9" y2="12"/>
+                            </svg>
+                            <span>LOGOUT WALLET</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Wallet Address Card -->
+                    <div class="card" style="margin-bottom: 24px; padding: 24px;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00bcd4" stroke-width="2">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                            </svg>
+                            <div style="color: rgba(255, 255, 255, 0.5); font-size: 12px; font-weight: 700; letter-spacing: 1px;">YOUR ADDRESS</div>
+                        </div>
+                        <div style="
+                            background: rgba(0, 0, 0, 0.3);
+                            border: 1px solid rgba(0, 188, 212, 0.2);
+                            border-radius: 10px;
+                            padding: 14px;
+                            color: #00bcd4;
+                            font-size: 11px;
+                            font-family: 'Courier New', monospace;
+                            word-break: break-all;
+                            margin-bottom: 12px;
+                            line-height: 1.6;
+                        ">${walletAddress}</div>
+                        <button onclick="copyWalletAddress('${walletAddress}')" style="
+                            width: 100%;
+                            padding: 12px;
+                            background: rgba(0, 188, 212, 0.15);
+                            border: 1px solid rgba(0, 188, 212, 0.3);
+                            border-radius: 10px;
+                            color: #00bcd4;
+                            font-size: 13px;
+                            font-weight: 700;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 8px;
+                            transition: all 0.3s;
+                        ">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                            </svg>
+                            <span>COPY ADDRESS</span>
+                        </button>
                     </div>
                     
                     <!-- Transaction History -->
-                    <div style="background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2)); border: 2px solid rgba(0, 255, 255, 0.3); border-radius: 16px; padding: 20px;">
-                        <h3 style="color: #fff; font-size: 16px; font-weight: 800; margin-bottom: 16px;">📊 TRANSACTION HISTORY</h3>
+                    <div class="card" style="padding: 24px;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00bcd4" stroke-width="2">
+                                <line x1="12" y1="1" x2="12" y2="23"/>
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                            </svg>
+                            <h3 style="color: #fff; font-size: 16px; font-weight: 800; letter-spacing: 0.5px; margin: 0;">TRANSACTIONS</h3>
+                        </div>
                         
                         ${transactions.length === 0 ? `
-                            <div style="text-align: center; padding: 40px 20px; color: rgba(255, 255, 255, 0.5);">
-                                <div style="font-size: 48px; margin-bottom: 12px;">📭</div>
+                            <div style="text-align: center; padding: 60px 20px; color: rgba(255, 255, 255, 0.3);">
+                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin: 0 auto 16px; opacity: 0.3;">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="12" y1="8" x2="12" y2="12"/>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                                </svg>
                                 <div style="font-size: 14px; font-weight: 600;">No transactions yet</div>
+                                <div style="font-size: 12px; margin-top: 6px; opacity: 0.7;">Your transaction history will appear here</div>
                             </div>
                         ` : `
                             <div style="display: flex; flex-direction: column; gap: 12px;">
                                 ${displayTransactions.map(tx => `
                                     <div style="
-                                        background: rgba(0, 0, 0, 0.3);
-                                        border: 1px solid rgba(0, 255, 255, 0.2);
+                                        background: rgba(0, 0, 0, 0.2);
+                                        border: 1px solid rgba(255, 255, 255, 0.05);
                                         border-radius: 12px;
                                         padding: 16px;
+                                        transition: all 0.3s;
                                     ">
-                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                            <div style="color: #fff; font-size: 14px; font-weight: 700;">
-                                                ${tx.type === 'send' ? '📤 Sent' : '📥 Received'}
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                            <div style="display: flex; align-items: center; gap: 10px;">
+                                                <div style="
+                                                    width: 36px;
+                                                    height: 36px;
+                                                    border-radius: 10px;
+                                                    background: ${tx.type === 'send' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)'};
+                                                    border: 1px solid ${tx.type === 'send' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)'};
+                                                    display: flex;
+                                                    align-items: center;
+                                                    justify-content: center;
+                                                ">
+                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${tx.type === 'send' ? '#ef4444' : '#10b981'}" stroke-width="2">
+                                                        ${tx.type === 'send' ? 
+                                                            '<line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>' :
+                                                            '<line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>'
+                                                        }
+                                                    </svg>
+                                                </div>
+                                                <div>
+                                                    <div style="color: #fff; font-size: 14px; font-weight: 700; margin-bottom: 2px;">
+                                                        ${tx.type === 'send' ? 'Sent' : 'Received'}
+                                                    </div>
+                                                    <div style="color: rgba(255, 255, 255, 0.4); font-size: 11px;">
+                                                        ${new Date(tx.timestamp).toLocaleDateString()}
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div style="color: ${tx.type === 'send' ? '#ff4444' : '#00ff00'}; font-size: 16px; font-weight: 800;">
-                                                ${tx.type === 'send' ? '-' : '+'}${tx.amount.toFixed(2)}
+                                            <div style="text-align: right;">
+                                                <div style="color: ${tx.type === 'send' ? '#ef4444' : '#10b981'}; font-size: 18px; font-weight: 900;">
+                                                    ${tx.type === 'send' ? '-' : '+'}${tx.amount.toFixed(2)}
+                                                </div>
+                                                <div style="color: rgba(255, 255, 255, 0.3); font-size: 10px; margin-top: 2px;">ARCASTRA</div>
                                             </div>
                                         </div>
-                                        <div style="color: rgba(255, 255, 255, 0.6); font-size: 11px; font-family: monospace; margin-bottom: 4px;">
-                                            ${tx.type === 'send' ? 'To: ' + tx.to : 'From: ' + tx.from}
-                                        </div>
-                                        <div style="color: rgba(255, 255, 255, 0.4); font-size: 11px;">
-                                            ${new Date(tx.timestamp).toLocaleString()}
+                                        <div style="
+                                            color: rgba(255, 255, 255, 0.4);
+                                            font-size: 10px;
+                                            font-family: 'Courier New', monospace;
+                                            padding: 8px;
+                                            background: rgba(0, 0, 0, 0.2);
+                                            border-radius: 6px;
+                                            word-break: break-all;
+                                        ">
+                                            ${tx.type === 'send' ? 'To: ' : 'From: '}${tx.type === 'send' ? tx.to : tx.from}
                                         </div>
                                     </div>
                                 `).join('')}
@@ -6814,26 +6947,27 @@ async function startMiningOnBackend() {
                             ${transactions.length > 5 && !showAll ? `
                                 <button onclick="showAllTransactions()" style="
                                     width: 100%;
-                                    padding: 12px;
-                                    background: rgba(0, 188, 212, 0.2);
-                                    border: 1px solid rgba(0, 188, 212, 0.4);
-                                    border-radius: 8px;
-                                    color: #00ffff;
+                                    padding: 14px;
+                                    background: rgba(0, 188, 212, 0.1);
+                                    border: 1px solid rgba(0, 188, 212, 0.2);
+                                    border-radius: 10px;
+                                    color: #00bcd4;
                                     font-size: 13px;
                                     font-weight: 700;
                                     cursor: pointer;
                                     margin-top: 12px;
-                                ">SHOW MORE (${transactions.length - 5})</button>
+                                    transition: all 0.3s;
+                                ">SHOW ${transactions.length - 5} MORE</button>
                             ` : ''}
                             
                             ${showAll && transactions.length > 5 ? `
                                 <button onclick="showLessTransactions()" style="
                                     width: 100%;
-                                    padding: 12px;
-                                    background: rgba(0, 188, 212, 0.2);
-                                    border: 1px solid rgba(0, 188, 212, 0.4);
-                                    border-radius: 8px;
-                                    color: #00ffff;
+                                    padding: 14px;
+                                    background: rgba(0, 188, 212, 0.1);
+                                    border: 1px solid rgba(0, 188, 212, 0.2);
+                                    border-radius: 10px;
+                                    color: #00bcd4;
                                     font-size: 13px;
                                     font-weight: 700;
                                     cursor: pointer;
@@ -6852,40 +6986,50 @@ async function startMiningOnBackend() {
             const pageContent = document.getElementById('fullPageContent');
             pageContent.innerHTML = `
                 <div style="padding: 20px;">
-                    <div style="text-align: center; margin-bottom: 24px;">
-                        <h2 style="color: #fff; font-size: 20px; font-weight: 800; margin-bottom: 8px;">🔑 Your Seed Phrase</h2>
-                        <p style="color: rgba(255, 255, 255, 0.7); font-size: 13px;">
-                            Write down these 10 words in order. You'll need them to recover your wallet.
+                    <div style="text-align: center; margin-bottom: 32px;">
+                        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#00bcd4" stroke-width="1.5" style="margin: 0 auto 20px;">
+                            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                            <line x1="1" y1="10" x2="23" y2="10"/>
+                        </svg>
+                        <h2 style="color: #fff; font-size: 22px; font-weight: 900; margin-bottom: 10px; letter-spacing: 0.5px;">Secret Recovery Phrase</h2>
+                        <p style="color: rgba(255, 255, 255, 0.5); font-size: 13px; max-width: 340px; margin: 0 auto; line-height: 1.6;">
+                            Write down these 10 words in order and store them safely
                         </p>
                     </div>
                     
-                    <div style="background: rgba(255, 165, 0, 0.1); border: 2px solid rgba(255, 165, 0, 0.4); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
-                        <div style="color: #ffa500; font-size: 12px; font-weight: 700; margin-bottom: 8px;">⚠️ IMPORTANT</div>
-                        <div style="color: rgba(255, 255, 255, 0.8); font-size: 12px; line-height: 1.5;">
-                            Never share your seed phrase with anyone. Store it safely offline. If you lose it, you cannot recover your wallet!
+                    <div style="background: linear-gradient(135deg, rgba(255, 165, 0, 0.1), rgba(255, 68, 68, 0.1)); border: 2px solid rgba(255, 165, 0, 0.3); border-radius: 14px; padding: 18px; margin-bottom: 24px;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffa500" stroke-width="2">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                <line x1="12" y1="9" x2="12" y2="13"/>
+                                <line x1="12" y1="17" x2="12.01" y2="17"/>
+                            </svg>
+                            <div style="color: #ffa500; font-size: 13px; font-weight: 800; letter-spacing: 0.5px;">IMPORTANT</div>
+                        </div>
+                        <div style="color: rgba(255, 255, 255, 0.7); font-size: 12px; line-height: 1.7;">
+                            Never share your recovery phrase. Anyone with these words can access your wallet. Store it offline in a secure location.
                         </div>
                     </div>
                     
-                    <div id="seedPhraseDisplay" style="
-                        background: rgba(0, 0, 0, 0.4);
-                        border: 2px solid rgba(0, 255, 255, 0.3);
-                        border-radius: 12px;
-                        padding: 20px;
-                        margin-bottom: 20px;
-                    ">
-                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                    <div class="card" style="padding: 20px; margin-bottom: 20px;">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
                             ${seedPhrase.split(' ').map((word, i) => `
                                 <div style="
-                                    background: rgba(0, 188, 212, 0.1);
-                                    border: 1px solid rgba(0, 188, 212, 0.3);
-                                    border-radius: 8px;
-                                    padding: 12px;
+                                    background: rgba(0, 188, 212, 0.08);
+                                    border: 1px solid rgba(0, 188, 212, 0.2);
+                                    border-radius: 10px;
+                                    padding: 14px;
                                     display: flex;
                                     align-items: center;
-                                    gap: 8px;
+                                    gap: 10px;
                                 ">
-                                    <span style="color: rgba(255, 255, 255, 0.5); font-size: 12px; font-weight: 700;">${i + 1}.</span>
-                                    <span style="color: #00ffff; font-size: 14px; font-weight: 700;">${word}</span>
+                                    <span style="
+                                        color: rgba(255, 255, 255, 0.3);
+                                        font-size: 11px;
+                                        font-weight: 800;
+                                        min-width: 20px;
+                                    ">${i + 1}.</span>
+                                    <span style="color: #00bcd4; font-size: 15px; font-weight: 700;">${word}</span>
                                 </div>
                             `).join('')}
                         </div>
@@ -6893,29 +7037,33 @@ async function startMiningOnBackend() {
                     
                     <button onclick="copySeedPhrase('${seedPhrase}')" style="
                         width: 100%;
-                        padding: 14px;
-                        background: rgba(0, 188, 212, 0.2);
-                        border: 1px solid rgba(0, 188, 212, 0.4);
-                        border-radius: 12px;
-                        color: #00ffff;
-                        font-size: 14px;
-                        font-weight: 700;
-                        cursor: pointer;
-                        margin-bottom: 12px;
-                    ">📋 COPY SEED PHRASE</button>
-                    
-                    <button onclick="confirmCreateWallet('${seedPhrase}')" style="
-                        width: 100%;
                         padding: 16px;
-                        background: linear-gradient(135deg, #00bcd4, #0097a7);
-                        border: none;
+                        background: rgba(0, 188, 212, 0.15);
+                        border: 1px solid rgba(0, 188, 212, 0.3);
                         border-radius: 12px;
-                        color: white;
-                        font-size: 16px;
+                        color: #00bcd4;
+                        font-size: 14px;
                         font-weight: 800;
                         cursor: pointer;
-                        box-shadow: 0 4px 12px rgba(0, 188, 212, 0.4);
-                    ">✅ I'VE SAVED IT - CREATE WALLET</button>
+                        margin-bottom: 12px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 10px;
+                    ">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                        </svg>
+                        <span>COPY PHRASE</span>
+                    </button>
+                    
+                    <button onclick="confirmCreateWallet('${seedPhrase}')" class="reward-claim-btn" style="padding: 18px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        <span style="font-size: 15px;">I'VE SAVED IT SECURELY</span>
+                    </button>
                 </div>
             `;
         }
@@ -6925,6 +7073,173 @@ async function startMiningOnBackend() {
                 showToast('✅ Seed phrase copied!', false);
             });
         }
+        
+        async function confirmCreateWallet(seedPhrase) {
+            try {
+                showToast('🔄 Creating wallet...', false, 999999);
+                
+                const seedHash = hashSeedPhrase(seedPhrase);
+                
+                const response = await fetch(API_ENDPOINTS.createWallet, {
+                    method: 'POST',
+                    headers: getApiHeaders(),
+                    body: JSON.stringify({
+                        userId: currentUser.userId,
+                        seedPhraseHash: seedHash
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    localStorage.setItem('walletActive_' + currentUser.email, 'true');
+                    showToast('✅ Wallet created successfully!', false);
+                    await initApp();
+                    openPage('wallet');
+                } else {
+                    showToast(`❌ ${data.error || 'Failed to create wallet'}`, true);
+                }
+            } catch (error) {
+                console.error('Create wallet error:', error);
+                showToast('❌ Failed to create wallet', true);
+            }
+        }
+        
+        function showImportWallet() {
+            const pageContent = document.getElementById('fullPageContent');
+            pageContent.innerHTML = `
+                <div style="padding: 20px;">
+                    <div style="text-align: center; margin-bottom: 32px;">
+                        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#00bcd4" stroke-width="1.5" style="margin: 0 auto 20px;">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        <h2 style="color: #fff; font-size: 22px; font-weight: 900; margin-bottom: 10px; letter-spacing: 0.5px;">Import Wallet</h2>
+                        <p style="color: rgba(255, 255, 255, 0.5); font-size: 13px; max-width: 320px; margin: 0 auto; line-height: 1.6;">
+                            Enter your 10-word recovery phrase to restore access
+                        </p>
+                    </div>
+                    
+                    <div style="margin-bottom: 24px;">
+                        <label style="color: rgba(255, 255, 255, 0.5); font-size: 12px; font-weight: 700; letter-spacing: 1px; display: block; margin-bottom: 12px;">RECOVERY PHRASE</label>
+                        <textarea id="importSeedInput" placeholder="Enter your 10 words separated by spaces..." style="
+                            width: 100%;
+                            min-height: 140px;
+                            background: rgba(0, 0, 0, 0.3);
+                            border: 2px solid rgba(0, 188, 212, 0.3);
+                            border-radius: 12px;
+                            padding: 18px;
+                            color: #00bcd4;
+                            font-size: 14px;
+                            font-family: 'Courier New', monospace;
+                            resize: vertical;
+                            line-height: 1.8;
+                        "></textarea>
+                    </div>
+                    
+                    <button onclick="confirmImportWallet()" class="reward-claim-btn" style="padding: 18px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        <span style="font-size: 15px;">IMPORT WALLET</span>
+                    </button>
+                    
+                    <button onclick="openPage('wallet')" style="
+                        width: 100%;
+                        padding: 16px;
+                        background: rgba(100, 100, 100, 0.15);
+                        border: 1px solid rgba(150, 150, 150, 0.2);
+                        border-radius: 12px;
+                        color: rgba(255, 255, 255, 0.5);
+                        font-size: 14px;
+                        font-weight: 700;
+                        cursor: pointer;
+                    ">CANCEL</button>
+                </div>
+            `;
+        }
+        
+        async function confirmImportWallet() {
+            try {
+                const seedInput = document.getElementById('importSeedInput');
+                const seedPhrase = seedInput.value.trim().toLowerCase();
+                
+                if (!seedPhrase) {
+                    showToast('❌ Please enter your seed phrase', true);
+                    return;
+                }
+                
+                const words = seedPhrase.split(/\s+/);
+                if (words.length !== 10) {
+                    showToast('❌ Seed phrase must be exactly 10 words', true);
+                    return;
+                }
+                
+                showToast('🔄 Importing wallet...', false, 999999);
+                
+                const seedHash = hashSeedPhrase(seedPhrase);
+                
+                const response = await fetch(API_ENDPOINTS.importWallet, {
+                    method: 'POST',
+                    headers: getApiHeaders(),
+                    body: JSON.stringify({
+                        userId: currentUser.userId,
+                        seedPhraseHash: seedHash
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    localStorage.setItem('walletActive_' + currentUser.email, 'true');
+                    showToast('✅ Wallet imported successfully!', false);
+                    await initApp();
+                    openPage('wallet');
+                } else {
+                    showToast(`❌ ${data.error || 'Invalid seed phrase'}`, true);
+                }
+            } catch (error) {
+                console.error('Import wallet error:', error);
+                showToast('❌ Failed to import wallet', true);
+            }
+        }
+        
+        function logoutWallet() {
+            if (confirm('Are you sure you want to logout? You will need your recovery phrase to access your wallet again.')) {
+                localStorage.removeItem('walletActive_' + currentUser.email);
+                closePage();
+                showToast('✅ Wallet logged out', false);
+            }
+        }
+        
+        function copyWalletAddress(address) {
+            navigator.clipboard.writeText(address).then(() => {
+                showToast('✅ Address copied!', false);
+            }).catch(() => {
+                showToast('❌ Failed to copy', true);
+            });
+        }
+        
+        function showAllTransactions() {
+            localStorage.setItem('showAllTransactions_' + currentUser.email, 'true');
+            openPage('wallet');
+        }
+        
+        function showLessTransactions() {
+            localStorage.setItem('showAllTransactions_' + currentUser.email, 'false');
+            openPage('wallet');
+        }
+        
+        function openSendModal() {
+            showToast('🚧 Send feature coming soon!', false);
+        }
+            navigator.clipboard.writeText(seedPhrase).then(() => {
+                showToast('✅ Seed phrase copied!', false);
+            });
+
         
         async function confirmCreateWallet(seedPhrase) {
             try {
