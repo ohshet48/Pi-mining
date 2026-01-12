@@ -2967,9 +2967,11 @@ function hideLoginLoading() {
         }
         
         function showError(msg) {
-            // Close any waiting toasts
-            const toasts = document.querySelectorAll('.toast-notification');
-            toasts.forEach(toast => toast.remove());
+            // Close any waiting toasts by ID
+            const toast = document.getElementById('toastNotification');
+            if (toast) {
+                toast.classList.remove('show');
+            }
             
             const el = document.getElementById('errorMsg');
             el.className = 'error-msg';
