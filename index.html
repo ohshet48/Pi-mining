@@ -2967,6 +2967,10 @@ function hideLoginLoading() {
         }
         
         function showError(msg) {
+            // Close any waiting toasts
+            const toasts = document.querySelectorAll('.toast-notification');
+            toasts.forEach(toast => toast.remove());
+            
             const el = document.getElementById('errorMsg');
             el.className = 'error-msg';
             el.textContent = msg;
@@ -3136,7 +3140,7 @@ window.__resetEmail = email;
     }
     
     if (!/^[a-zA-Z0-9]+$/.test(username)) {
-        showError('Username can only contain letters and numbers');
+        showError('Username: only English letters and numbers allowed');
         return;
     }
     if (!email || !password || !confirmPassword) {
