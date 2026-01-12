@@ -5738,25 +5738,27 @@ async function startMiningOnBackend() {
                 console.error('Failed to fetch leaderboard:', err);
             }
             
-            // Find current user's rank
+            // Find current user's rank from their user document (not from leaderboard list)
             const currentEmail = currentUser ? currentUser.email : '';
-            console.log('🔍 Finding user in leaderboard:', currentEmail);
+            console.log('🔍 Finding user rank:', currentEmail);
             console.log('📊 Leaderboard data:', leaderboardData.length, 'users');
             
-            const currentUserRank = leaderboardData.findIndex(u => u.email === currentEmail) + 1;
+            // Get rank from user document (set by scheduled function)
+            const currentUserRank = currentUser?.leaderboardRank || 0;
             let currentUserData = leaderboardData.find(u => u.email === currentEmail);
             
-            console.log('📍 User rank:', currentUserRank, '| Found in list:', !!currentUserData);
+            console.log('📍 User rank:', currentUserRank, '| Found in top 100:', !!currentUserData);
             
-            // If user not in leaderboard, use currentUser data
+            // If user not in top 100, use currentUser data
             if (!currentUserData && currentUser) {
-                console.log('ℹ️ User not in leaderboard, using currentUser data');
+                console.log('ℹ️ User not in top 100, using currentUser data with rank:', currentUserRank);
                 currentUserData = {
                     email: currentUser.email,
                     username: currentUser.username,
                     level: currentUser.level || 1,
                     miningDays: currentUser.miningDays || 0,
-                    country: currentUser.country || 'Turkey'
+                    country: currentUser.country || 'Turkey',
+                    rank: currentUserRank
                 };
             }
             
