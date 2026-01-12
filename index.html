@@ -5633,58 +5633,32 @@ async function startMiningOnBackend() {
         }
         
         async function getAnnouncementsPageContent() {
-            // TODO: Replace this with server API call
-            // Example: fetch('/api/announcements').then(res => res.json()).then(data => ...)
-            
-            const announcements = [
-                // Mock data - replace with server data
-                // {
-                //     id: 1,
-                //     title: "Welcome to Arc Astra",
-                //     date: "2024-12-10",
-                //     content: "We are excited to launch Arc Astra!",
-                //     priority: "high" // high, medium, low
-                // }
-            ];
-            
-            if (announcements.length === 0) {
-                return `
-                    <div style="text-align: center; padding: 60px 20px;">
-                        <div style="font-size: 64px; margin-bottom: 20px;">📢</div>
-                        <h2 style="color: white; font-size: 24px; font-weight: 800; margin-bottom: 12px;">No Announcements Yet</h2>
-                        <p style="color: #8b5cf6; font-size: 15px; line-height: 1.6;">Stay tuned for important updates and news from Arc Astra.</p>
-                    </div>
-                `;
-            }
-            
-            // Render announcements
-            let html = '<div style="display: flex; flex-direction: column; gap: 16px;">';
-            
-            announcements.forEach(announcement => {
-                const priorityColor = announcement.priority === 'high' ? '#ef4444' : 
-                                     announcement.priority === 'medium' ? '#f59e0b' : '#3b82f6';
-                const priorityBadge = announcement.priority === 'high' ? '🔴 Important' : 
-                                     announcement.priority === 'medium' ? '🟡 Notice' : '🔵 Info';
+            try {
+                const snapshot = await db.collection('announcements').orderBy('createdAt', 'desc').limit(10).get();
                 
-                html += `
-                    <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);">
-                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
-                            <h3 style="color: white; font-size: 18px; font-weight: 800; margin: 0; flex: 1;">${announcement.title}</h3>
-                            <span style="background: ${priorityColor}20; color: ${priorityColor}; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; white-space: nowrap; margin-left: 12px;">${priorityBadge}</span>
-                        </div>
-                        <div style="color: #8b5cf6; font-size: 13px; margin-bottom: 12px; font-weight: 600;">
-                            📅 ${formatAnnouncementDate(announcement.date)}
-                        </div>
-                        <div style="color: #c4b5fd; font-size: 15px; line-height: 1.6;">
-                            ${announcement.content}
-                        </div>
-                    </div>
-                `;
-            });
-            
-            html += '</div>';
-            return html;
+                if (snapshot.empty) {
+                    return `<div style="text-align: center; padding: 60px 20px;"><div style="font-size: 64px; margin-bottom: 20px;">📢</div><h2 style="color: white; font-size: 24px; font-weight: 800; margin-bottom: 12px;">No Announcements Yet</h2><p style="color: #8b5cf6; font-size: 15px; line-height: 1.6;">Stay tuned for important updates and news from Arc Astra.</p></div>`;
+                }
+                
+                let html = '<div style="display: flex; flex-direction: column; gap: 16px;">';
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const title = data.title || 'Announcement';
+                    const message = data.message || '';
+                    const date = data.date || 'Recent';
+                    
+                    html += `<div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);"><h3 style="color: white; font-size: 18px; font-weight: 800; margin-bottom: 8px;">${title}</h3><div style="color: #8b5cf6; font-size: 13px; margin-bottom: 12px; font-weight: 600;">📅 ${date}</div><div style="color: #c4b5fd; font-size: 15px; line-height: 1.6;">${message}</div></div>`;
+                });
+                
+                html += '</div>';
+                return html;
+            } catch (error) {
+                console.error('Error loading announcements:', error);
+                return `<div style="text-align: center; padding: 60px 20px;"><div style="font-size: 64px; margin-bottom: 20px;">❌</div><h2 style="color: white; font-size: 24px; font-weight: 800; margin-bottom: 12px;">Error Loading Announcements</h2></div>`;
+            }
         }
+
         
         function formatAnnouncementDate(dateString) {
             const date = new Date(dateString);
