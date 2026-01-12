@@ -3623,11 +3623,10 @@ window.__resetEmail = email;
             // Check if current session has ad boost active
             let adBonus = 0;
             if (activeMiningSession && activeMiningSession.adBoostActive) {
-                const boostCount = activeMiningSession.adBoostCount || 1;
-                adBonus = boostCount * 0.25;  // Cumulative: each ad adds 0.25
+                adBonus = activeMiningSession.adBoostTotal || 0;  // Use total cumulative boost
                 console.log('🚀 Ad boost detected:', {
-                    adBoostCount: boostCount,
-                    adBonus: adBonus
+                    adBoostCount: activeMiningSession.adBoostCount,
+                    adBoostTotal: adBonus
                 });
             }
             
@@ -3917,6 +3916,19 @@ window.__resetEmail = email;
             const isMaxAds = adBoostCount >= 5;
             const isDisabled = isOnCooldown || isMaxAds;
             
+            // Calculate next reward
+            let nextReward = 0;
+            const nextCount = adBoostCount + 1;
+            if (nextCount <= 2) {
+                nextReward = 0.25;
+            } else if (nextCount === 3) {
+                nextReward = 0.50;
+            } else if (nextCount === 4) {
+                nextReward = 0.75;
+            } else if (nextCount === 5) {
+                nextReward = 1.00;
+            }
+            
             container.innerHTML = `
                 <button 
                     id="watchAdButton"
@@ -3944,7 +3956,7 @@ window.__resetEmail = email;
                         `🔒 Max Ads (${adBoostCount}/5)` : 
                         (isOnCooldown ? 
                             `⏳ Wait for reward ${cooldownRemaining}s` : 
-                            `📺 Watch Ad +0.25 (${adBoostCount}/5)`
+                            `📺 Watch Ad +${nextReward.toFixed(2)} (${adBoostCount}/5)`
                         )
                     }
                 </button>
@@ -4565,35 +4577,10 @@ async function startMiningOnBackend() {
                     const data = await response.json();
                     
                     if (response.ok) {
-                        // Update activeMiningSession with new adBoostCount (instant update)
-                        if (activeMiningSession) {
-                            activeMiningSession.adBoostCount = data.adBoostCount;
-                            activeMiningSession.adBoostActive = true;
-                            console.log('✅ activeMiningSession updated:', {
-                                adBoostCount: activeMiningSession.adBoostCount,
-                                adBoostActive: activeMiningSession.adBoostActive
-                            });
-                        } else {
-                            console.error('❌ No activeMiningSession to update!');
-                        }
+                        console.log('✅ Ad boost applied successfully, refreshing data from backend...');
                         
-                        // Force immediate rate recalculation
-                        const baseRate = currentUser.rate || 0.25;
-                        const refBonus = d.activeRefs * 0.05;
-                        const adBonus = data.adBoostCount * 0.25;
-                        const speedBonus = activeMiningSession?.speedBoostActive ? (activeMiningSession.speedBoostAmount || 0) : 0;
-                        d.rate = baseRate + refBonus + adBonus + speedBonus;
-                        
-                        console.log('🎬 Ad boost applied, rate recalculated:', {
-                            baseRate,
-                            refBonus,
-                            adBonus,
-                            speedBonus,
-                            totalRate: d.rate
-                        });
-                        
-                        // Re-render UI with updated rate (no API call needed)
-                        render();
+                        // Fetch fresh data from backend
+                        await initApp();
                     } else {
                         showToast(`❌ ${data.error || 'Failed to apply boost'}`, true);
                     }
