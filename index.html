@@ -6785,8 +6785,17 @@ async function startMiningOnBackend() {
         }
         
         let isPurchasingSpeedBoost = false;
+        let speedBoostCooldownEnd = 0;
         
         async function purchaseBooster() {
+            // Check cooldown
+            const now = Date.now();
+            if (now < speedBoostCooldownEnd) {
+                const remainingSeconds = Math.ceil((speedBoostCooldownEnd - now) / 1000);
+                showToast(`⏳ Please wait ${remainingSeconds}s before purchasing again`, false);
+                return;
+            }
+            
             // Prevent multiple clicks
             if (isPurchasingSpeedBoost) {
                 showToast('⏳ Purchase in progress, please wait...', false);
@@ -6824,6 +6833,10 @@ async function startMiningOnBackend() {
                 
                 if (response.ok) {
                     showToast(`🚀 Speed Boost activated! Total: +${data.totalBoostAmount.toFixed(2)} (${data.boostCount}x purchases)`, false);
+                    
+                    // Set 10 second cooldown
+                    speedBoostCooldownEnd = Date.now() + 10000;
+                    
                     // Refresh data to show new rate
                     await initApp();
                 } else {
@@ -6833,16 +6846,22 @@ async function startMiningOnBackend() {
                 console.error('Purchase error:', error);
                 showToast('❌ Purchase failed. Please try again.', true);
             } finally {
-                // Reset flag after 2 seconds to allow retry if needed
-                setTimeout(() => {
-                    isPurchasingSpeedBoost = false;
-                }, 2000);
+                isPurchasingSpeedBoost = false;
             }
         }
         
         let isPurchasingPermanentBoost = false;
+        let permanentBoostCooldownEnd = 0;
         
         async function purchasePermanentBooster() {
+            // Check cooldown
+            const now = Date.now();
+            if (now < permanentBoostCooldownEnd) {
+                const remainingSeconds = Math.ceil((permanentBoostCooldownEnd - now) / 1000);
+                showToast(`⏳ Please wait ${remainingSeconds}s before purchasing again`, false);
+                return;
+            }
+            
             // Prevent multiple clicks
             if (isPurchasingPermanentBoost) {
                 showToast('⏳ Purchase in progress, please wait...', false);
@@ -6873,6 +6892,10 @@ async function startMiningOnBackend() {
                 
                 if (response.ok) {
                     showToast(`⭐ Permanent Speed Boost activated! Rate: ${data.oldRate.toFixed(2)} → ${data.newRate.toFixed(2)}`, false);
+                    
+                    // Set 10 second cooldown
+                    permanentBoostCooldownEnd = Date.now() + 10000;
+                    
                     // Refresh data to show new rate
                     await initApp();
                 } else {
@@ -6882,10 +6905,7 @@ async function startMiningOnBackend() {
                 console.error('Purchase error:', error);
                 showToast('❌ Purchase failed. Please try again.', true);
             } finally {
-                // Reset flag after 2 seconds to allow retry if needed
-                setTimeout(() => {
-                    isPurchasingPermanentBoost = false;
-                }, 2000);
+                isPurchasingPermanentBoost = false;
             }
         }
         
