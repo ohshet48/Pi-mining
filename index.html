@@ -1927,11 +1927,6 @@ const messaging = firebase.messaging();
 // Global initApp - will be defined inside DOMContentLoaded but accessible globally
 let initApp;
 
-// Define a placeholder that will be replaced
-initApp = async function() {
-    console.warn('initApp called but full implementation not loaded yet');
-};
-
 // Auto-login when DOM is ready  
 document.addEventListener('DOMContentLoaded', async function() {
     // IMMEDIATELY override initApp with a function that will work
@@ -6780,10 +6775,12 @@ async function startMiningOnBackend() {
         function openSendModal() {
             showToast('🚧 Send feature coming soon!', false);
         }
+        
+        function copySeedPhrase(seedPhrase) {
             navigator.clipboard.writeText(seedPhrase).then(() => {
                 showToast('✅ Seed phrase copied!', false);
             });
-        
+        }
         
         async function confirmCreateWallet(seedPhrase) {
             try {
