@@ -5252,6 +5252,12 @@ async function startMiningOnBackend() {
                 case 'upgrades':
                     pageTitle.textContent = 'Upgrades / Boosts';
                     pageContent.innerHTML = getUpgradesPageContent();
+                    // Render buttons and start timer
+                    setTimeout(() => {
+                        renderSpeedBoostButton();
+                        renderPermanentBoostButton();
+                        startBoostButtonUpdates();
+                    }, 0);
                     break;
                 case 'announcements':
                     pageTitle.textContent = 'Announcements';
@@ -5440,6 +5446,9 @@ async function startMiningOnBackend() {
             const fullPage = document.getElementById('fullPage');
             const sidebar = document.getElementById('menuSidebar');
             const menuOverlay = document.getElementById('menuOverlay');
+            
+            // Stop boost button updates
+            stopBoostButtonUpdates();
             
             // Close full page
             fullPage.classList.remove('active');
@@ -6643,9 +6652,7 @@ async function startMiningOnBackend() {
                                 <div style="color: #8b5cf6; font-size: 16px; font-weight: 600; margin-bottom: 12px;">
                                     Price: <span style="color: #00ffff; font-size: 20px; font-weight: 900;">$0.99</span>
                                 </div>
-                                <button onclick="purchaseBooster()" style="width: 100%; background: linear-gradient(135deg, #00ffff, #0088cc); border: none; border-radius: 12px; padding: 16px; color: #000; font-size: 18px; font-weight: 900; cursor: pointer; box-shadow: 0 4px 20px rgba(0, 255, 255, 0.4); transition: all 0.3s;">
-                                    🚀 ACTIVATE BOOST
-                                </button>
+                                <div id="speedBoostButtonContainer"></div>
                             </div>
                         </div>
                     </div>
@@ -6757,26 +6764,7 @@ async function startMiningOnBackend() {
                                 <div style="color: #8b5cf6; font-size: 16px; font-weight: 600; margin-bottom: 12px;">
                                     Price: <span style="color: #00ffff; font-size: 20px; font-weight: 900;">$9.99</span>
                                 </div>
-                                <button 
-                                    onclick="${isPermanentPurchased ? '' : 'purchasePermanentBooster()'}" 
-                                    style="
-                                        width: 100%; 
-                                        background: ${isPermanentPurchased ? 'rgba(100, 100, 100, 0.3)' : 'linear-gradient(135deg, #00ffff, #0088cc)'}; 
-                                        border: none; 
-                                        border-radius: 12px; 
-                                        padding: 16px; 
-                                        color: ${isPermanentPurchased ? 'rgba(255, 255, 255, 0.5)' : '#000'}; 
-                                        font-size: 18px; 
-                                        font-weight: 900; 
-                                        cursor: ${isPermanentPurchased ? 'not-allowed' : 'pointer'}; 
-                                        box-shadow: 0 4px 20px rgba(0, 255, 255, ${isPermanentPurchased ? '0.1' : '0.4'}); 
-                                        transition: all 0.3s;
-                                        opacity: ${isPermanentPurchased ? '0.6' : '1'};
-                                    "
-                                    ${isPermanentPurchased ? 'disabled' : ''}
-                                >
-                                    ${isPermanentPurchased ? '✅ ALREADY PURCHASED' : '🚀 ACTIVATE BOOST'}
-                                </button>
+                                <div id="permanentBoostButtonContainer"></div>
                             </div>
                         </div>
                     </div>
@@ -6786,19 +6774,104 @@ async function startMiningOnBackend() {
         
         let isPurchasingSpeedBoost = false;
         let speedBoostCooldownEnd = 0;
+        let permanentBoostCooldownEnd = 0;
+        let boostButtonInterval = null;
+        
+        // Render Speed Boost button with cooldown
+        function renderSpeedBoostButton() {
+            const container = document.getElementById('speedBoostButtonContainer');
+            if (!container) return;
+            
+            const now = Date.now();
+            const cooldownRemaining = Math.max(0, Math.ceil((speedBoostCooldownEnd - now) / 1000));
+            const isOnCooldown = cooldownRemaining > 0;
+            const isDisabled = isOnCooldown || isPurchasingSpeedBoost;
+            
+            container.innerHTML = `
+                <button 
+                    onclick="${isDisabled ? '' : 'purchaseBooster()'}" 
+                    style="
+                        width: 100%; 
+                        background: ${isOnCooldown ? 'rgba(0, 255, 255, 0.1)' : 'linear-gradient(135deg, #00ffff, #0088cc)'}; 
+                        border: ${isOnCooldown ? '1px solid rgba(0, 255, 255, 0.3)' : 'none'}; 
+                        border-radius: 12px; 
+                        padding: 16px; 
+                        color: ${isOnCooldown ? 'rgba(255, 255, 255, 0.6)' : '#000'}; 
+                        font-size: 18px; 
+                        font-weight: 900; 
+                        cursor: ${isDisabled ? 'not-allowed' : 'pointer'}; 
+                        box-shadow: 0 4px 20px rgba(0, 255, 255, ${isOnCooldown ? '0.1' : '0.4'}); 
+                        transition: all 0.3s;
+                        opacity: ${isOnCooldown ? '0.6' : '1'};
+                    "
+                    ${isDisabled ? 'disabled' : ''}
+                >
+                    ${isOnCooldown ? `⏳ Wait ${cooldownRemaining}s` : '🚀 ACTIVATE BOOST'}
+                </button>
+            `;
+        }
+        
+        // Render Permanent Boost button with cooldown
+        function renderPermanentBoostButton() {
+            const container = document.getElementById('permanentBoostButtonContainer');
+            if (!container) return;
+            
+            const isPermanentPurchased = currentUser.permanentBoostPurchased || false;
+            const now = Date.now();
+            const cooldownRemaining = Math.max(0, Math.ceil((permanentBoostCooldownEnd - now) / 1000));
+            const isOnCooldown = cooldownRemaining > 0;
+            const isDisabled = isOnCooldown || isPermanentPurchased;
+            
+            container.innerHTML = `
+                <button 
+                    onclick="${isDisabled ? '' : 'purchasePermanentBooster()'}" 
+                    style="
+                        width: 100%; 
+                        background: ${isPermanentPurchased ? 'rgba(100, 100, 100, 0.3)' : (isOnCooldown ? 'rgba(0, 255, 255, 0.1)' : 'linear-gradient(135deg, #00ffff, #0088cc)')}; 
+                        border: ${isOnCooldown ? '1px solid rgba(0, 255, 255, 0.3)' : 'none'}; 
+                        border-radius: 12px; 
+                        padding: 16px; 
+                        color: ${isDisabled ? 'rgba(255, 255, 255, 0.6)' : '#000'}; 
+                        font-size: 18px; 
+                        font-weight: 900; 
+                        cursor: ${isDisabled ? 'not-allowed' : 'pointer'}; 
+                        box-shadow: 0 4px 20px rgba(0, 255, 255, ${isDisabled ? '0.1' : '0.4'}); 
+                        transition: all 0.3s;
+                        opacity: ${isDisabled ? '0.6' : '1'};
+                    "
+                    ${isDisabled ? 'disabled' : ''}
+                >
+                    ${isPermanentPurchased ? '✅ ALREADY PURCHASED' : (isOnCooldown ? `⏳ Wait ${cooldownRemaining}s` : '🚀 ACTIVATE BOOST')}
+                </button>
+            `;
+        }
+        
+        // Start button update interval
+        function startBoostButtonUpdates() {
+            if (boostButtonInterval) clearInterval(boostButtonInterval);
+            boostButtonInterval = setInterval(() => {
+                renderSpeedBoostButton();
+                renderPermanentBoostButton();
+            }, 1000);
+        }
+        
+        // Stop button updates
+        function stopBoostButtonUpdates() {
+            if (boostButtonInterval) {
+                clearInterval(boostButtonInterval);
+                boostButtonInterval = null;
+            }
+        }
         
         async function purchaseBooster() {
             // Check cooldown
             const now = Date.now();
             if (now < speedBoostCooldownEnd) {
-                const remainingSeconds = Math.ceil((speedBoostCooldownEnd - now) / 1000);
-                showToast(`⏳ Please wait ${remainingSeconds}s before purchasing again`, false);
-                return;
+                return; // Button already shows countdown
             }
             
             // Prevent multiple clicks
             if (isPurchasingSpeedBoost) {
-                showToast('⏳ Purchase in progress, please wait...', false);
                 return;
             }
             
@@ -6836,6 +6909,7 @@ async function startMiningOnBackend() {
                     
                     // Set 10 second cooldown
                     speedBoostCooldownEnd = Date.now() + 10000;
+                    renderSpeedBoostButton();
                     
                     // Refresh data to show new rate
                     await initApp();
@@ -6847,24 +6921,21 @@ async function startMiningOnBackend() {
                 showToast('❌ Purchase failed. Please try again.', true);
             } finally {
                 isPurchasingSpeedBoost = false;
+                renderSpeedBoostButton();
             }
         }
         
         let isPurchasingPermanentBoost = false;
-        let permanentBoostCooldownEnd = 0;
         
         async function purchasePermanentBooster() {
             // Check cooldown
             const now = Date.now();
             if (now < permanentBoostCooldownEnd) {
-                const remainingSeconds = Math.ceil((permanentBoostCooldownEnd - now) / 1000);
-                showToast(`⏳ Please wait ${remainingSeconds}s before purchasing again`, false);
-                return;
+                return; // Button already shows countdown
             }
             
             // Prevent multiple clicks
             if (isPurchasingPermanentBoost) {
-                showToast('⏳ Purchase in progress, please wait...', false);
                 return;
             }
             
@@ -6895,6 +6966,7 @@ async function startMiningOnBackend() {
                     
                     // Set 10 second cooldown
                     permanentBoostCooldownEnd = Date.now() + 10000;
+                    renderPermanentBoostButton();
                     
                     // Refresh data to show new rate
                     await initApp();
@@ -6906,6 +6978,7 @@ async function startMiningOnBackend() {
                 showToast('❌ Purchase failed. Please try again.', true);
             } finally {
                 isPurchasingPermanentBoost = false;
+                renderPermanentBoostButton();
             }
         }
         
