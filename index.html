@@ -3801,7 +3801,11 @@ window.__resetEmail = email;
                     if (hasNewAnnouncements || hasAirdrops) {
                         menuButton.style.border = '2px solid #10b981';
                         menuButton.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.5)';
-                        menuButton.style.animation = 'notificationPulse 1s ease-in-out 3';
+                        // Restart animation
+                        menuButton.style.animation = 'none';
+                        setTimeout(() => {
+                            menuButton.style.animation = 'notificationPulse 1s ease-in-out 3';
+                        }, 10);
                     } else {
                         menuButton.style.border = '';
                         menuButton.style.boxShadow = '';
