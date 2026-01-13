@@ -3762,24 +3762,32 @@ window.__resetEmail = email;
                     .get();
                 const hasAirdrops = !airdropsSnap.empty;
                 
-                // Update menu items
+                // Update menu items with inline styles (stronger than class)
                 const announcementsMenuItem = document.getElementById('announcementsMenuItem');
                 const airdropMenuItem = document.getElementById('airdropMenuItem');
                 const menuButton = document.getElementById('menuButton');
                 
                 if (announcementsMenuItem) {
                     if (hasNewAnnouncements) {
-                        announcementsMenuItem.classList.add('menu-item-highlight');
+                        announcementsMenuItem.style.border = '2px solid #10b981';
+                        announcementsMenuItem.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.5)';
+                        announcementsMenuItem.style.background = 'rgba(16, 185, 129, 0.2)';
                     } else {
-                        announcementsMenuItem.classList.remove('menu-item-highlight');
+                        announcementsMenuItem.style.border = '';
+                        announcementsMenuItem.style.boxShadow = '';
+                        announcementsMenuItem.style.background = '';
                     }
                 }
                 
                 if (airdropMenuItem) {
                     if (hasAirdrops) {
-                        airdropMenuItem.classList.add('menu-item-highlight');
+                        airdropMenuItem.style.border = '2px solid #10b981';
+                        airdropMenuItem.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.5)';
+                        airdropMenuItem.style.background = 'rgba(16, 185, 129, 0.2)';
                     } else {
-                        airdropMenuItem.classList.remove('menu-item-highlight');
+                        airdropMenuItem.style.border = '';
+                        airdropMenuItem.style.boxShadow = '';
+                        airdropMenuItem.style.background = '';
                     }
                 }
                 
@@ -3797,6 +3805,7 @@ window.__resetEmail = email;
                 console.error('Error checking notifications:', error);
             }
         }
+
 
         
         function calculateActiveRefs() {
