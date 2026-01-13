@@ -4307,18 +4307,6 @@ window.__resetEmail = email;
                 </div>
             `;
             
-            // Update Airdrop menu item and hamburger button based on pending airdrops
-            const airdropMenuItem = document.getElementById('airdropMenuItem');
-            const menuButton = document.getElementById('menuButton');
-            
-            if (hasPendingAirdrops) {
-                if (airdropMenuItem) airdropMenuItem.classList.add('menu-item-highlight');
-                if (menuButton) menuButton.classList.add('menu-btn-highlight');
-            } else {
-                if (airdropMenuItem) airdropMenuItem.classList.remove('menu-item-highlight');
-                if (menuButton) menuButton.classList.remove('menu-btn-highlight');
-            }
-            
             // MANUAL event listener for referrals card (fix for back button issue)
             setTimeout(() => {
                 const referralsCards = document.querySelectorAll('.stat');
