@@ -3808,25 +3808,6 @@ window.__resetEmail = email;
                     if (hasNewAnnouncements || hasAirdrops) {
                         menuButton.style.border = '2px solid #10b981';
                         menuButton.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.5)';
-                        // Pulse 3 times
-                        let count = 0;
-                        hamburgerPulseInterval = setInterval(() => {
-                            if (count >= 6) {
-                                clearInterval(hamburgerPulseInterval);
-                                hamburgerPulseInterval = null;
-                                menuButton.style.border = '2px solid #10b981';
-                                menuButton.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.5)';
-                                return;
-                            }
-                            if (count % 2 === 0) {
-                                menuButton.style.border = '3px solid #059669';
-                                menuButton.style.boxShadow = '0 0 25px rgba(16, 185, 129, 0.8)';
-                            } else {
-                                menuButton.style.border = '2px solid #10b981';
-                                menuButton.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.5)';
-                            }
-                            count++;
-                        }, 400);
                     } else {
                         menuButton.style.border = '';
                         menuButton.style.boxShadow = '';
@@ -4763,6 +4744,13 @@ async function startMiningOnBackend() {
             // Prevent background scrolling when menu is open
             if (sidebar.classList.contains('open')) {
                 document.body.style.overflow = 'hidden';
+                
+                // Clear hamburger highlight when menu opens
+                const menuButton = document.getElementById('menuButton');
+                if (menuButton) {
+                    menuButton.style.border = '';
+                    menuButton.style.boxShadow = '';
+                }
                 
                 // Push state for back button handling
                 try {
