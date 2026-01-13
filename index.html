@@ -3748,8 +3748,15 @@ window.__resetEmail = email;
         
 
         // Check for new announcements and unclaimed airdrops
+        let hamburgerPulseInterval = null;
         async function checkNotifications() {
             try {
+                // Clear previous pulse interval
+                if (hamburgerPulseInterval) {
+                    clearInterval(hamburgerPulseInterval);
+                    hamburgerPulseInterval = null;
+                }
+                
                 const lastViewedAnnouncements = localStorage.getItem('lastViewedAnnouncements_' + currentUser.userId) || '0';
                 
                 // Check announcements (newer than last viewed)
@@ -3803,9 +3810,10 @@ window.__resetEmail = email;
                         menuButton.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.5)';
                         // Pulse 3 times
                         let count = 0;
-                        const pulseInterval = setInterval(() => {
+                        hamburgerPulseInterval = setInterval(() => {
                             if (count >= 6) {
-                                clearInterval(pulseInterval);
+                                clearInterval(hamburgerPulseInterval);
+                                hamburgerPulseInterval = null;
                                 menuButton.style.border = '2px solid #10b981';
                                 menuButton.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.5)';
                                 return;
