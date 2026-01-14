@@ -3798,10 +3798,10 @@ window.__resetEmail = email;
                     userCreatedDate = new Date();
                 }
                 
-                // Check announcements (newer than last viewed AND sent before/at user registration)
+                // Check announcements (newer than last viewed AND sent before user registration)
                 const announcementsSnap = await db.collection('announcements')
                     .where('createdAt', '>', new Date(parseInt(lastViewedAnnouncements)))
-                    .where('createdAt', '<=', userCreatedDate)
+                    .where('createdAt', '<', userCreatedDate) // Strictly BEFORE user registration
                     .limit(1)
                     .get();
                 const hasNewAnnouncements = !announcementsSnap.empty;
@@ -5761,9 +5761,9 @@ async function startMiningOnBackend() {
                     userCreatedDate = new Date();
                 }
                 
-                // Fetch announcements that were sent BEFORE or AT the time user registered
+                // Fetch announcements that were sent BEFORE user registered (not at the same time)
                 const snapshot = await db.collection('announcements')
-                    .where('createdAt', '<=', userCreatedDate)
+                    .where('createdAt', '<', userCreatedDate) // Strictly BEFORE, not equal
                     .orderBy('createdAt', 'desc')
                     .limit(10)
                     .get();
@@ -6643,16 +6643,14 @@ async function startMiningOnBackend() {
                         currentUser.balance = d.balance;
                         
                         // Backend automatically claims all pending referral rewards ✅
+                        // Don't call initApp() - it might reload old data before DELETE propagates
+                        // Optimistic update already handled above
                         
                         save();
                         localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                        
-                        // Wait for backend to update pending rewards
-                        await new Promise(resolve => setTimeout(resolve, 1500));
-                        
-                        // Reload app to refresh pending rewards
-                        await initApp();
                         render();
+                        
+                        console.log('✅ Referral earnings claimed successfully');
                     } else {
                         // Rollback on error
                         d.balance = oldBalance;
