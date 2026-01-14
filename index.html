@@ -7886,6 +7886,13 @@ async function sendPasswordReset() {
                 
                 const data = await response.json();
                 
+                // DEBUG: Log backend response
+                console.log('🔍 Password reset response:', {
+                    status: response.status,
+                    ok: response.ok,
+                    data: data
+                });
+                
                 if (response.ok) {
                     showForgotSuccess(data.message || "Reset link sent. Check your email.");
                     // Keep success message visible briefly, then proceed
@@ -7896,10 +7903,11 @@ async function sendPasswordReset() {
                         if (box) box.style.display = 'flex';
                     }, 1000);
                 } else {
+                    console.error('❌ Password reset failed:', data);
                     showForgotError(data.error || 'Email not found');
                 }
             } catch (error) {
-                console.error('Password reset error:', error);
+                console.error('❌ Password reset error:', error);
                 showForgotError('Failed to send reset link');
             }
         }
