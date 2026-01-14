@@ -3582,6 +3582,9 @@ window.__resetEmail = email;
             if (pendingRewardsData.length > 0) {
                 console.log(`📦 ${pendingRewardsData.length} pending reward bulundu`);
                 
+                // Get claimed levels from backend
+                const claimedLevels = allData.user.claimedLevels || [];
+                
                 // Restore flags from pending rewards
                 for (const reward of pendingRewardsData) {
                     if (reward.rewardType === 'daily') {
@@ -3590,6 +3593,13 @@ window.__resetEmail = email;
                     } else if (reward.rewardType === 'levelUp') {
                         const metadata = reward.metadata || {};
                         const level = metadata.level || (currentUser.level + 1);
+                        
+                        // CRITICAL: Don't set pending if already claimed
+                        if (claimedLevels.includes(level)) {
+                            console.log(`🚫 Level ${level} already claimed, ignoring pending reward`);
+                            continue;
+                        }
+                        
                         tempPendingLevelUp = level;
                         console.log(`✅ Level up flag set: Level ${level}`);
                     }
