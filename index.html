@@ -3898,10 +3898,18 @@ window.__resetEmail = email;
             const nextLevel = d.level + 1;
             const nextReq = levelRequirements[nextLevel];
             
+            // Get claimed levels from backend (persisted in database)
+            const claimedLevels = currentUser.claimedLevels || [];
+            
             // Don't set pendingLevelUp if:
             // 1. Already pending
             // 2. Recently claimed (prevents re-showing after claim)
-            if (d.miningDays >= nextReq && !d.pendingLevelUp && !recentlyClaimedLevels.has(nextLevel)) {
+            // 3. Already claimed in backend (prevents duplicate after app restart)
+            if (d.miningDays >= nextReq && 
+                !d.pendingLevelUp && 
+                !recentlyClaimedLevels.has(nextLevel) &&
+                !claimedLevels.includes(nextLevel)) {
+                
                 d.pendingLevelUp = nextLevel;
                 save();
                 
