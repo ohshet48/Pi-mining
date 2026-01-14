@@ -3389,6 +3389,9 @@ window.__resetEmail = email;
         let isClaimingAirdrop = false;
         let isWatchingAd = false;
         
+        // Track claimed levels to prevent re-showing after claim (temporary memory)
+        let recentlyClaimedLevels = new Set();
+        
         // Level system data
         const levelRequirements = {
             1: 0, 2: 5, 3: 10, 4: 15, 5: 20, 6: 30, 7: 40, 8: 50, 9: 60, 10: 75,
@@ -3637,7 +3640,15 @@ window.__resetEmail = email;
                 mining: false,
                 timeLeft: 0,
                 miningDays: currentUser.miningDays || 0,
-                pendingLevelUp: tempPendingLevelUp || currentUser.pendingLevelUp || null,
+                // Only set pendingLevelUp if not recently claimed
+                pendingLevelUp: (() => {
+                    const pending = tempPendingLevelUp || currentUser.pendingLevelUp || null;
+                    if (pending && recentlyClaimedLevels.has(pending)) {
+                        console.log(`🚫 Level ${pending} recently claimed, ignoring backend pendingLevelUp`);
+                        return null;
+                    }
+                    return pending;
+                })(),
                 pendingReferralEarnings: currentUser.pendingReferralEarnings || 0
             };
             
@@ -3759,9 +3770,28 @@ window.__resetEmail = email;
                 
                 const lastViewedAnnouncements = localStorage.getItem('lastViewedAnnouncements_' + currentUser.userId) || '0';
                 
-                // Check announcements (newer than last viewed)
+                // Get user's registration date for filtering
+                const userCreatedAt = currentUser.createdAt;
+                let userCreatedDate;
+                
+                if (userCreatedAt) {
+                    // Handle Firestore Timestamp
+                    if (userCreatedAt._seconds) {
+                        userCreatedDate = new Date(userCreatedAt._seconds * 1000);
+                    } else if (typeof userCreatedAt === 'string' || typeof userCreatedAt === 'number') {
+                        userCreatedDate = new Date(userCreatedAt);
+                    } else {
+                        userCreatedDate = userCreatedAt;
+                    }
+                } else {
+                    // If no createdAt, show all announcements (fallback for old users)
+                    userCreatedDate = new Date();
+                }
+                
+                // Check announcements (newer than last viewed AND sent before/at user registration)
                 const announcementsSnap = await db.collection('announcements')
                     .where('createdAt', '>', new Date(parseInt(lastViewedAnnouncements)))
+                    .where('createdAt', '<=', userCreatedDate)
                     .limit(1)
                     .get();
                 const hasNewAnnouncements = !announcementsSnap.empty;
@@ -3865,16 +3895,21 @@ window.__resetEmail = email;
         async function checkLevelUp() {
             if (d.level >= 20) return;
             
-            const nextReq = levelRequirements[d.level + 1];
-            if (d.miningDays >= nextReq && !d.pendingLevelUp) {
-                d.pendingLevelUp = d.level + 1;
+            const nextLevel = d.level + 1;
+            const nextReq = levelRequirements[nextLevel];
+            
+            // Don't set pendingLevelUp if:
+            // 1. Already pending
+            // 2. Recently claimed (prevents re-showing after claim)
+            if (d.miningDays >= nextReq && !d.pendingLevelUp && !recentlyClaimedLevels.has(nextLevel)) {
+                d.pendingLevelUp = nextLevel;
                 save();
                 
                 // Save pending level up reward
-                const levelReward = levelRewards[d.level + 1];
+                const levelReward = levelRewards[nextLevel];
                 if (levelReward && currentUser && currentUser.userId) {
                     await addPendingReward('levelUp', levelReward.coins, {
-                        level: d.level + 1,
+                        level: nextLevel,
                         miningDays: d.miningDays
                     });
                 }
@@ -3893,6 +3928,33 @@ window.__resetEmail = email;
             try {
                 showToast('Claiming level reward...');
                 
+                // ⚡ OPTIMISTIC UI - Update immediately
+                const levelReward = levelRewards[claimedLevel];
+                d.balance += levelReward.coins;
+                d.rate += levelReward.rate;
+                d.level = claimedLevel;
+                d.pendingLevelUp = null; // Clear immediately
+                
+                currentUser.balance = d.balance;
+                currentUser.rate = d.rate;
+                currentUser.level = claimedLevel;
+                
+                // Mark this level as claimed (prevents re-showing)
+                recentlyClaimedLevels.add(claimedLevel);
+                
+                // Clear from set after 5 seconds (enough time for backend to update)
+                setTimeout(() => {
+                    recentlyClaimedLevels.delete(claimedLevel);
+                    console.log(`✓ Level ${claimedLevel} removed from recently claimed set`);
+                }, 5000);
+                
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                save(); // Save to localStorage immediately
+                
+                render();
+                showToast(`✓ Claimed Level ${claimedLevel} reward! +${levelReward.coins} coins +${levelReward.rate} rate`);
+                
+                // Backend update in background
                 const response = await fetch(API_ENDPOINTS.claimLevelReward, {
                     method: 'POST',
                     headers: getApiHeaders(),
@@ -3903,32 +3965,16 @@ window.__resetEmail = email;
                 });
                 
                 if (!response.ok) {
-                    throw new Error('Failed to claim level reward');
+                    console.error('Backend claim failed, but UI already updated');
                 }
-                
-                const data = await response.json();
-                
-                // Update local data
-                d.balance = data.balance;
-                d.level = claimedLevel;
-                d.pendingLevelUp = null;
-                currentUser.balance = data.balance;
-                currentUser.rate = data.rate;
-                currentUser.level = claimedLevel;
-                
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                
-                render();
-                showToast(`✓ Claimed Level ${claimedLevel} reward!`);
-                
-                // Reload to refresh
-                await initApp();
-                if (d.level < 20) checkLevelUp();
-                render();
                 
             } catch (error) {
                 console.error('Level reward error:', error);
                 showToast('Failed to claim level reward', true);
+                // Revert on error
+                d.pendingLevelUp = claimedLevel;
+                recentlyClaimedLevels.delete(claimedLevel);
+                render();
             } finally {
                 isClaimingLevel = false;
             }
@@ -5679,7 +5725,30 @@ async function startMiningOnBackend() {
         
         async function getAnnouncementsPageContent() {
             try {
-                const snapshot = await db.collection('announcements').orderBy('createdAt', 'desc').limit(10).get();
+                // Get user's registration date
+                const userCreatedAt = currentUser.createdAt;
+                let userCreatedDate;
+                
+                if (userCreatedAt) {
+                    // Handle Firestore Timestamp
+                    if (userCreatedAt._seconds) {
+                        userCreatedDate = new Date(userCreatedAt._seconds * 1000);
+                    } else if (typeof userCreatedAt === 'string' || typeof userCreatedAt === 'number') {
+                        userCreatedDate = new Date(userCreatedAt);
+                    } else {
+                        userCreatedDate = userCreatedAt;
+                    }
+                } else {
+                    // If no createdAt, show all announcements (fallback for old users)
+                    userCreatedDate = new Date();
+                }
+                
+                // Fetch announcements that were sent BEFORE or AT the time user registered
+                const snapshot = await db.collection('announcements')
+                    .where('createdAt', '<=', userCreatedDate)
+                    .orderBy('createdAt', 'desc')
+                    .limit(10)
+                    .get();
                 
                 if (snapshot.empty) {
                     return `
@@ -8368,15 +8437,6 @@ try {
                 console.error('Claim error:', error);
                 isClaimingAirdrop = false;
                 showToast('Failed to claim', true);
-            }
-        }
-                }, 1500);
-                
-            } catch (error) {
-                console.error('Error claiming airdrops:', error);
-                hideLoading();
-                isClaimingAirdrop = false;
-                showToast('Failed to claim airdrops: ' + error.message, true);
             }
         }
 
