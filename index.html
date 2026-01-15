@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <meta name="theme-color" content="#00d4ff">
     <title>Arc Astra</title>
     <style>
@@ -16,6 +16,10 @@
             user-select: none;
             -webkit-tap-highlight-color: transparent;
             -webkit-touch-callout: none;
+            -webkit-text-size-adjust: 100%;
+            -moz-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+            text-size-adjust: 100%;
         }
         
         input, button {
@@ -35,6 +39,19 @@
             overflow-y: auto;
             position: relative;
             touch-action: pan-y;
+            -webkit-text-size-adjust: 100% !important;
+            -moz-text-size-adjust: 100% !important;
+            -ms-text-size-adjust: 100% !important;
+            text-size-adjust: 100% !important;
+            font-size: 16px !important;
+        }
+        
+        html {
+            -webkit-text-size-adjust: 100% !important;
+            -moz-text-size-adjust: 100% !important;
+            -ms-text-size-adjust: 100% !important;
+            text-size-adjust: 100% !important;
+            font-size: 16px !important;
         }
         
         /* Simplified Tech Background - Single Layer */
@@ -5507,7 +5524,6 @@ async function startMiningOnBackend() {
                     // Render buttons and start timer
                     setTimeout(() => {
                         renderSpeedBoostButton();
-                        renderPermanentBoostButton();
                         startBoostButtonUpdates();
                     }, 0);
                     break;
@@ -7219,125 +7235,12 @@ async function startMiningOnBackend() {
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Second Booster Card (Permanent) -->
-                    <div style="background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2)); border: 2px solid rgba(255, 215, 0, 0.4); border-radius: 20px; padding: 24px; margin-top: 24px; box-shadow: 0 8px 32px rgba(255, 215, 0, 0.2); position: relative; overflow: hidden;">
-                        
-                        <!-- Decorative glow -->
-                        <div style="position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(0, 255, 255, 0.1) 0%, transparent 70%); pointer-events: none;"></div>
-                        
-                        <!-- Content -->
-                        <div style="position: relative; z-index: 1;">
-                            <!-- Rocket SVG (Bigger & More Powerful) -->
-                            <div style="display: flex; justify-content: center; margin-bottom: 20px;">
-                                <svg width="140" height="140" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                                    <!-- Triple Flame (more powerful) -->
-                                    <g>
-                                        <!-- Center flame -->
-                                        <ellipse cx="100" cy="175" rx="18" ry="30" fill="url(#flameGradient)" opacity="0.95"/>
-                                        <!-- Left flame -->
-                                        <ellipse cx="80" cy="180" rx="10" ry="20" fill="url(#flameGradient2)" opacity="0.85"/>
-                                        <!-- Right flame -->
-                                        <ellipse cx="120" cy="180" rx="10" ry="20" fill="url(#flameGradient2)" opacity="0.85"/>
-                                        <!-- Extra glow -->
-                                        <ellipse cx="100" cy="170" rx="25" ry="15" fill="#ff6b00" opacity="0.3"/>
-                                    </g>
-                                    
-                                    <!-- Rocket Body (Thicker) -->
-                                    <path d="M 80 155 Q 80 100 100 30 Q 120 100 120 155 Z" fill="url(#rocketBody)" stroke="#00ffff" stroke-width="3"/>
-                                    
-                                    <!-- Rocket Nose (Sharper) -->
-                                    <path d="M 100 15 L 80 45 Q 100 35 120 45 Z" fill="url(#rocketNose)" stroke="#00ffff" stroke-width="3"/>
-                                    
-                                    <!-- Window (Bigger) -->
-                                    <circle cx="100" cy="75" r="18" fill="url(#window)" stroke="#00d4ff" stroke-width="2.5"/>
-                                    <circle cx="100" cy="75" r="12" fill="rgba(0, 200, 255, 0.4)"/>
-                                    
-                                    <!-- Fins (Bigger) -->
-                                    <path d="M 80 135 L 55 165 L 80 155 Z" fill="url(#fin)" stroke="#00ffff" stroke-width="2.5"/>
-                                    <path d="M 120 135 L 145 165 L 120 155 Z" fill="url(#fin)" stroke="#00ffff" stroke-width="2.5"/>
-                                    
-                                    <!-- Details (More lines) -->
-                                    <rect x="85" y="95" width="30" height="3" rx="1.5" fill="#00ffff" opacity="0.7"/>
-                                    <rect x="85" y="105" width="30" height="3" rx="1.5" fill="#00ffff" opacity="0.7"/>
-                                    <rect x="85" y="115" width="30" height="3" rx="1.5" fill="#00ffff" opacity="0.7"/>
-                                    <rect x="85" y="125" width="30" height="3" rx="1.5" fill="#00ffff" opacity="0.7"/>
-                                    
-                                    <!-- Boosters on sides -->
-                                    <rect x="75" y="140" width="5" height="15" rx="2" fill="url(#rocketBody)" stroke="#00ffff" stroke-width="1.5"/>
-                                    <rect x="120" y="140" width="5" height="15" rx="2" fill="url(#rocketBody)" stroke="#00ffff" stroke-width="1.5"/>
-                                    
-                                    <!-- Gradients -->
-                                    <defs>
-                                        <linearGradient id="rocketBody" x1="0%" y1="0%" x2="0%" y2="100%">
-                                            <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:1" />
-                                            <stop offset="100%" style="stop-color:#0088cc;stop-opacity:1" />
-                                        </linearGradient>
-                                        <linearGradient id="rocketNose" x1="0%" y1="0%" x2="0%" y2="100%">
-                                            <stop offset="0%" style="stop-color:#00ffff;stop-opacity:1" />
-                                            <stop offset="100%" style="stop-color:#00d4ff;stop-opacity:1" />
-                                        </linearGradient>
-                                        <radialGradient id="window">
-                                            <stop offset="0%" style="stop-color:#00ffff;stop-opacity:0.8" />
-                                            <stop offset="100%" style="stop-color:#0066cc;stop-opacity:1" />
-                                        </radialGradient>
-                                        <linearGradient id="fin" x1="0%" y1="0%" x2="100%" y2="0%">
-                                            <stop offset="0%" style="stop-color:#0088cc;stop-opacity:1" />
-                                            <stop offset="100%" style="stop-color:#00d4ff;stop-opacity:1" />
-                                        </linearGradient>
-                                        <linearGradient id="flameGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                                            <stop offset="0%" style="stop-color:#ff6b00;stop-opacity:1" />
-                                            <stop offset="50%" style="stop-color:#ff3300;stop-opacity:1" />
-                                            <stop offset="100%" style="stop-color:#ffaa00;stop-opacity:0.7" />
-                                        </linearGradient>
-                                        <linearGradient id="flameGradient2" x1="0%" y1="0%" x2="0%" y2="100%">
-                                            <stop offset="0%" style="stop-color:#ffaa00;stop-opacity:1" />
-                                            <stop offset="100%" style="stop-color:#ff3300;stop-opacity:0.5" />
-                                        </linearGradient>
-                                    </defs>
-                                </svg>
-                            </div>
-                            
-                            <!-- Booster Info -->
-                            <div style="text-align: center; margin-bottom: 20px;">
-                                <h2 style="color: #fff; font-size: 24px; font-weight: 900; margin-bottom: 8px;">Permanent Speed Boost +5.00</h2>
-                                <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin: 0;">
-                                    Provides a permanent in-app speed enhancement
-                                </p>
-                            </div>
-                            
-                            <!-- Features -->
-                            <div style="background: rgba(0, 255, 255, 0.05); border: 1px solid rgba(0, 255, 255, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
-                                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
-                                    <span style="color: #00ffff; font-size: 20px;">✓</span>
-                                    <span style="color: rgba(255, 255, 255, 0.9); font-size: 14px;">Permanent speed enhancement (+5.00)</span>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
-                                    <span style="color: #00ffff; font-size: 20px;">✓</span>
-                                    <span style="color: rgba(255, 255, 255, 0.9); font-size: 14px;">Works in addition to your current progress speed</span>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 12px;">
-                                    <span style="color: #00ffff; font-size: 20px;">✓</span>
-                                    <span style="color: rgba(255, 255, 255, 0.9); font-size: 14px;">One-time purchase, lifetime benefit</span>
-                                </div>
-                            </div>
-                            
-                            <!-- Price & Button -->
-                            <div style="text-align: center;">
-                                <div style="color: #8b5cf6; font-size: 16px; font-weight: 600; margin-bottom: 12px;">
-                                    Price: <span style="color: #00ffff; font-size: 20px; font-weight: 900;">$9.99</span>
-                                </div>
-                                <div id="permanentBoostButtonContainer"></div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             `;
         }
         
         let isPurchasingSpeedBoost = false;
         let speedBoostCooldownEnd = 0;
-        let permanentBoostCooldownEnd = 0;
         let boostButtonInterval = null;
         
         // Render Speed Boost button with cooldown
@@ -7375,46 +7278,12 @@ async function startMiningOnBackend() {
         }
         
         // Render Permanent Boost button with cooldown
-        function renderPermanentBoostButton() {
-            const container = document.getElementById('permanentBoostButtonContainer');
-            if (!container) return;
-            
-            const isPermanentPurchased = currentUser.permanentBoostPurchased || false;
-            const now = Date.now();
-            const cooldownRemaining = Math.max(0, Math.ceil((permanentBoostCooldownEnd - now) / 1000));
-            const isOnCooldown = cooldownRemaining > 0;
-            const isDisabled = isOnCooldown || isPermanentPurchased;
-            
-            container.innerHTML = `
-                <button 
-                    onclick="${isDisabled ? '' : 'purchasePermanentBooster()'}" 
-                    style="
-                        width: 100%; 
-                        background: ${isPermanentPurchased ? 'rgba(100, 100, 100, 0.3)' : (isOnCooldown ? 'rgba(0, 255, 255, 0.1)' : 'linear-gradient(135deg, #00ffff, #0088cc)')}; 
-                        border: ${isOnCooldown ? '1px solid rgba(0, 255, 255, 0.3)' : 'none'}; 
-                        border-radius: 12px; 
-                        padding: 16px; 
-                        color: ${isDisabled ? 'rgba(255, 255, 255, 0.6)' : '#000'}; 
-                        font-size: 18px; 
-                        font-weight: 900; 
-                        cursor: ${isDisabled ? 'not-allowed' : 'pointer'}; 
-                        box-shadow: 0 4px 20px rgba(0, 255, 255, ${isDisabled ? '0.1' : '0.4'}); 
-                        transition: all 0.3s;
-                        opacity: ${isDisabled ? '0.6' : '1'};
-                    "
-                    ${isDisabled ? 'disabled' : ''}
-                >
-                    ${isPermanentPurchased ? '✅ ALREADY PURCHASED' : (isOnCooldown ? `⏳ Wait ${cooldownRemaining}s` : '🚀 ACTIVATE BOOST')}
-                </button>
-            `;
-        }
         
         // Start button update interval
         function startBoostButtonUpdates() {
             if (boostButtonInterval) clearInterval(boostButtonInterval);
             boostButtonInterval = setInterval(() => {
                 renderSpeedBoostButton();
-                renderPermanentBoostButton();
             }, 1000);
         }
         
@@ -7448,20 +7317,59 @@ async function startMiningOnBackend() {
             isPurchasingSpeedBoost = true;
             
             try {
-                showToast('🔄 Processing purchase...', false, 999999);
+                showToast('🔄 Initiating purchase...', false, 999999);
                 
-                // TODO: Google Play In-App Purchase integration
-                // const purchaseToken = await initiatePurchase('speed_boost_24h');
+                // Google Play In-App Purchase integration
+                let purchaseToken = null;
                 
-                // TEMPORARY: Generate unique test token (will be replaced with real Google Play token)
-                const testToken = 'test_speed_boost_' + Date.now() + '_' + Math.random().toString(36).substring(7);
+                // Check if running in Android WebView with billing support
+                if (typeof Android !== 'undefined' && Android.purchaseProduct) {
+                    try {
+                        // Call Android native method to initiate purchase
+                        const purchaseResult = await new Promise((resolve, reject) => {
+                            // Set timeout for purchase
+                            const timeout = setTimeout(() => {
+                                reject(new Error('Purchase timeout'));
+                            }, 60000); // 60 second timeout
+                            
+                            // Store callback globally
+                            window.onPurchaseComplete = (result) => {
+                                clearTimeout(timeout);
+                                if (result.success) {
+                                    resolve(result);
+                                } else {
+                                    reject(new Error(result.error || 'Purchase failed'));
+                                }
+                            };
+                            
+                            // Initiate purchase
+                            Android.purchaseProduct('speed_boost_24h');
+                        });
+                        
+                        purchaseToken = purchaseResult.token;
+                        console.log('✅ Purchase token received:', purchaseToken);
+                        
+                    } catch (purchaseError) {
+                        console.error('Purchase initiation failed:', purchaseError);
+                        showToast('❌ ' + (purchaseError.message || 'Purchase cancelled'), true);
+                        isPurchasingSpeedBoost = false;
+                        renderSpeedBoostButton();
+                        return;
+                    }
+                } else {
+                    // Fallback for web testing (development only)
+                    console.warn('⚠️ Android billing not available, using test token');
+                    purchaseToken = 'test_speed_boost_' + Date.now() + '_' + Math.random().toString(36).substring(7);
+                }
+                
+                showToast('🔄 Verifying purchase...', false, 999999);
                 
                 const response = await fetch(API_ENDPOINTS.purchaseSpeedBoost, {
                     method: 'POST',
                     headers: getApiHeaders(),
                     body: JSON.stringify({
                         userId: currentUser.userId,
-                        purchaseToken: testToken
+                        purchaseToken: purchaseToken
                     })
                 });
                 
@@ -7485,63 +7393,6 @@ async function startMiningOnBackend() {
             } finally {
                 isPurchasingSpeedBoost = false;
                 renderSpeedBoostButton();
-            }
-        }
-        
-        let isPurchasingPermanentBoost = false;
-        
-        async function purchasePermanentBooster() {
-            // Check cooldown
-            const now = Date.now();
-            if (now < permanentBoostCooldownEnd) {
-                return; // Button already shows countdown
-            }
-            
-            // Prevent multiple clicks
-            if (isPurchasingPermanentBoost) {
-                return;
-            }
-            
-            isPurchasingPermanentBoost = true;
-            
-            try {
-                showToast('🔄 Processing purchase...', false, 999999);
-                
-                // TODO: Google Play In-App Purchase integration
-                // const purchaseToken = await initiatePurchase('permanent_speed_boost');
-                
-                // TEMPORARY: Generate unique test token (will be replaced with real Google Play token)
-                const testToken = 'test_permanent_boost_' + Date.now() + '_' + Math.random().toString(36).substring(7);
-                
-                const response = await fetch(API_ENDPOINTS.purchasePermanentSpeedBoost, {
-                    method: 'POST',
-                    headers: getApiHeaders(),
-                    body: JSON.stringify({
-                        userId: currentUser.userId,
-                        purchaseToken: testToken
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    showToast(`⭐ Permanent Speed Boost activated! Rate: ${data.oldRate.toFixed(2)} → ${data.newRate.toFixed(2)}`, false);
-                    
-                    // Set 10 second cooldown
-                    permanentBoostCooldownEnd = Date.now() + 10000;
-                    renderPermanentBoostButton();
-                    
-                    // Refresh data to show new rate
-                    await initApp();
-                } else {
-                    showToast(`❌ ${data.error || 'Purchase failed'}`, true);
-                }
-            } catch (error) {
-                console.error('Purchase error:', error);
-                showToast('❌ Purchase failed. Please try again.', true);
-            } finally {
-                isPurchasingPermanentBoost = false;
-                renderPermanentBoostButton();
             }
         }
         
