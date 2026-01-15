@@ -3804,6 +3804,9 @@ window.__resetEmail = email;
 
         // Check for new announcements and unclaimed airdrops
         let hamburgerPulseInterval = null;
+        let hasNewAnnouncementsGlobal = false; // Global state
+        let hasAirdropsGlobal = false; // Global state
+        
         async function checkNotifications() {
             try {
                 // Clear previous pulse interval
@@ -3834,22 +3837,19 @@ window.__resetEmail = email;
                     userCreatedDate = firebase.firestore.Timestamp.now();
                 }
                 
-                // Check announcements (newer than last viewed AND sent before user registration)
+                // Check announcements (sent after registration AND newer than last viewed)
                 const lastViewedTimestamp = firebase.firestore.Timestamp.fromMillis(parseInt(lastViewedAnnouncements));
                 const announcementsSnap = await db.collection('announcements')
-                    .where('createdAt', '>', lastViewedTimestamp)  // Firestore Timestamp
-                    .where('createdAt', '<', userCreatedDate)      // Firestore Timestamp
+                    .where('createdAt', '>', userCreatedDate)       // After registration
+                    .where('createdAt', '>', lastViewedTimestamp)   // And not viewed yet
                     .limit(1)
                     .get();
                 const hasNewAnnouncements = !announcementsSnap.empty;
-                
-                // Check airdrops
-                const airdropsSnap = await db.collection('airdrops')
-                    .where('userId', '==', currentUser.userId)
-                    .where('claimed', '==', false)
-                    .limit(1)
-                    .get();
                 const hasAirdrops = !airdropsSnap.empty;
+                
+                // Update global state
+                hasNewAnnouncementsGlobal = hasNewAnnouncements;
+                hasAirdropsGlobal = hasAirdrops;
                 
                 // Update menu items with inline styles (stronger than class)
                 const announcementsMenuItem = document.getElementById('announcementsMenuItem');
@@ -3880,15 +3880,17 @@ window.__resetEmail = email;
                     }
                 }
                 
-                // Update hamburger button
+                // CRITICAL: Always update hamburger button, even if menu items not in DOM
                 if (menuButton) {
                     if (hasNewAnnouncements || hasAirdrops) {
-                        menuButton.style.border = '2px solid #10b981';
-                        menuButton.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.5)';
+                        menuButton.style.cssText = 'border: 2px solid #10b981 !important; box-shadow: 0 0 15px rgba(16, 185, 129, 0.5) !important;';
+                        console.log('✅ Hamburger button notification set');
                     } else {
                         menuButton.style.border = '';
                         menuButton.style.boxShadow = '';
                     }
+                } else {
+                    console.warn('⚠️ Menu button not found in DOM yet');
                 }
             } catch (error) {
                 console.error('Error checking notifications:', error);
@@ -4833,6 +4835,24 @@ async function startMiningOnBackend() {
             // Prevent background scrolling when menu is open
             if (sidebar.classList.contains('open')) {
                 document.body.style.overflow = 'hidden';
+                
+                // Apply notification styling to menu items when menu opens
+                setTimeout(() => {
+                    const announcementsMenuItem = document.getElementById('announcementsMenuItem');
+                    const airdropMenuItem = document.getElementById('airdropMenuItem');
+                    
+                    if (announcementsMenuItem && hasNewAnnouncementsGlobal) {
+                        announcementsMenuItem.style.border = '2px solid #10b981';
+                        announcementsMenuItem.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.5)';
+                        announcementsMenuItem.style.background = 'rgba(16, 185, 129, 0.2)';
+                    }
+                    
+                    if (airdropMenuItem && hasAirdropsGlobal) {
+                        airdropMenuItem.style.border = '2px solid #10b981';
+                        airdropMenuItem.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.5)';
+                        airdropMenuItem.style.background = 'rgba(16, 185, 129, 0.2)';
+                    }
+                }, 100); // Small delay to ensure menu items are in DOM
                 
                 // Clear hamburger highlight when menu opens
                 const menuButton = document.getElementById('menuButton');
@@ -5797,9 +5817,9 @@ async function startMiningOnBackend() {
                     userCreatedDate = firebase.firestore.Timestamp.now();
                 }
                 
-                // Fetch announcements that were sent BEFORE user registered (not at the same time)
+                // Fetch announcements that were sent AFTER user registered
                 const snapshot = await db.collection('announcements')
-                    .where('createdAt', '<', userCreatedDate) // Use Firestore Timestamp
+                    .where('createdAt', '>', userCreatedDate) // AFTER registration
                     .orderBy('createdAt', 'desc')
                     .limit(10)
                     .get();
