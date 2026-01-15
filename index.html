@@ -3845,6 +3845,13 @@ window.__resetEmail = email;
                     .limit(1)
                     .get();
                 const hasNewAnnouncements = !announcementsSnap.empty;
+                
+                // Check airdrops
+                const airdropsSnap = await db.collection('airdrops')
+                    .where('userId', '==', currentUser.userId)
+                    .where('claimed', '==', false)
+                    .limit(1)
+                    .get();
                 const hasAirdrops = !airdropsSnap.empty;
                 
                 // Update global state
