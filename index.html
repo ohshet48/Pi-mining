@@ -3597,23 +3597,6 @@ window.__resetEmail = email;
             
             console.log('✅ User data yüklendi');
             
-            // CRITICAL: For new users, set lastViewedAnnouncements to their registration date
-            // This prevents showing old announcements that were sent before they registered
-            const lastViewedKey = 'lastViewedAnnouncements_' + currentUser.userId;
-            if (!localStorage.getItem(lastViewedKey) && currentUser.createdAt) {
-                // First time checking announcements - set to user's registration timestamp
-                let registrationTimestamp;
-                if (currentUser.createdAt._seconds) {
-                    registrationTimestamp = currentUser.createdAt._seconds * 1000;
-                } else if (typeof currentUser.createdAt === 'number') {
-                    registrationTimestamp = currentUser.createdAt;
-                } else {
-                    registrationTimestamp = new Date(currentUser.createdAt).getTime();
-                }
-                localStorage.setItem(lastViewedKey, registrationTimestamp.toString());
-                console.log('🆕 New user: Set lastViewedAnnouncements to registration date');
-            }
-            
             // Process Referral Counts (no detailed list - modal will fetch that)
             localStorage.setItem('activeReferralsCount_' + currentUser.email, allData.activeCount || 0);
             localStorage.setItem('totalReferralsCount_' + currentUser.email, allData.totalCount || 0);
@@ -8486,14 +8469,15 @@ try {
                 d.balance = currentUser.balance;
                 localStorage.setItem('currentUser', JSON.stringify(currentUser));
                 
-                // IMMEDIATELY reload airdrop page to hide claim button (no waiting!)
-                const pageContent = document.getElementById('fullPageContent');
-                if (pageContent) {
-                    const html = await getAirdropPageContent();
-                    pageContent.innerHTML = html;
+                // IMMEDIATELY hide claim button from DOM (instant!)
+                const claimButton = document.querySelector('button[onclick="claimAllAirdrops()"]');
+                if (claimButton) {
+                    const container = claimButton.closest('div[style*="background: linear-gradient"]');
+                    if (container) {
+                        container.style.display = 'none'; // Hide entire claim section instantly
+                    }
                 }
                 
-                render();
                 showToast('✓ Claimed ' + totalClaimed.toFixed(2) + ' ARCASTRA!');
                 
                 // Backend update in background (async, don't wait)
@@ -8517,6 +8501,13 @@ try {
                         
                         // Update menu notification (remove green border)
                         await checkNotifications();
+                        
+                        // Reload page to show "No Airdrops" message
+                        const pageContent = document.getElementById('fullPageContent');
+                        if (pageContent) {
+                            const html = await getAirdropPageContent();
+                            pageContent.innerHTML = html;
+                        }
                     } catch (err) {
                         console.error('Background airdrop update failed:', err);
                     } finally {
