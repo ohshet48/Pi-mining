@@ -4642,16 +4642,13 @@ async function startMiningOnBackend() {
                         currentUser.balance = d.balance;
                         
                         // Backend automatically claims pending reward ✅
+                        // Don't call initApp() - optimistic update already handled
                         
                         save();
                         localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                        
-                        // Wait for backend to update pending rewards
-                        await new Promise(resolve => setTimeout(resolve, 1500));
-                        
-                        // Reload app to refresh pending rewards and hide button
-                        await initApp();
                         render();
+                        
+                        console.log('✅ Daily reward claimed successfully');
                     } else {
                         // Rollback on error
                         d.balance = oldBalance;
@@ -8488,8 +8485,6 @@ try {
                 d.balance = currentUser.balance;
                 localStorage.setItem('currentUser', JSON.stringify(currentUser));
                 
-                // Stay on airdrop page, just re-render
-                render();
                 showToast('✓ Claimed ' + totalClaimed.toFixed(2) + ' ARCASTRA!');
                 
                 // Backend update in background
@@ -8512,6 +8507,14 @@ try {
                 // Update menu notification (remove green border)
                 await checkNotifications();
                 
+                // Reload airdrop page to hide claim button
+                const pageContent = document.getElementById('fullPageContent');
+                if (pageContent) {
+                    const html = await getAirdropPageContent();
+                    pageContent.innerHTML = html;
+                }
+                
+                render();
                 isClaimingAirdrop = false;
                 
             } catch (error) {
