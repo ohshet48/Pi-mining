@@ -3837,11 +3837,16 @@ window.__resetEmail = email;
                     userCreatedDate = firebase.firestore.Timestamp.now();
                 }
                 
-                // Check announcements (sent after registration AND newer than last viewed)
+                // Check announcements (sent after registration OR after last viewed, whichever is later)
                 const lastViewedTimestamp = firebase.firestore.Timestamp.fromMillis(parseInt(lastViewedAnnouncements));
+                
+                // Use the LATER of the two timestamps (most restrictive)
+                const checkAfterTimestamp = userCreatedDate.toMillis() > lastViewedTimestamp.toMillis() 
+                    ? userCreatedDate 
+                    : lastViewedTimestamp;
+                
                 const announcementsSnap = await db.collection('announcements')
-                    .where('createdAt', '>', userCreatedDate)       // After registration
-                    .where('createdAt', '>', lastViewedTimestamp)   // And not viewed yet
+                    .where('createdAt', '>', checkAfterTimestamp)
                     .limit(1)
                     .get();
                 const hasNewAnnouncements = !announcementsSnap.empty;
