@@ -502,6 +502,17 @@
             text-align: center;
         }
         
+        .info-msg {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.5);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 20px;
+            color: #60a5fa;
+            font-size: 14px;
+            text-align: center;
+        }
+        
         /* Toast Notification */
         .toast-notification {
             position: fixed;
@@ -3568,6 +3579,23 @@ window.__resetEmail = email;
             
             console.log('✅ User data yüklendi');
             
+            // CRITICAL: For new users, set lastViewedAnnouncements to their registration date
+            // This prevents showing old announcements that were sent before they registered
+            const lastViewedKey = 'lastViewedAnnouncements_' + currentUser.userId;
+            if (!localStorage.getItem(lastViewedKey) && currentUser.createdAt) {
+                // First time checking announcements - set to user's registration timestamp
+                let registrationTimestamp;
+                if (currentUser.createdAt._seconds) {
+                    registrationTimestamp = currentUser.createdAt._seconds * 1000;
+                } else if (typeof currentUser.createdAt === 'number') {
+                    registrationTimestamp = currentUser.createdAt;
+                } else {
+                    registrationTimestamp = new Date(currentUser.createdAt).getTime();
+                }
+                localStorage.setItem(lastViewedKey, registrationTimestamp.toString());
+                console.log('🆕 New user: Set lastViewedAnnouncements to registration date');
+            }
+            
             // Process Referral Counts (no detailed list - modal will fetch that)
             localStorage.setItem('activeReferralsCount_' + currentUser.email, allData.activeCount || 0);
             localStorage.setItem('totalReferralsCount_' + currentUser.email, allData.totalCount || 0);
@@ -3606,11 +3634,16 @@ window.__resetEmail = email;
                 }
                 
                 // Calculate total pending referral earnings from pendingRewards
-                const referralRewards = pendingRewardsData.filter(r => r.rewardType === 'referral');
+                // Filter out any that might still be in results but marked as claimed
+                const referralRewards = pendingRewardsData.filter(r => 
+                    r.rewardType === 'referral' && r.claimed === false
+                );
                 const totalReferralEarnings = referralRewards.reduce((sum, r) => sum + (r.amount || 0), 0);
                 if (totalReferralEarnings > 0) {
                     currentUser.pendingReferralEarnings = totalReferralEarnings;
                     console.log(`✅ Referral earnings calculated: ${totalReferralEarnings}`);
+                } else {
+                    currentUser.pendingReferralEarnings = 0;
                 }
             } else {
                 console.log('✓ No pending rewards');
@@ -3785,23 +3818,25 @@ window.__resetEmail = email;
                 let userCreatedDate;
                 
                 if (userCreatedAt) {
-                    // Handle Firestore Timestamp
+                    // Handle Firestore Timestamp - convert to proper Firestore Timestamp for query
                     if (userCreatedAt._seconds) {
-                        userCreatedDate = new Date(userCreatedAt._seconds * 1000);
-                    } else if (typeof userCreatedAt === 'string' || typeof userCreatedAt === 'number') {
-                        userCreatedDate = new Date(userCreatedAt);
+                        userCreatedDate = firebase.firestore.Timestamp.fromMillis(userCreatedAt._seconds * 1000);
+                    } else if (typeof userCreatedAt === 'number') {
+                        userCreatedDate = firebase.firestore.Timestamp.fromMillis(userCreatedAt);
+                    } else if (userCreatedAt.toDate) {
+                        userCreatedDate = userCreatedAt; // Already a Timestamp
                     } else {
-                        userCreatedDate = userCreatedAt;
+                        userCreatedDate = firebase.firestore.Timestamp.fromDate(new Date(userCreatedAt));
                     }
                 } else {
-                    // If no createdAt, show all announcements (fallback for old users)
-                    userCreatedDate = new Date();
+                    // If no createdAt, use current time
+                    userCreatedDate = firebase.firestore.Timestamp.now();
                 }
                 
                 // Check announcements (newer than last viewed AND sent before user registration)
                 const announcementsSnap = await db.collection('announcements')
                     .where('createdAt', '>', new Date(parseInt(lastViewedAnnouncements)))
-                    .where('createdAt', '<', userCreatedDate) // Strictly BEFORE user registration
+                    .where('createdAt', '<', userCreatedDate) // Use Firestore Timestamp, strictly BEFORE user registration
                     .limit(1)
                     .get();
                 const hasNewAnnouncements = !announcementsSnap.empty;
@@ -5748,22 +5783,24 @@ async function startMiningOnBackend() {
                 let userCreatedDate;
                 
                 if (userCreatedAt) {
-                    // Handle Firestore Timestamp
+                    // Handle Firestore Timestamp - convert to proper Firestore Timestamp for query
                     if (userCreatedAt._seconds) {
-                        userCreatedDate = new Date(userCreatedAt._seconds * 1000);
-                    } else if (typeof userCreatedAt === 'string' || typeof userCreatedAt === 'number') {
-                        userCreatedDate = new Date(userCreatedAt);
+                        userCreatedDate = firebase.firestore.Timestamp.fromMillis(userCreatedAt._seconds * 1000);
+                    } else if (typeof userCreatedAt === 'number') {
+                        userCreatedDate = firebase.firestore.Timestamp.fromMillis(userCreatedAt);
+                    } else if (userCreatedAt.toDate) {
+                        userCreatedDate = userCreatedAt; // Already a Timestamp
                     } else {
-                        userCreatedDate = userCreatedAt;
+                        userCreatedDate = firebase.firestore.Timestamp.fromDate(new Date(userCreatedAt));
                     }
                 } else {
-                    // If no createdAt, show all announcements (fallback for old users)
-                    userCreatedDate = new Date();
+                    // If no createdAt, use current time
+                    userCreatedDate = firebase.firestore.Timestamp.now();
                 }
                 
                 // Fetch announcements that were sent BEFORE user registered (not at the same time)
                 const snapshot = await db.collection('announcements')
-                    .where('createdAt', '<', userCreatedDate) // Strictly BEFORE, not equal
+                    .where('createdAt', '<', userCreatedDate) // Use Firestore Timestamp
                     .orderBy('createdAt', 'desc')
                     .limit(10)
                     .get();
@@ -8433,8 +8470,7 @@ try {
                 d.balance = currentUser.balance;
                 localStorage.setItem('currentUser', JSON.stringify(currentUser));
                 
-                // Close airdrop page immediately
-                openPage('profile');
+                // Stay on airdrop page, just re-render
                 render();
                 showToast('✓ Claimed ' + totalClaimed.toFixed(2) + ' ARCASTRA!');
                 
@@ -8454,6 +8490,9 @@ try {
                 });
                 
                 await batch.commit();
+                
+                // Update menu notification (remove green border)
+                await checkNotifications();
                 
                 isClaimingAirdrop = false;
                 
