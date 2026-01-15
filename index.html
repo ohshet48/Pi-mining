@@ -2284,10 +2284,11 @@ async function requestNotificationPermission() {
     // Check if service worker file exists before registering
     let swExists = false;
     try {
-      const swCheck = await fetch('/firebase-messaging-sw.js', { method: 'HEAD' });
-      swExists = swCheck.ok;
+      const swCheck = await fetch('/firebase-messaging-sw.js', { method: 'HEAD', cache: 'no-cache' });
+      swExists = swCheck.ok && swCheck.status === 200;
     } catch (e) {
-      console.warn('⚠️ [FCM] Service Worker file not found - notifications disabled');
+      // Service worker file doesn't exist - silently continue without notifications
+      console.log('ℹ️ [FCM] Service Worker not available - push notifications disabled');
       return null;
     }
 
