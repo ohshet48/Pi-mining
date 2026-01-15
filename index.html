@@ -3019,10 +3019,14 @@ function hideLoginLoading() {
         }
         
         function showToast(message, isError = false, duration = 3000) {
-            const toast = document.getElementById('toastNotification');
+            let toast = document.getElementById('toastNotification');
+            
+            // If toast element doesn't exist, create it
             if (!toast) {
-                console.warn('Toast element not found');
-                return; // Silently fail if toast element doesn't exist
+                toast = document.createElement('div');
+                toast.id = 'toastNotification';
+                toast.className = 'toast-notification';
+                document.body.appendChild(toast);
             }
             
             toast.textContent = message;
@@ -3038,10 +3042,14 @@ function hideLoginLoading() {
         }
         
         function showExitToast() {
-            const toast = document.getElementById('toastNotification');
+            let toast = document.getElementById('toastNotification');
+            
+            // If toast element doesn't exist, create it
             if (!toast) {
-                console.warn('Toast element not found');
-                return;
+                toast = document.createElement('div');
+                toast.id = 'toastNotification';
+                toast.className = 'toast-notification';
+                document.body.appendChild(toast);
             }
             
             toast.textContent = '⬅️ Press back again to exit';
