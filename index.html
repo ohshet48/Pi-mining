@@ -3609,6 +3609,11 @@ window.__resetEmail = email;
             // Process Pending Rewards
             pendingRewardsData = allData.pendingRewards || [];
             
+            // CRITICAL: Check localStorage for recently claimed rewards to prevent re-showing
+            const now = Date.now();
+            const lastDailyClaimTime = parseInt(localStorage.getItem('lastDailyClaimTime_' + currentUser.userId) || '0');
+            const recentlyClaimed = (now - lastDailyClaimTime) < 5000; // Within 5 seconds
+            
             if (pendingRewardsData.length > 0) {
                 console.log(`📦 ${pendingRewardsData.length} pending reward bulundu`);
                 
@@ -3618,8 +3623,13 @@ window.__resetEmail = email;
                 // Restore flags from pending rewards
                 for (const reward of pendingRewardsData) {
                     if (reward.rewardType === 'daily') {
-                        dailyRewardAvailable = true;
-                        console.log('✅ Daily reward flag set');
+                        // Don't show if recently claimed in this session
+                        if (!recentlyClaimed) {
+                            dailyRewardAvailable = true;
+                            console.log('✅ Daily reward flag set');
+                        } else {
+                            console.log('🚫 Daily reward recently claimed, skipping');
+                        }
                     } else if (reward.rewardType === 'levelUp') {
                         const metadata = reward.metadata || {};
                         const level = metadata.level || (currentUser.level + 1);
@@ -3641,11 +3651,19 @@ window.__resetEmail = email;
                     r.rewardType === 'referral' && r.claimed === false
                 );
                 const totalReferralEarnings = referralRewards.reduce((sum, r) => sum + (r.amount || 0), 0);
-                if (totalReferralEarnings > 0) {
+                
+                // CRITICAL: Check localStorage for recently claimed referrals
+                const lastReferralClaimTime = parseInt(localStorage.getItem('lastReferralClaimTime_' + currentUser.userId) || '0');
+                const referralRecentlyClaimed = (now - lastReferralClaimTime) < 5000; // Within 5 seconds
+                
+                if (totalReferralEarnings > 0 && !referralRecentlyClaimed) {
                     currentUser.pendingReferralEarnings = totalReferralEarnings;
                     console.log(`✅ Referral earnings calculated: ${totalReferralEarnings}`);
                 } else {
                     currentUser.pendingReferralEarnings = 0;
+                    if (referralRecentlyClaimed) {
+                        console.log('🚫 Referral recently claimed, skipping');
+                    }
                 }
             } else {
                 console.log('✓ No pending rewards');
@@ -4614,6 +4632,9 @@ async function startMiningOnBackend() {
             const oldBalance = d.balance;
             d.balance += rewardAmount;
             dailyRewardAvailable = false;
+            
+            // CRITICAL: Mark claim time in localStorage to prevent re-showing
+            localStorage.setItem('lastDailyClaimTime_' + currentUser.userId, Date.now().toString());
             
             // Update UI instantly
             render();
@@ -6685,6 +6706,9 @@ async function startMiningOnBackend() {
             d.pendingReferralEarnings = 0;
             currentUser.pendingReferralEarnings = 0;
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            // CRITICAL: Mark claim time in localStorage to prevent re-showing
+            localStorage.setItem('lastReferralClaimTime_' + currentUser.userId, Date.now().toString());
             
             save();
             
