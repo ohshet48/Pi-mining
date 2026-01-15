@@ -3020,6 +3020,11 @@ function hideLoginLoading() {
         
         function showToast(message, isError = false, duration = 3000) {
             const toast = document.getElementById('toastNotification');
+            if (!toast) {
+                console.warn('Toast element not found');
+                return; // Silently fail if toast element doesn't exist
+            }
+            
             toast.textContent = message;
             toast.className = 'toast-notification' + (isError ? ' error' : '');
             
@@ -3034,6 +3039,11 @@ function hideLoginLoading() {
         
         function showExitToast() {
             const toast = document.getElementById('toastNotification');
+            if (!toast) {
+                console.warn('Toast element not found');
+                return;
+            }
+            
             toast.textContent = '⬅️ Press back again to exit';
             toast.className = 'toast-notification exit';
             
