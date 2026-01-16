@@ -2056,6 +2056,7 @@ const API_ENDPOINTS = {
   claimLevelReward: `${FUNCTIONS_BASE_URL}/claimLevelReward`,
   claimDailyReward: `${FUNCTIONS_BASE_URL}/claimDailyReward`,
   claimReferralEarnings: `${FUNCTIONS_BASE_URL}/claimReferralEarnings`,
+  claimAirdrops: `${FUNCTIONS_BASE_URL}/claimAirdrops`,
   getReferrals: `${FUNCTIONS_BASE_URL}/getReferrals`,
   getActiveReferrals: `${FUNCTIONS_BASE_URL}/getActiveReferrals`,
   getTransactions: `${FUNCTIONS_BASE_URL}/getTransactions`,
@@ -3569,6 +3570,8 @@ window.__resetEmail = email;
     if (userId) {
         try {
             console.log('🔄 Backend veriler çekiliyor (optimize edilmiş tek istek)...');
+            console.log('🆔 UserID:', userId);
+            console.log('👤 Stored User:', JSON.parse(localStorage.getItem('currentUser') || '{}'));
             
             // OPTİMİZE: 4 istek yerine TEK istek!
             const response = await fetch(API_ENDPOINTS.getAllUserData, {
@@ -3583,6 +3586,17 @@ window.__resetEmail = email;
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('❌ Response not ok:', response.status, errorText);
+                
+                // Eğer kullanıcı bulunamazsa localStorage'ı temizle
+                if (response.status === 404) {
+                    console.log('🧹 User not found, clearing localStorage...');
+                    localStorage.removeItem('userId');
+                    localStorage.removeItem('userEmail');
+                    localStorage.removeItem('isLoggedIn');
+                    localStorage.removeItem('currentUser');
+                    window.location.reload();
+                }
+                
                 throw new Error(`Failed to fetch user data: ${response.status} - ${errorText}`);
             }
             
@@ -6071,7 +6085,9 @@ async function startMiningOnBackend() {
                     console.log('🔄 Fetching leaderboard from backend...');
                     
                     // Fetch from backend
-                    const response = await fetch(API_ENDPOINTS.getLeaderboard);
+                    const response = await fetch(API_ENDPOINTS.getLeaderboard, {
+                        headers: getApiHeaders()
+                    });
                     const data = await response.json();
                     
                     if (response.ok && data.leaderboard) {
@@ -8355,77 +8371,58 @@ try {
             try {
                 const userId = currentUser.userId;
                 
-                const snapshot = await db.collection('airdrops')
-                    .where('userId', '==', userId)
-                    .where('claimed', '==', false)
-                    .get();
+                showToast('🔄 Claiming airdrops...', false, 999999);
                 
-                if (snapshot.empty) {
-                    isClaimingAirdrop = false;
-                    showToast('No airdrops to claim', true);
-                    return;
-                }
-                
-                let totalClaimed = 0;
-                snapshot.forEach(doc => {
-                    totalClaimed += doc.data().amount;
+                // Call backend API
+                const response = await fetch(API_ENDPOINTS.claimAirdrops, {
+                    method: 'POST',
+                    headers: getApiHeaders(),
+                    body: JSON.stringify({ userId: userId })
                 });
                 
-                // ⚡ OPTIMISTIC UI - Update immediately
-                currentUser.balance += totalClaimed;
-                d.balance = currentUser.balance;
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                const data = await response.json();
                 
-                // IMMEDIATELY hide claim button from DOM (instant!)
-                const claimButton = document.querySelector('button[onclick="claimAllAirdrops()"]');
-                if (claimButton) {
-                    const container = claimButton.closest('div[style*="background: linear-gradient"]');
-                    if (container) {
-                        container.style.display = 'none'; // Hide entire claim section instantly
-                    }
-                }
-                
-                showToast('✓ Claimed ' + totalClaimed.toFixed(2) + ' ARCASTRA!');
-                
-                // Backend update in background (async, don't wait)
-                (async () => {
-                    try {
-                        const batch = db.batch();
-                        snapshot.forEach(doc => {
-                            batch.update(doc.ref, {
-                                claimed: true,
-                                claimedAt: firebase.firestore.FieldValue.serverTimestamp()
-                            });
-                        });
-                        
-                        const userRef = db.collection('users').doc(userId);
-                        batch.update(userRef, {
-                            balance: firebase.firestore.FieldValue.increment(totalClaimed),
-                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                        
-                        await batch.commit();
-                        
-                        // Update menu notification (remove green border)
-                        await checkNotifications();
-                        
-                        // Reload page to show "No Airdrops" message
-                        const pageContent = document.getElementById('fullPageContent');
-                        if (pageContent) {
-                            const html = await getAirdropPageContent();
-                            pageContent.innerHTML = html;
-                        }
-                    } catch (err) {
-                        console.error('Background airdrop update failed:', err);
-                    } finally {
+                if (response.ok && data.success) {
+                    if (data.totalClaimed === 0) {
+                        showToast('No airdrops to claim', true);
                         isClaimingAirdrop = false;
+                        return;
                     }
-                })();
+                    
+                    // ⚡ OPTIMISTIC UI - Update immediately
+                    currentUser.balance += data.totalClaimed;
+                    d.balance = currentUser.balance;
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    
+                    // IMMEDIATELY hide claim button from DOM (instant!)
+                    const claimButton = document.querySelector('button[onclick="claimAllAirdrops()"]');
+                    if (claimButton) {
+                        const container = claimButton.closest('div[style*="background: linear-gradient"]');
+                        if (container) {
+                            container.style.display = 'none'; // Hide entire claim section instantly
+                        }
+                    }
+                    
+                    showToast('✓ Claimed ' + data.totalClaimed.toFixed(2) + ' ARCASTRA!');
+                    
+                    // Update menu notification (remove green border)
+                    await checkNotifications();
+                    
+                    // Reload page to show "No Airdrops" message
+                    const pageContent = document.getElementById('fullPageContent');
+                    if (pageContent) {
+                        const html = await getAirdropPageContent();
+                        pageContent.innerHTML = html;
+                    }
+                } else {
+                    showToast('❌ Failed to claim airdrops', true);
+                }
                 
             } catch (error) {
                 console.error('Claim error:', error);
+                showToast('❌ Failed to claim', true);
+            } finally {
                 isClaimingAirdrop = false;
-                showToast('Failed to claim', true);
             }
         }
 
