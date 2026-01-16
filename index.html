@@ -4264,8 +4264,8 @@ window.__resetEmail = email;
                             <p class="timer-label">Time Remaining</p>
                             <div class="earning-box">
                                 <p class="earning-text">Earning: <span class="earning-amount">${(() => {
-                                    const miningDuration = localStorage.getItem('miningDuration_' + currentUser.email) || 60000; // Default 1 minute (TEST)
-                                    const hours = parseInt(miningDuration) / (1000 * 60 * 60);
+                                    const miningDuration = localStorage.getItem('miningDuration_' + currentUser.email) || 86400000; // 24 hour
+                                    const miningDuration = 24 * 60 * 60 * 1000;
                                     return (d.rate * hours).toFixed(2);
                                 })()} <span style="font-size: 14px;">ARCASTRA</span></span></p>
                             </div>
