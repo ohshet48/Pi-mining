@@ -7332,7 +7332,7 @@ async function startMiningOnBackend() {
             isPurchasingSpeedBoost = true;
             
             try {
-                showToast('🔄 Initiating purchase...', false, 999999);
+                showToast('🔄 Please wait Initiating purchase...', false, 999999);
                 
                 // Google Play In-App Purchase integration
                 let purchaseToken = null;
@@ -7377,7 +7377,7 @@ async function startMiningOnBackend() {
                     purchaseToken = 'test_speed_boost_' + Date.now() + '_' + Math.random().toString(36).substring(7);
                 }
                 
-                showToast('🔄 Verifying purchase...', false, 999999);
+                showToast('🔄 Please Wait Verifying purchase...', false, 999999);
                 
                 const response = await fetch(API_ENDPOINTS.purchaseSpeedBoost, {
                     method: 'POST',
