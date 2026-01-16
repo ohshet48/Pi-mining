@@ -4492,7 +4492,7 @@ window.__resetEmail = email;
 	
         async function startMine() {
             const now = Date.now();
-            const miningDuration = 1 * 60 * 1000; // 1 minute (TEST MODE)
+            const miningDuration = 24 * 60 * 60 * 1000; // 24 hours in ms
             const end = now + miningDuration;
             
             // OPTIMISTIC UI: Update UI IMMEDIATELY (0ms delay)
