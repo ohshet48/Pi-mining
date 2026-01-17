@@ -2740,9 +2740,9 @@ function hideLoginLoading() {
             <div class="menu-item" onclick="openPage('tasks')">Tasks</div>
             <div class="menu-item" onclick="openPage('leaderboard')">Leaderboard</div>
             <div class="menu-item" id="announcementsMenuItem" onclick="openPage('announcements')">Announcements</div>
-            <div class="menu-item" id="airdropMenuItem" onclick="openPage('airdrop')">Airdrop</div>
+            <div class="menu-item" id="airdropMenuItem" onclick="openPage('airdrop')">Events</div>
             <div class="menu-item menu-item-disabled">
-                <span>KYC</span>
+                <span>Verification</span>
                 <span style="font-size: 11px; color: #666; margin-left: 8px;">Coming Soon</span>
             </div>
             <div class="menu-item" onclick="viewRoadmap()">View Roadmap</div>
@@ -4214,7 +4214,7 @@ window.__resetEmail = email;
                 </div>
 
                 <div class="card balance-card">
-                    <p class="balance-label">Total Balance</p>
+                    <p class="balance-label">Total</p>
                     <div class="balance-container">
                         <div class="balance-value">
                             ${balanceVisible ? d.balance.toFixed(2) : '••••••'}
@@ -4243,7 +4243,7 @@ window.__resetEmail = email;
                             <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
                                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
                             </svg>
-                            Start Mining
+                            Start Session
                         </button>
                     ` : `
                         <div class="timer-wrap">
@@ -4259,11 +4259,11 @@ window.__resetEmail = email;
                                     </svg>
                                 </div>
                             </div>
-                            <p class="mining-active">⚡ Mining Active</p>
+                            <p class="mining-active">⚡ Active</p>
                             <p class="timer-time">${fmt(d.timeLeft)}</p>
                             <p class="timer-label">Time Remaining</p>
                             <div class="earning-box">
-                                <p class="earning-text">Earning: <span class="earning-amount">${(() => {
+                                <p class="earning-text">Target: <span class="earning-amount">${(() => {
                                     const miningDuration = localStorage.getItem('miningDuration_' + currentUser.email) || 86400000; // Default 24 hours
                                     const hours = parseInt(miningDuration) / (1000 * 60 * 60);
                                     return (d.rate * hours).toFixed(2);
@@ -4282,7 +4282,7 @@ window.__resetEmail = email;
                             <div class="stat-icon icon-blue">
                                 <svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
                             </div>
-                            <span class="stat-label">Mining Rate</span>
+                            <span class="stat-label">Rate</span>
                         </div>
                         <div class="stat-value">${d.rate.toFixed(2)}</div>
                         <div class="stat-unit">ARCASTRA/hour</div>
@@ -4337,7 +4337,7 @@ window.__resetEmail = email;
                                 <span class="stat-label">Referrals</span>
                             </div>
                             <div class="stat-value">${d.activeRefs}/${d.refs}</div>
-                            <div class="stat-unit">Active Mining</div>
+                            <div class="stat-unit">Active</div>
                         </div>
                     `}
 
@@ -4346,7 +4346,7 @@ window.__resetEmail = email;
                             <div class="stat-icon icon-orange">
                                 <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                             </div>
-                            <span class="stat-label">Daily Reward</span>
+                            <span class="stat-label">Daily Bonus</span>
                         </div>
                         <div class="reward-card" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 90px; padding: 15px 10px 10px 10px;">
                             <div style="display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: -21px; margin-bottom: 10px;">
@@ -6142,7 +6142,7 @@ async function startMiningOnBackend() {
                                 No Rankings Yet
                             </h2>
                             <p style="color: rgba(139, 92, 246, 0.7); font-size: 14px; line-height: 1.6;">
-                                Start mining to appear on the leaderboard!
+                                Start Session to appear on the leaderboard!
                             </p>
                         </div>
                     </div>
@@ -6905,9 +6905,9 @@ async function startMiningOnBackend() {
                 <div style="padding: 20px 0;">
                     <!-- Header Info -->
                     <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.15)); border: 2px solid rgba(139, 92, 246, 0.3); border-radius: 16px; padding: 20px; margin-bottom: 24px; text-align: center;">
-                        <h3 style="color: #fff; font-size: 18px; font-weight: 800; margin-bottom: 8px;">🎯 Complete Tasks & Earn</h3>
+                        <h3 style="color: #fff; font-size: 18px; font-weight: 800; margin-bottom: 8px;">🎯 Complete Tasks</h3>
                         <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin: 0; line-height: 1.5;">
-                            Follow us on social media and earn +5 ARCASTRA per task!
+                            Complete tasks to gain +5 progress!
                         </p>
                     </div>
                     
@@ -6949,7 +6949,7 @@ async function startMiningOnBackend() {
                                         <div>
                                             <div style="color: #fff; font-size: 16px; font-weight: 700; margin-bottom: 4px;">${task.name}</div>
                                             <div style="color: ${isCompleted ? '#00ff00' : '#00ffff'}; font-size: 13px; font-weight: 600;">
-                                                ${isCompleted ? '✅ Completed +5' : 'Follow us • Earn +5'}
+                                                ${isCompleted ? '✅ Completed +5' : 'Follow us • Progress +5'}
                                             </div>
                                         </div>
                                     </div>
@@ -7126,7 +7126,7 @@ async function startMiningOnBackend() {
                         font-weight: 700;
                         cursor: not-allowed;
                         white-space: nowrap;
-                    ">Claimed</button>
+                    ">Completed</button>
                 `;
             }
             
