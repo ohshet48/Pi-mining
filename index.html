@@ -4881,6 +4881,8 @@ async function startMiningOnBackend() {
             console.log('✅ onAdRewardEarned called:', rewardData);
             
             if (rewardData && rewardData.success) {
+                adRewardEarned = true; // Mark reward as earned
+                
                 const sessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
                 if (!sessionId) {
                     console.error('❌ No session found');
@@ -4922,6 +4924,17 @@ async function startMiningOnBackend() {
             isWatchingAd = false;
         };
         
+        // Android callback: Called when ad is dismissed (user closes before completion)
+        window.onAdDismissed = function(data) {
+            console.log('🔴 onAdDismissed called:', data);
+            
+            if (!adRewardEarned) {
+                showToast('❌ Ad not watched completely', true);
+            }
+            
+            isWatchingAd = false;
+        };
+        
         // Helper function to close ad container (kept for compatibility)
         function closeAdContainer() {
             const container = document.getElementById('rewarded-ad-container');
@@ -4937,6 +4950,9 @@ async function startMiningOnBackend() {
         
         // Apply ad reward function
         async function applyAdReward(sessionId, watchDuration, adProvider) {
+            // Reset watching flag immediately
+            isWatchingAd = false;
+            
             const btn = document.getElementById('watchAdButton');
             if (btn) btn.setAttribute('data-locked', 'true');
             
@@ -4999,7 +5015,6 @@ async function startMiningOnBackend() {
                 clearInterval(countdownInterval);
                 const btn = document.getElementById('watchAdButton');
                 if (btn) btn.setAttribute('data-locked', 'false');
-                isWatchingAd = false;
                 updateWatchAdButton();
             }, 45000);
         }
