@@ -4844,7 +4844,7 @@ async function startMiningOnBackend() {
                         // Android will call window.onAdRewardEarned when done
                     } else {
                         console.warn('⚠️ Android ad not ready yet');
-                        showToast('❌ Ad not ready. Please try again in a few seconds.', true);
+                        showToast('❌ Ad could not be loaded. Please disable VPN, ad blocker, or private DNS.', true);
                         isWatchingAd = false;
                     }
                     return;
