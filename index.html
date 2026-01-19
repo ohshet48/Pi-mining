@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <meta name="theme-color" content="#00d4ff">
     <title>Arc Astra</title>
+    
+    <!-- Google AdMob SDK -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4534323466794129"
+     crossorigin="anonymous"></script>
+    
     <style>
         * { 
             margin: 0; 
@@ -3454,6 +3459,11 @@ window.__resetEmail = email;
         let isClaimingAirdrop = false;
         let isWatchingAd = false;
         
+        // AdMob variables
+        let adRewardEarned = false;
+        let rewardedAd = null;
+        const ADMOB_AD_UNIT_ID = 'ca-app-pub-4534323466794129/8698252598'; // mining_boost_reward
+        
         // Track claimed levels to prevent re-showing after claim (temporary memory)
         let recentlyClaimedLevels = new Set();
         
@@ -4777,24 +4787,109 @@ async function startMiningOnBackend() {
             const sessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
             
             if (!sessionId) {
-                showToast('❌ No active session! Please try again after 3 seconds.', true);
+                showToast('❌ No active session! Please start mining first.', true);
                 return;
             }
             
             // Set watching flag
             isWatchingAd = true;
-            
-            // Lock the button (prevent initApp from resetting it)
-            const btn = document.getElementById('watchAdButton');
-            if (btn) btn.setAttribute('data-locked', 'true');
-            
-            // Set cooldown in localStorage
-            const cooldownEnd = Date.now() + 45000; // 45 seconds
-            localStorage.setItem('adCooldown_' + currentUser.email, cooldownEnd.toString());
+            adRewardEarned = false;
             
             const adStartTime = Date.now();
             
-            // Update button countdown
+            // Show loading message
+            showToast('📺 Loading ad...', false, 3000);
+            
+            try {
+                // Check if AdSense is available
+                if (typeof adsbygoogle !== 'undefined' && window.adsbygoogle) {
+                    console.log('✅ AdMob SDK detected, showing real ad');
+                    
+                    // Create ad container if not exists
+                    let adContainer = document.getElementById('rewarded-ad-container');
+                    if (!adContainer) {
+                        adContainer = document.createElement('div');
+                        adContainer.id = 'rewarded-ad-container';
+                        adContainer.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center;';
+                        document.body.appendChild(adContainer);
+                    }
+                    
+                    // Show ad container
+                    adContainer.style.display = 'flex';
+                    adContainer.innerHTML = `
+                        <div style="background: white; padding: 20px; border-radius: 12px; text-align: center; max-width: 90%; max-height: 90%;">
+                            <div style="color: #333; font-size: 16px; margin-bottom: 15px;">Watch the full ad to earn boost!</div>
+                            <ins class="adsbygoogle"
+                                 style="display:block"
+                                 data-ad-client="ca-pub-4534323466794129"
+                                 data-ad-slot="${ADMOB_AD_UNIT_ID.split('/')[1]}"
+                                 data-ad-format="auto"
+                                 data-full-width-responsive="true"></ins>
+                            <button onclick="closeAdContainer()" style="margin-top: 15px; padding: 10px 20px; background: #ff4444; color: white; border: none; border-radius: 6px; cursor: pointer;">Close Ad (No Reward)</button>
+                        </div>
+                    `;
+                    
+                    // Push ad
+                    try {
+                        (adsbygoogle = window.adsbygoogle || []).push({});
+                        
+                        // Simulate ad watch (30 seconds minimum for real ad)
+                        setTimeout(() => {
+                            adRewardEarned = true;
+                            const watchDuration = Date.now() - adStartTime;
+                            console.log(`✅ Ad watched for ${watchDuration}ms`);
+                            
+                            // Close ad container
+                            if (adContainer) adContainer.style.display = 'none';
+                            
+                            // Apply reward
+                            applyAdReward(sessionId, watchDuration, 'admob');
+                        }, 30000); // 30 seconds for real ad
+                        
+                    } catch (adError) {
+                        console.error('❌ AdSense push error:', adError);
+                        if (adContainer) adContainer.style.display = 'none';
+                        showToast('❌ Ad not available. Try again later.', true);
+                        isWatchingAd = false;
+                    }
+                    
+                } else {
+                    // AdMob not available
+                    console.error('❌ AdMob SDK not loaded');
+                    showToast('❌ Ad service not available. Try again later.', true);
+                    isWatchingAd = false;
+                }
+                
+            } catch (error) {
+                console.error('❌ Ad load error:', error);
+                showToast('❌ Failed to load ad. Try again later.', true);
+                isWatchingAd = false;
+            }
+        }
+        
+        // Helper function to close ad container
+        function closeAdContainer() {
+            const container = document.getElementById('rewarded-ad-container');
+            if (container) container.style.display = 'none';
+            
+            if (!adRewardEarned) {
+                showToast('❌ Watch the full ad to earn reward', true);
+                isWatchingAd = false;
+            }
+        }
+        
+        // Test mode function
+        
+        // Apply ad reward function
+        async function applyAdReward(sessionId, watchDuration, adProvider) {
+            const btn = document.getElementById('watchAdButton');
+            if (btn) btn.setAttribute('data-locked', 'true');
+            
+            // Start cooldown
+            const cooldownEnd = Date.now() + 45000;
+            localStorage.setItem('adCooldown_' + currentUser.email, cooldownEnd.toString());
+            
+            // Button countdown
             const updateButton = () => {
                 const btn = document.getElementById('watchAdButton');
                 if (!btn || btn.getAttribute('data-locked') !== 'true') return;
@@ -4809,57 +4904,50 @@ async function startMiningOnBackend() {
                     btn.style.background = 'rgba(0, 255, 255, 0.1)';
                     btn.style.border = '1px solid rgba(0, 255, 255, 0.3)';
                     btn.style.color = 'rgba(255, 255, 255, 0.4)';
-                    btn.textContent = `⏳ Wait for reward ${remaining}s`;
+                    btn.textContent = `⏳ Cooldown ${remaining}s`;
                 }
             };
             
-            // Initial update
             updateButton();
-            
-            // Update every second
             const countdownInterval = setInterval(updateButton, 1000);
             
-            // Call backend after 35 seconds (so rate updates by 40th second)
-            setTimeout(async () => {
-                const watchDuration = Date.now() - adStartTime;
+            // Send to backend
+            try {
+                const response = await fetch(API_ENDPOINTS.applyAdBoost, {
+                    method: 'POST',
+                    headers: getApiHeaders(),
+                    body: JSON.stringify({ 
+                        sessionId: sessionId,
+                        watchDuration: watchDuration,
+                        adProvider: adProvider
+                    })
+                });
                 
-                // Call backend to apply boost
-                try {
-                    const response = await fetch(API_ENDPOINTS.applyAdBoost, {
-                        method: 'POST',
-                        headers: getApiHeaders(),
-                        body: JSON.stringify({ 
-                            sessionId: sessionId,
-                            watchDuration: watchDuration
-                        })
-                    });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast(`✅ +${data.thisReward.toFixed(2)}/h boost earned!`, false, 3000);
+                    console.log('✅ Ad boost applied successfully');
                     
-                    const data = await response.json();
-                    
-                    if (response.ok) {
-                        console.log('✅ Ad boost applied successfully, refreshing data from backend...');
-                        
-                        // Fetch fresh data from backend
-                        await initApp();
-                    } else {
-                        showToast(`❌ ${data.error || 'Failed to apply boost'}`, true);
-                    }
-                } catch (error) {
-                    console.error('Apply ad boost error:', error);
-                    showToast('❌ Failed to apply boost', true);
+                    // Refresh data
+                    await initApp();
+                } else {
+                    showToast(`❌ ${data.error || 'Failed to apply boost'}`, true);
                 }
-            }, 35000); // 35 seconds - backend called (rate updates by 40s)
+            } catch (error) {
+                console.error('❌ Backend error:', error);
+                showToast('❌ Failed to apply boost', true);
+            }
             
-            // Unlock button after 45 seconds
+            // Unlock button after 45s
             setTimeout(() => {
                 clearInterval(countdownInterval);
-                
-                // Unlock button
                 const btn = document.getElementById('watchAdButton');
                 if (btn) btn.setAttribute('data-locked', 'false');
-                
-                // Release lock
                 isWatchingAd = false;
+                updateWatchAdButton();
+            }, 45000);
+        }
                 
                 // Re-render to show unlocked button
                 updateWatchAdButton();
