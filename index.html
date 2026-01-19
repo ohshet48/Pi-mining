@@ -6250,16 +6250,11 @@ async function startMiningOnBackend() {
                     
                     if (response.ok && data.leaderboard) {
                         leaderboardData = data.leaderboard;
-
-                        // SORT: by balance (higher first)
-                        leaderboardData.sort((a, b) => {
-                            return (b.balance || 0) - (a.balance || 0);
-                        });
                         
                         // Cache to localStorage
                         localStorage.setItem('leaderboard_cache', JSON.stringify(leaderboardData));
                         localStorage.setItem('leaderboard_cache_time', Date.now().toString());
-                        console.log('✅ Leaderboard cached to localStorage:', leaderboardData.length, 'users');
+                        console.log('✅ Leaderboard cached:', leaderboardData.length, 'users');
                     }
                 }
             } catch (err) {
@@ -6663,9 +6658,6 @@ async function startMiningOnBackend() {
             const users = JSON.parse(localStorage.getItem('users') || '{}');
             const currentEmail = localStorage.getItem('currentUser');
             
-            console.log('📋 getReferralsPageContent - Loading referrals...');
-            console.log('Current user:', currentUser.userId);
-            
             // Get referrals from backend OR cache
             const now = Date.now();
             let activeRefs = [];
@@ -6679,30 +6671,21 @@ async function startMiningOnBackend() {
             try {
                 // Use cache if available and valid
                 if (isCacheValid) {
-                    console.log('✅ Using cached referrals data (age: ' + Math.round(cacheAge / 1000 / 60) + ' minutes)');
                     activeRefs = cachedReferralsData.activeRefs;
                     inactiveRefs = cachedReferralsData.inactiveRefs;
                 } else {
-                    console.log('🔄 Fetching referrals from backend...');
-                    
                     // Get all referrals with isActive field
                     const refResponse = await fetch(API_ENDPOINTS.getReferrals + '?userId=' + currentUser.userId, {
                         headers: getApiHeaders()
                     });
                     const refData = await refResponse.json();
                     
-                    console.log('Backend response:', refResponse.ok, refData);
-                    
                     if (refResponse.ok && refData.referrals) {
                         const allReferrals = refData.referrals;
-                        
-                        console.log('Total referrals:', allReferrals.length);
                         
                         // Backend now provides isActive field for each referral
                         activeRefs = allReferrals.filter(r => r.isActive === true);
                         inactiveRefs = allReferrals.filter(r => r.isActive === false);
-                        
-                        console.log('Active:', activeRefs.length, 'Inactive:', inactiveRefs.length);
                         
                         // Cache the results in memory and localStorage
                         cachedReferralsData = { activeRefs, inactiveRefs };
@@ -6710,10 +6693,6 @@ async function startMiningOnBackend() {
                         
                         localStorage.setItem('referralsCache_' + currentEmail, JSON.stringify(cachedReferralsData));
                         localStorage.setItem('referralsCacheTime_' + currentEmail, now.toString());
-                        
-                        console.log('✅ Referrals cached for 1 hour:', { active: activeRefs.length, inactive: inactiveRefs.length });
-                    } else {
-                        console.error('Failed to get referrals:', refData);
                     }
                 }
             } catch (err) {
