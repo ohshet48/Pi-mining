@@ -3466,6 +3466,7 @@ window.__resetEmail = email;
         
         // Prevent duplicate initApp calls
         let isInitializing = false;
+        let initAppTimeout = null;
         
         // Track claimed levels to prevent re-showing after claim (temporary memory)
         let recentlyClaimedLevels = new Set();
@@ -3578,11 +3579,22 @@ window.__resetEmail = email;
             }
         }
         async function initApp() {
+    // Debounce: Multiple calls within 100ms = single execution
+    if (initAppTimeout) {
+        console.log('⚠️ initApp debounced - ignoring rapid call');
+        return;
+    }
+    
     // Prevent duplicate calls
     if (isInitializing) {
         console.log('⚠️ initApp already running, skipping duplicate call');
         return;
     }
+    
+    // Set debounce timeout
+    initAppTimeout = setTimeout(() => {
+        initAppTimeout = null;
+    }, 100);
     
     isInitializing = true;
     
