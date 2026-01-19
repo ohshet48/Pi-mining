@@ -4844,7 +4844,7 @@ async function startMiningOnBackend() {
                         // Android will call window.onAdRewardEarned when done
                     } else {
                         console.warn('⚠️ Android ad not ready yet');
-                        showToast('❌ Ad could not be loaded. Please disable VPN, ad blocker, or private DNS.', true);
+                        showToast('❌ Ad couldn’t load. Please Disable VPN/ad blocker or try again in 5 seconds.', true);
                         isWatchingAd = false;
                     }
                     return;
@@ -4865,7 +4865,7 @@ async function startMiningOnBackend() {
                 
             } catch (error) {
                 console.error('❌ Ad load error:', error);
-                showToast('❌ Failed to load ad. Try again later.', true);
+                showToast('❌ Ad couldn’t load. VPN or ad blocker must be disabled..', true);
                 isWatchingAd = false;
             }
         }
@@ -4895,14 +4895,14 @@ async function startMiningOnBackend() {
         // Android callback: Called when ad is not ready
         window.onAdNotReady = function() {
             console.warn('⚠️ onAdNotReady called');
-            showToast('❌ Ad not ready. Try again in a few seconds.', true);
+            showToast('❌ Ad couldn’t load. Please Disable VPN/ad blocker or try again in 5 seconds.', true);
             isWatchingAd = false;
         };
         
         // Android callback: Called when ad load fails
         window.onAdLoadFailed = function(error) {
             console.error('❌ onAdLoadFailed:', error);
-            showToast('❌ Failed to load ad. Try again later.', true);
+            showToast('❌ Ad couldn’t load. VPN or ad blocker must be disabled..', true);
             isWatchingAd = false;
         };
         
