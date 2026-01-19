@@ -4957,7 +4957,7 @@ async function startMiningOnBackend() {
             if (btn) btn.setAttribute('data-locked', 'true');
             
             // Start cooldown
-            const cooldownEnd = Date.now() + 45000;
+            const cooldownEnd = Date.now() + 15000;
             localStorage.setItem('adCooldown_' + currentUser.email, cooldownEnd.toString());
             
             // Button countdown
@@ -5016,7 +5016,7 @@ async function startMiningOnBackend() {
                 const btn = document.getElementById('watchAdButton');
                 if (btn) btn.setAttribute('data-locked', 'false');
                 updateWatchAdButton();
-            }, 45000);
+            }, 15000);
         }
 
         function checkMining() {
