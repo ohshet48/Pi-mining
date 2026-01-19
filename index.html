@@ -6889,8 +6889,13 @@ async function startMiningOnBackend() {
         
         
         function getTasksPageContent() {
-            // Check which tasks are completed
-            const completedTasks = JSON.parse(localStorage.getItem('completedTasks_' + currentUser.email) || '{}');
+            // Get completed tasks from currentUser (backend)
+            const completedTasks = currentUser.completedTasks || [];
+            const completedTasksObj = {};
+            completedTasks.forEach(taskId => {
+                completedTasksObj[taskId] = true;
+            });
+            
             const clickedTasks = JSON.parse(localStorage.getItem('clickedTasks_' + currentUser.email) || '{}');
             
             const tasks = [
@@ -6939,7 +6944,7 @@ async function startMiningOnBackend() {
                     <!-- Tasks List -->
                     <div style="display: flex; flex-direction: column; gap: 16px;">
                         ${tasks.map(task => {
-                            const isCompleted = completedTasks[task.id];
+                            const isCompleted = completedTasksObj[task.id];
                             const isClicked = clickedTasks[task.id];
                             const showClaim = isClicked && !isCompleted;
                             
@@ -7091,54 +7096,10 @@ async function startMiningOnBackend() {
             if (isProcessingTask) return;
             isProcessingTask = true;
             
-            // Disable button immediately
             const buttonContainer = document.getElementById('taskButton_' + taskId);
-            if (buttonContainer) {
-                buttonContainer.innerHTML = `
-                    <button disabled style="
-                        padding: 12px 24px;
-                        background: rgba(100, 100, 100, 0.3);
-                        border: 1px solid rgba(150, 150, 150, 0.3);
-                        border-radius: 12px;
-                        color: rgba(255, 255, 255, 0.4);
-                        font-size: 14px;
-                        font-weight: 700;
-                        cursor: not-allowed;
-                        white-space: nowrap;
-                    ">Claiming...</button>
-                `;
-            }
-            
-            // Mark as completed
-            const completedTasks = JSON.parse(localStorage.getItem('completedTasks_' + currentUser.email) || '{}');
-            completedTasks[taskId] = true;
-            localStorage.setItem('completedTasks_' + currentUser.email, JSON.stringify(completedTasks));
-            
-            // Add reward to balance
             const reward = 5;
-            d.balance += reward;
-            currentUser.balance = d.balance;
             
-            // Update backend
-            try {
-                await fetch(API_ENDPOINTS.addPendingReward, {
-                    method: 'POST',
-                    headers: getApiHeaders(),
-                    body: JSON.stringify({
-                        userId: currentUser.userId,
-                        type: 'task',
-                        amount: reward,
-                        metadata: { taskId: taskId }
-                    })
-                });
-            } catch (error) {
-                console.error('Failed to record task reward:', error);
-            }
-            
-            // Show success
-            showToast('✅ Task completed! +5 ARCASTRA', false);
-            
-            // Update button to claimed state
+            // Update UI immediately (optimistic update)
             if (buttonContainer) {
                 buttonContainer.innerHTML = `
                     <button disabled style="
@@ -7155,8 +7116,31 @@ async function startMiningOnBackend() {
                 `;
             }
             
-            // Re-render to update balance
+            // Update local state immediately
+            if (!currentUser.completedTasks) {
+                currentUser.completedTasks = [];
+            }
+            currentUser.completedTasks.push(taskId);
+            currentUser.balance += reward;
+            d.balance = currentUser.balance;
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            showToast('✅ Task completed! +5 ARCASTRA', false);
             render();
+            
+            // Send to backend in background (don't await)
+            fetch(API_ENDPOINTS.addPendingReward, {
+                method: 'POST',
+                headers: getApiHeaders(),
+                body: JSON.stringify({
+                    userId: currentUser.userId,
+                    rewardType: 'task',
+                    amount: reward,
+                    metadata: { taskId: taskId }
+                })
+            }).catch(error => {
+                console.error('Failed to sync task to backend:', error);
+            });
             
             isProcessingTask = false;
         }
