@@ -3464,6 +3464,9 @@ window.__resetEmail = email;
         let rewardedAd = null;
         const ADMOB_AD_UNIT_ID = 'ca-app-pub-4534323466794129/8698252598'; // mining_boost_reward
         
+        // Prevent duplicate initApp calls
+        let isInitializing = false;
+        
         // Track claimed levels to prevent re-showing after claim (temporary memory)
         let recentlyClaimedLevels = new Set();
         
@@ -3575,24 +3578,33 @@ window.__resetEmail = email;
             }
         }
         async function initApp() {
-    requestAnimationFrame(() => {  });
-    const appEl = document.getElementById('app');
-    if (appEl) appEl.style.display = 'block';
-    
-    // Declare pendingRewardsData at function scope
-    let pendingRewardsData = [];
-    
-    // localStorage'dan currentUser'ı oku
-    const storedUser = localStorage.getItem('currentUser');
-    const userId = localStorage.getItem('userId');
-    
-    if (storedUser) {
-        currentUser = JSON.parse(storedUser);
-        // Username yoksa email'den oluştur
-        if (!currentUser.username && currentUser.email) {
-            currentUser.username = currentUser.email.split('@')[0];
-        }
+    // Prevent duplicate calls
+    if (isInitializing) {
+        console.log('⚠️ initApp already running, skipping duplicate call');
+        return;
     }
+    
+    isInitializing = true;
+    
+    try {
+        requestAnimationFrame(() => {  });
+        const appEl = document.getElementById('app');
+        if (appEl) appEl.style.display = 'block';
+        
+        // Declare pendingRewardsData at function scope
+        let pendingRewardsData = [];
+        
+        // localStorage'dan currentUser'ı oku
+        const storedUser = localStorage.getItem('currentUser');
+        const userId = localStorage.getItem('userId');
+        
+        if (storedUser) {
+            currentUser = JSON.parse(storedUser);
+            // Username yoksa email'den oluştur
+            if (!currentUser.username && currentUser.email) {
+                currentUser.username = currentUser.email.split('@')[0];
+            }
+        }
     
     // Backend'den TÜM verileri çek - TEK İSTEK (OPTİMİZE EDİLDİ!)
     if (userId) {
@@ -3876,6 +3888,12 @@ window.__resetEmail = email;
                     toasts.forEach(toast => toast.remove());
                 }, 100);
             }
+        } catch (error) {
+            console.error('❌ initApp error:', error);
+        } finally {
+            // Always release lock
+            isInitializing = false;
+        }
         }
         
 
