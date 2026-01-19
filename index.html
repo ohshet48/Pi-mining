@@ -2081,7 +2081,7 @@ const API_KEY = 'arc_astra_mobile_2024_x7K9mP3qR8wL5nF2';
 function getApiHeaders(additionalHeaders = {}) {
   return {
     'Content-Type': 'application/json',
-    'X-API-Key': API_KEY,
+    'x-api-key': API_KEY,
     ...additionalHeaders
   };
 }
@@ -2451,13 +2451,29 @@ async function requestNotificationPermission() {
 // Handle foreground messages
 messaging.onMessage((payload) => {
   console.log('Foreground message:', payload);
+  
+  // Set localStorage flags for notification types
+  if (payload.data && currentUser) {
+    if (payload.data.type === 'announcement') {
+      localStorage.setItem('hasNewAnnouncements_' + currentUser.userId, 'true');
+      console.log('✅ Announcement flag set');
+    }
+    if (payload.data.type === 'airdrop') {
+      localStorage.setItem('hasNewAirdrops_' + currentUser.userId, 'true');
+      console.log('✅ Airdrop flag set');
+    }
+    // Refresh notification indicators
+    if (typeof checkNotifications === 'function') {
+      checkNotifications();
+    }
+  }
+  
   showCustomNotification(
     payload.notification.title,
     payload.notification.body,
     payload.data
   );
 });
-*/
 
 // Show custom notification
 function showCustomNotification(title, body, data) {
@@ -6077,10 +6093,14 @@ async function startMiningOnBackend() {
             let leaderboardData = [];
             
             try {
-                // Use cache if available
-                if (cachedLeaderboardData) {
-                    console.log('✅ Using cached leaderboard data');
-                    leaderboardData = cachedLeaderboardData;
+                // Try localStorage cache first (24 hour validity)
+                const cachedData = localStorage.getItem('leaderboard_cache');
+                const cacheTime = localStorage.getItem('leaderboard_cache_time');
+                const twentyFourHours = 24 * 60 * 60 * 1000;
+                
+                if (cachedData && cacheTime && (Date.now() - parseInt(cacheTime)) < twentyFourHours) {
+                    console.log('✅ Using localStorage cached leaderboard');
+                    leaderboardData = JSON.parse(cachedData);
                 } else {
                     console.log('🔄 Fetching leaderboard from backend...');
                     
@@ -6098,9 +6118,10 @@ async function startMiningOnBackend() {
                             return (b.balance || 0) - (a.balance || 0);
                         });
                         
-                        // Cache the results
-                        cachedLeaderboardData = leaderboardData;
-                        console.log('✅ Leaderboard cached:', leaderboardData.length, 'users');
+                        // Cache to localStorage
+                        localStorage.setItem('leaderboard_cache', JSON.stringify(leaderboardData));
+                        localStorage.setItem('leaderboard_cache_time', Date.now().toString());
+                        console.log('✅ Leaderboard cached to localStorage:', leaderboardData.length, 'users');
                     }
                 }
             } catch (err) {
