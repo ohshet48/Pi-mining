@@ -5570,8 +5570,10 @@ async function startMiningOnBackend() {
                     pageTitle.textContent = 'Announcements';
                     pageContent.innerHTML = '<div style="text-align: center; padding: 60px 20px; color: #00d4ff;">Loading...</div>';
                     getAnnouncementsPageContent().then(html => { pageContent.innerHTML = html; });
-                    // Mark as viewed
-                    localStorage.setItem('lastViewedAnnouncements_' + currentUser.userId, Date.now().toString());
+                    
+                    // Clear notification flag
+                    localStorage.removeItem('hasNewAnnouncements_' + currentUser.userId);
+                    
                     // Clear styles immediately
                     const announcementsMenuItem = document.getElementById('announcementsMenuItem');
                     if (announcementsMenuItem) {
@@ -5582,9 +5584,13 @@ async function startMiningOnBackend() {
                     checkNotifications(); // Recheck to update hamburger
                     break;
                 case 'airdrop':
-                    pageTitle.textContent = 'Airdrop';
+                    pageTitle.textContent = 'Events';
                     pageContent.innerHTML = '<div style="text-align: center; padding: 60px 20px; color: #00d4ff;">Loading...</div>';
                     getAirdropPageContent().then(html => { pageContent.innerHTML = html; });
+                    
+                    // Clear notification flag
+                    localStorage.removeItem('hasNewAirdrops_' + currentUser.userId);
+                    
                     // Clear styles immediately
                     const airdropMenuItem = document.getElementById('airdropMenuItem');
                     if (airdropMenuItem) {
@@ -5964,7 +5970,7 @@ async function startMiningOnBackend() {
                         <div style="display: flex; align-items: center; justify-content: center; min-height: 400px; padding: 20px;">
                             <div style="background: rgba(0, 0, 0, 0.5); border: 2px solid rgba(100, 100, 100, 0.4); border-radius: 20px; padding: 40px 30px; max-width: 340px; width: 100%; text-align: center; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
                                 <div style="background: rgba(100, 100, 100, 0.2); border: 2px solid rgba(100, 100, 100, 0.3); border-radius: 16px; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 40px;">💰</div>
-                                <h2 style="color: rgba(255, 255, 255, 0.6); font-size: 22px; font-weight: 900; margin-bottom: 12px;">No Airdrops</h2>
+                                <h2 style="color: rgba(255, 255, 255, 0.6); font-size: 22px; font-weight: 900; margin-bottom: 12px;">No Events</h2>
                                 <p style="color: rgba(139, 92, 246, 0.7); font-size: 14px; line-height: 1.6;">Check back later for rewards</p>
                             </div>
                         </div>
