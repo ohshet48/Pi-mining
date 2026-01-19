@@ -5544,11 +5544,6 @@ async function startMiningOnBackend() {
             const pageTitle = document.getElementById('fullPageTitle');
             const pageContent = document.getElementById('fullPageContent');
             
-            // Clear old content and show page immediately
-            pageContent.innerHTML = '';
-            fullPage.classList.add('active');
-            fullPage.dataset.currentPage = page;
-            
             switch(page) {
                 case 'profile':
                     pageTitle.textContent = 'Profile';
@@ -5765,6 +5760,10 @@ async function startMiningOnBackend() {
                     pageContent.innerHTML = '<div class="card"><h2 style="color: white; text-align: center;">Menü 6 İçeriği</h2><p style="color: #c4b5fd; text-align: center; margin-top: 10px;">Bu sayfa için içerik yakında eklenecek.</p></div>';
                     break;
             }
+            
+            // Show page AFTER content is set
+            fullPage.classList.add('active');
+            fullPage.dataset.currentPage = page;
         }
         
         function closePage() {
