@@ -4826,69 +4826,42 @@ async function startMiningOnBackend() {
             adRewardEarned = false;
             
             const adStartTime = Date.now();
+            // Save start time for duration calculation
+            localStorage.setItem('adStartTime_' + currentUser.email, adStartTime.toString());
             
             // Show loading message
             showToast('📺 Loading ad...', false, 3000);
             
             try {
-                // Check if AdSense is available
-                if (typeof adsbygoogle !== 'undefined' && window.adsbygoogle) {
-                    console.log('✅ AdMob SDK detected, showing real ad');
+                // CHECK 1: Android Native AdMob (Priority)
+                if (typeof Android !== 'undefined' && Android.showAd) {
+                    console.log('✅ Android native AdMob detected');
                     
-                    // Create ad container if not exists
-                    let adContainer = document.getElementById('rewarded-ad-container');
-                    if (!adContainer) {
-                        adContainer = document.createElement('div');
-                        adContainer.id = 'rewarded-ad-container';
-                        adContainer.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center;';
-                        document.body.appendChild(adContainer);
-                    }
-                    
-                    // Show ad container
-                    adContainer.style.display = 'flex';
-                    adContainer.innerHTML = `
-                        <div style="background: white; padding: 20px; border-radius: 12px; text-align: center; max-width: 90%; max-height: 90%;">
-                            <div style="color: #333; font-size: 16px; margin-bottom: 15px;">Watch the full ad to earn boost!</div>
-                            <ins class="adsbygoogle"
-                                 style="display:block"
-                                 data-ad-client="ca-pub-4534323466794129"
-                                 data-ad-slot="${ADMOB_AD_UNIT_ID.split('/')[1]}"
-                                 data-ad-format="auto"
-                                 data-full-width-responsive="true"></ins>
-                            <button onclick="closeAdContainer()" style="margin-top: 15px; padding: 10px 20px; background: #ff4444; color: white; border: none; border-radius: 6px; cursor: pointer;">Close Ad (No Reward)</button>
-                        </div>
-                    `;
-                    
-                    // Push ad
-                    try {
-                        (adsbygoogle = window.adsbygoogle || []).push({});
-                        
-                        // Simulate ad watch (30 seconds minimum for real ad)
-                        setTimeout(() => {
-                            adRewardEarned = true;
-                            const watchDuration = Date.now() - adStartTime;
-                            console.log(`✅ Ad watched for ${watchDuration}ms`);
-                            
-                            // Close ad container
-                            if (adContainer) adContainer.style.display = 'none';
-                            
-                            // Apply reward
-                            applyAdReward(sessionId, watchDuration, 'admob');
-                        }, 30000); // 30 seconds for real ad
-                        
-                    } catch (adError) {
-                        console.error('❌ AdSense push error:', adError);
-                        if (adContainer) adContainer.style.display = 'none';
-                        showToast('❌ Ad not available. Try again later.', true);
+                    // Check if ad is ready
+                    if (typeof Android.isAdReady === 'function' && Android.isAdReady()) {
+                        console.log('📺 Showing Android native ad...');
+                        Android.showAd();
+                        // Android will call window.onAdRewardEarned when done
+                    } else {
+                        console.warn('⚠️ Android ad not ready yet');
+                        showToast('❌ Ad not ready. Please try again in a few seconds.', true);
                         isWatchingAd = false;
                     }
-                    
-                } else {
-                    // AdMob not available
-                    console.error('❌ AdMob SDK not loaded');
-                    showToast('❌ Ad service not available. Try again later.', true);
-                    isWatchingAd = false;
+                    return;
                 }
+                
+                // CHECK 2: Web AdSense (Fallback for web version)
+                if (typeof adsbygoogle !== 'undefined' && window.adsbygoogle) {
+                    console.log('⚠️ Web AdSense detected (not recommended for production)');
+                    showToast('❌ Please use the mobile app for ads.', true);
+                    isWatchingAd = false;
+                    return;
+                }
+                
+                // CHECK 3: No ad system available
+                console.error('❌ No ad system available');
+                showToast('❌ Ad service not available. Please update the app.', true);
+                isWatchingAd = false;
                 
             } catch (error) {
                 console.error('❌ Ad load error:', error);
@@ -4897,10 +4870,53 @@ async function startMiningOnBackend() {
             }
         }
         
-        // Helper function to close ad container
+        // Android callback: Called when user earns reward
+        window.onAdRewardEarned = async function(rewardData) {
+            console.log('✅ onAdRewardEarned called:', rewardData);
+            
+            if (rewardData && rewardData.success) {
+                const sessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
+                if (!sessionId) {
+                    console.error('❌ No session found');
+                    isWatchingAd = false;
+                    return;
+                }
+                
+                const watchDuration = Date.now() - Date.parse(localStorage.getItem('adStartTime_' + currentUser.email));
+                
+                // Apply reward
+                await applyAdReward(sessionId, watchDuration, 'admob');
+            } else {
+                showToast('❌ Failed to earn reward', true);
+                isWatchingAd = false;
+            }
+        };
+        
+        // Android callback: Called when ad is not ready
+        window.onAdNotReady = function() {
+            console.warn('⚠️ onAdNotReady called');
+            showToast('❌ Ad not ready. Try again in a few seconds.', true);
+            isWatchingAd = false;
+        };
+        
+        // Android callback: Called when ad load fails
+        window.onAdLoadFailed = function(error) {
+            console.error('❌ onAdLoadFailed:', error);
+            showToast('❌ Failed to load ad. Try again later.', true);
+            isWatchingAd = false;
+        };
+        
+        // Android callback: Called when ad show fails
+        window.onAdShowFailed = function(error) {
+            console.error('❌ onAdShowFailed:', error);
+            showToast('❌ Failed to show ad. Try again later.', true);
+            isWatchingAd = false;
+        };
+        
+        // Helper function to close ad container (kept for compatibility)
         function closeAdContainer() {
             const container = document.getElementById('rewarded-ad-container');
-            if (container) container.style.display = 'none';
+            if (container) container.remove();
             
             if (!adRewardEarned) {
                 showToast('❌ Watch the full ad to earn reward', true);
