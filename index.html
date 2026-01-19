@@ -6452,6 +6452,9 @@ async function startMiningOnBackend() {
                 `;
             }
             
+            // ⚡ OPTIMIZATION: Use array instead of string concatenation
+            const userRows = [];
+            
             // Top 100 list
             leaderboardData.forEach((user, index) => {
                 const rank = index + 1;
@@ -6619,7 +6622,7 @@ async function startMiningOnBackend() {
                 // Calculate progress based on 365 days
                 const progressPercent = Math.min((user.miningDays / 365) * 100, 100);
                 
-                html += `
+                userRows.push(`
                     <div style="background: ${isCurrentUser ? 'rgba(251, 191, 36, 0.1)' : 'rgba(0, 0, 0, 0.3)'}; border: 1px solid ${isCurrentUser ? '#fbbf24' : 'rgba(0, 255, 255, 0.2)'}; border-radius: 10px; padding: 10px; ${isCurrentUser ? '' : ''}">
                         <div style="display: flex; align-items: center; justify-content: space-between;">
                             <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
@@ -6658,10 +6661,34 @@ async function startMiningOnBackend() {
                             </div>
                         </div>
                     </div>
-                `;
+                `);
             });
             
+            // ⚡ Join first 50 rows immediately (fast initial render)
+            const INITIAL_RENDER = 50;
+            const firstBatch = userRows.slice(0, INITIAL_RENDER).join('');
+            html += firstBatch;
+            
             html += '</div></div>'; // Close items container and main container
+            
+            // ⚡ Load remaining rows after page shows (progressive render)
+            if (userRows.length > INITIAL_RENDER) {
+                setTimeout(() => {
+                    const pageContent = document.getElementById('fullPageContent');
+                    if (!pageContent) return;
+                    
+                    const remainingBatch = userRows.slice(INITIAL_RENDER).join('');
+                    const closingDivs = '</div></div>';
+                    const currentHTML = pageContent.innerHTML;
+                    const insertPosition = currentHTML.lastIndexOf(closingDivs);
+                    
+                    if (insertPosition !== -1) {
+                        const newHTML = currentHTML.slice(0, insertPosition) + remainingBatch + currentHTML.slice(insertPosition);
+                        pageContent.innerHTML = newHTML;
+                        console.log('✅ Loaded remaining', userRows.length - INITIAL_RENDER, 'users in background');
+                    }
+                }, 100);
+            }
             
             return html;
         }
