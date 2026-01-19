@@ -4948,11 +4948,6 @@ async function startMiningOnBackend() {
                 updateWatchAdButton();
             }, 45000);
         }
-                
-                // Re-render to show unlocked button
-                updateWatchAdButton();
-            }, 45000); // 45 seconds - button unlocked
-        }
 
         function checkMining() {
             const end = localStorage.getItem('miningEndTime_' + currentUser.email);
