@@ -4185,6 +4185,12 @@ window.__resetEmail = email;
                 return;
             }
             
+            // Check if AdMob is ready
+            let isAdReady = false;
+            if (typeof Android !== 'undefined' && typeof Android.isAdReady === 'function') {
+                isAdReady = Android.isAdReady();
+            }
+            
             const currentRate = d.rate;
             const adCooldownKey = 'adCooldown_' + currentUser.email;
             const adCooldownEnd = parseInt(localStorage.getItem(adCooldownKey) || '0');
@@ -4193,7 +4199,7 @@ window.__resetEmail = email;
             const isOnCooldown = cooldownRemaining > 0;
             const adBoostCount = activeMiningSession?.adBoostCount || 0;
             const isMaxAds = adBoostCount >= 5;
-            const isDisabled = isOnCooldown || isMaxAds;
+            const isDisabled = isOnCooldown || isMaxAds || !isAdReady;
             
             // Calculate next reward
             let nextReward = 0;
@@ -4216,8 +4222,8 @@ window.__resetEmail = email;
                     style="
                         width: 100%; 
                         height: 45px; 
-                        background: ${isMaxAds ? 'rgba(100, 100, 100, 0.3)' : (isOnCooldown ? 'rgba(0, 255, 255, 0.1)' : 'rgba(0, 255, 255, 0.15)')}; 
-                        border: 1px solid ${isMaxAds ? 'rgba(150, 150, 150, 0.3)' : (isOnCooldown ? 'rgba(0, 255, 255, 0.3)' : 'rgba(0, 255, 255, 0.4)')}; 
+                        background: ${isMaxAds ? 'rgba(100, 100, 100, 0.3)' : (!isAdReady ? 'rgba(100, 100, 100, 0.2)' : (isOnCooldown ? 'rgba(0, 255, 255, 0.1)' : 'rgba(0, 255, 255, 0.15)'))}; 
+                        border: 1px solid ${isMaxAds ? 'rgba(150, 150, 150, 0.3)' : (!isAdReady ? 'rgba(150, 150, 150, 0.3)' : (isOnCooldown ? 'rgba(0, 255, 255, 0.3)' : 'rgba(0, 255, 255, 0.4)'))}; 
                         border-radius: 12px; 
                         color: ${isDisabled ? 'rgba(255, 255, 255, 0.4)' : '#00ffff'}; 
                         font-size: 13px; 
@@ -4882,7 +4888,10 @@ async function startMiningOnBackend() {
                     return;
                 }
                 
-                const watchDuration = Date.now() - Date.parse(localStorage.getItem('adStartTime_' + currentUser.email));
+                const adStartTime = parseInt(localStorage.getItem('adStartTime_' + currentUser.email) || '0');
+                const watchDuration = Date.now() - adStartTime;
+                
+                console.log('⏱️ Watch duration:', watchDuration, 'ms');
                 
                 // Apply reward
                 await applyAdReward(sessionId, watchDuration, 'admob');
@@ -5023,6 +5032,9 @@ async function startMiningOnBackend() {
                     }
                     render();
                 }
+                
+                // Update Watch Ad button every second to check if ad is ready
+                updateWatchAdButton();
                 
                 // Update active referrals count every 10 seconds
                 if (Date.now() % 10000 < 1000) {
