@@ -5544,6 +5544,10 @@ async function startMiningOnBackend() {
             const pageTitle = document.getElementById('fullPageTitle');
             const pageContent = document.getElementById('fullPageContent');
             
+            // Show page IMMEDIATELY
+            fullPage.classList.add('active');
+            fullPage.dataset.currentPage = page;
+            
             switch(page) {
                 case 'profile':
                     pageTitle.textContent = 'Profile';
@@ -5760,10 +5764,6 @@ async function startMiningOnBackend() {
                     pageContent.innerHTML = '<div class="card"><h2 style="color: white; text-align: center;">Menü 6 İçeriği</h2><p style="color: #c4b5fd; text-align: center; margin-top: 10px;">Bu sayfa için içerik yakında eklenecek.</p></div>';
                     break;
             }
-            
-            // Show page AFTER content is set
-            fullPage.classList.add('active');
-            fullPage.dataset.currentPage = page;
         }
         
         function closePage() {
@@ -6718,10 +6718,29 @@ async function startMiningOnBackend() {
             const pageTitle = document.getElementById('fullPageTitle');
             const pageContent = document.getElementById('fullPageContent');
             
-            pageTitle.textContent = 'My Referrals';
-            getReferralsPageContent().then(html => pageContent.innerHTML = html);
+            // Show page with loading
             fullPage.classList.add('active');
             fullPage.dataset.currentPage = 'referrals';
+            
+            pageTitle.textContent = 'My Referrals';
+            
+            // Show loading skeleton immediately
+            pageContent.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; min-height: 400px; padding: 20px;">
+                    <div style="background: rgba(0, 0, 0, 0.5); border: 2px solid rgba(0, 255, 255, 0.4); border-radius: 20px; padding: 40px 30px; max-width: 340px; width: 100%; text-align: center; box-shadow: 0 8px 32px rgba(0, 255, 255, 0.2);">
+                        <div style="width: 60px; height: 60px; border: 3px solid rgba(0, 255, 255, 0.3); border-top-color: #00ffff; border-radius: 50%; margin: 0 auto 20px; animation: spin 1s linear infinite;"></div>
+                        <h3 style="color: #00ffff; font-size: 18px; font-weight: 700; margin-bottom: 8px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Loading Referrals</h3>
+                    </div>
+                </div>
+                <style>
+                    @keyframes spin {
+                        to { transform: rotate(360deg); }
+                    }
+                </style>
+            `;
+            
+            // Load content asynchronously
+            getReferralsPageContent().then(html => pageContent.innerHTML = html);
             
             // Reset flag after a moment
             setTimeout(() => { ignoreNextPopstate = false; }, 200);
