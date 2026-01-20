@@ -6719,6 +6719,8 @@ async function startMiningOnBackend() {
             const now = Date.now();
             let activeRefs = [];
             let inactiveRefs = [];
+            let hasMore = false;
+            let totalRefs = 0;
             
             // Check if cache is valid (less than 1 hour old)
             const cacheAge = now - cachedReferralsTimestamp;
@@ -6730,22 +6732,26 @@ async function startMiningOnBackend() {
                 if (isCacheValid) {
                     activeRefs = cachedReferralsData.activeRefs;
                     inactiveRefs = cachedReferralsData.inactiveRefs;
+                    hasMore = cachedReferralsData.hasMore || false;
+                    totalRefs = cachedReferralsData.total || 0;
                 } else {
-                    // Get all referrals with isActive field
-                    const refResponse = await fetch(API_ENDPOINTS.getReferrals + '?userId=' + currentUser.userId, {
+                    // Get first 10 referrals
+                    const refResponse = await fetch(API_ENDPOINTS.getReferrals + '?userId=' + currentUser.userId + '&offset=0', {
                         headers: getApiHeaders()
                     });
                     const refData = await refResponse.json();
                     
                     if (refResponse.ok && refData.referrals) {
                         const allReferrals = refData.referrals;
+                        hasMore = refData.hasMore || false;
+                        totalRefs = refData.total || 0;
                         
                         // Backend now provides isActive field for each referral
                         activeRefs = allReferrals.filter(r => r.isActive === true);
                         inactiveRefs = allReferrals.filter(r => r.isActive === false);
                         
                         // Cache the results in memory and localStorage
-                        cachedReferralsData = { activeRefs, inactiveRefs };
+                        cachedReferralsData = { activeRefs, inactiveRefs, hasMore, total: totalRefs };
                         cachedReferralsTimestamp = now;
                         
                         localStorage.setItem('referralsCache_' + currentEmail, JSON.stringify(cachedReferralsData));
@@ -6804,6 +6810,12 @@ async function startMiningOnBackend() {
                             </div>
                         </div>
                     `).join('') : '<div style="text-align: center; padding: 40px 20px; color: rgba(255, 255, 255, 0.4); font-size: 14px;">No active referrals yet</div>'}
+                    
+                    ${hasMore ? `
+                        <button id="loadMoreBtn" onclick="loadMoreReferrals()" style="background: linear-gradient(135deg, #0ea5e9, #0284c7); border: none; border-radius: 12px; padding: 14px; color: white; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 10px;">
+                            📥 Load More (${totalRefs - 10} remaining)
+                        </button>
+                    ` : ''}
                 </div>
                 
                 <!-- Inactive List -->
@@ -6822,6 +6834,12 @@ async function startMiningOnBackend() {
                                 </div>
                             </div>
                         `).join('')}
+                        
+                        ${hasMore ? `
+                            <button id="loadMoreBtnInactive" onclick="loadMoreReferrals()" style="background: linear-gradient(135deg, #0ea5e9, #0284c7); border: none; border-radius: 12px; padding: 14px; color: white; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 10px;">
+                                📥 Load More (${totalRefs - 10} remaining)
+                            </button>
+                        ` : ''}
                         
                         <!-- Notify Button -->
                         <button onclick="sendReferralNotification()" ${!canSendNotif ? 'disabled' : ''} style="background: ${canSendNotif ? 'linear-gradient(135deg, #8b5cf6, #7c3aed)' : 'rgba(0, 0, 0, 0.3)'}; border: none; border-radius: 12px; padding: 14px; color: white; font-size: 14px; font-weight: 700; cursor: ${canSendNotif ? 'pointer' : 'not-allowed'}; margin-top: 10px; opacity: ${canSendNotif ? '1' : '0.5'};">
@@ -6856,6 +6874,54 @@ async function startMiningOnBackend() {
                 activeTab.style.color = 'rgba(255, 255, 255, 0.5)';
                 inactiveList.style.display = 'flex';
                 activeList.style.display = 'none';
+            }
+        }
+        
+        async function loadMoreReferrals() {
+            const btn = document.getElementById('loadMoreBtn');
+            const btnInactive = document.getElementById('loadMoreBtnInactive');
+            
+            if (btn) btn.disabled = true;
+            if (btnInactive) btnInactive.disabled = true;
+            
+            showToast('🔄 Loading more referrals...', false, 999999);
+            
+            try {
+                // Load remaining referrals (offset = 10)
+                const refResponse = await fetch(API_ENDPOINTS.getReferrals + '?userId=' + currentUser.userId + '&offset=10', {
+                    headers: getApiHeaders()
+                });
+                const refData = await refResponse.json();
+                
+                if (refResponse.ok && refData.referrals) {
+                    const newReferrals = refData.referrals;
+                    const newActive = newReferrals.filter(r => r.isActive === true);
+                    const newInactive = newReferrals.filter(r => r.isActive === false);
+                    
+                    // Update cache
+                    if (cachedReferralsData) {
+                        cachedReferralsData.activeRefs.push(...newActive);
+                        cachedReferralsData.inactiveRefs.push(...newInactive);
+                        cachedReferralsData.hasMore = false; // All loaded now
+                        
+                        const currentEmail = localStorage.getItem('currentUser');
+                        localStorage.setItem('referralsCache_' + currentEmail, JSON.stringify(cachedReferralsData));
+                    }
+                    
+                    // Reload page to show all referrals
+                    showToast('✓ Loaded all referrals!');
+                    setTimeout(() => {
+                        openPage('referrals');
+                    }, 500);
+                } else {
+                    showToast('❌ Failed to load more', true);
+                }
+            } catch (err) {
+                console.error('Load more error:', err);
+                showToast('❌ Failed to load more', true);
+            } finally {
+                if (btn) btn.disabled = false;
+                if (btnInactive) btnInactive.disabled = false;
             }
         }
         
@@ -7774,8 +7840,17 @@ async function startMiningOnBackend() {
                 // Check if full page is open - close it and go to main (CHECK THIS FIRST!)
                 if (fullPage && fullPage.classList.contains('active')) {
                     closePage();
+                    
+                    // ✅ CRITICAL: Ensure main page is visible
+                    const mainContainer = document.querySelector('.container');
+                    if (mainContainer) {
+                        mainContainer.style.display = 'block';
+                    }
+                    
+                    // ✅ DOUBLE PUSH: Prevent app exit
                     history.pushState({ page: 'main' }, '', '');
-                    return; // IMPORTANT: return here!
+                    history.pushState({ page: 'main' }, '', '');
+                    return;
                 }
                 
                 // Check if menu is open - close it and go to main
