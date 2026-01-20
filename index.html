@@ -3739,6 +3739,14 @@ window.__resetEmail = email;
             
             console.log('✅ User data yüklendi');
             
+            // Process Airdrops (cache for airdrop page)
+            window.cachedAirdrops = allData.airdrops || [];
+            window.cachedTotalAirdropAmount = allData.totalAirdropAmount || 0;
+            console.log('✅ Airdrops loaded:', {
+                count: window.cachedAirdrops.length,
+                total: window.cachedTotalAirdropAmount
+            });
+            
             // Process Referral Counts (no detailed list - modal will fetch that)
             localStorage.setItem('activeReferralCount_' + currentUser.email, allData.activeCount || 0);
             localStorage.setItem('totalReferralsCount_' + currentUser.email, allData.totalCount || 0);
@@ -4017,13 +4025,8 @@ window.__resetEmail = email;
                     .get();
                 const hasNewAnnouncements = !announcementsSnap.empty;
                 
-                // Check airdrops
-                const airdropsSnap = await db.collection('airdrops')
-                    .where('userId', '==', currentUser.userId)
-                    .where('claimed', '==', false)
-                    .limit(1)
-                    .get();
-                const hasAirdrops = !airdropsSnap.empty;
+                // Check airdrops (use cache from getAllUserData)
+                const hasAirdrops = (window.cachedAirdrops && window.cachedAirdrops.length > 0) || false;
                 
                 // Update global state
                 hasNewAnnouncementsGlobal = hasNewAnnouncements;
@@ -6311,10 +6314,34 @@ async function startMiningOnBackend() {
         
         async function getAirdropPageContent() {
             try {
-                const userId = currentUser.userId;
-                const snapshot = await db.collection('airdrops').where('userId', '==', userId).where('claimed', '==', false).get();
+                // Backend'den airdrops verisi gelecek (initApp'de zaten çekildi)
+                // Eğer yoksa backend'e istek at
+                let airdropsData = window.cachedAirdrops || null;
+                let totalAmount = window.cachedTotalAirdropAmount || 0;
                 
-                if (snapshot.empty) {
+                if (!airdropsData) {
+                    // Backend'den çek
+                    const response = await fetch(API_ENDPOINTS.getAllUserData, {
+                        method: 'POST',
+                        headers: getApiHeaders(),
+                        body: JSON.stringify({ userId: currentUser.userId })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        airdropsData = data.airdrops || [];
+                        totalAmount = data.totalAirdropAmount || 0;
+                        
+                        // Cache et
+                        window.cachedAirdrops = airdropsData;
+                        window.cachedTotalAirdropAmount = totalAmount;
+                    } else {
+                        airdropsData = [];
+                        totalAmount = 0;
+                    }
+                }
+                
+                if (!airdropsData || airdropsData.length === 0) {
                     return `
                         <div style="display: flex; align-items: center; justify-content: center; min-height: 400px; padding: 20px;">
                             <div style="background: rgba(0, 0, 0, 0.5); border: 2px solid rgba(100, 100, 100, 0.4); border-radius: 20px; padding: 40px 30px; max-width: 340px; width: 100%; text-align: center; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
@@ -6325,10 +6352,6 @@ async function startMiningOnBackend() {
                         </div>
                     `;
                 }
-                
-                let totalAmount = 0;
-                const airdrops = [];
-                snapshot.forEach(doc => { const data = doc.data(); totalAmount += data.amount; airdrops.push({id: doc.id, amount: data.amount, createdAt: data.createdAt}); });
                 
                 let html = `
                     <div style="padding: 20px;">
@@ -6354,12 +6377,15 @@ async function startMiningOnBackend() {
                         <div style="display: flex; flex-direction: column; gap: 10px;">
                 `;
                 
-                airdrops.forEach(airdrop => {
-                    const date = airdrop.createdAt ? new Date(airdrop.createdAt.toDate()).toLocaleDateString() : 'Recent';
+                airdropsData.forEach(airdrop => {
+                    const date = airdrop.createdAt ? new Date(airdrop.createdAt.toDate ? airdrop.createdAt.toDate() : airdrop.createdAt._seconds * 1000).toLocaleDateString() : 'Recent';
+                    const typeLabel = airdrop.type === 'global' ? '🌍 Global' : '🎁 Personal';
+                    const message = airdrop.message || 'Airdrop Reward';
+                    
                     html += `
                         <div style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 14px; display: flex; justify-content: space-between; align-items: center;">
                             <div>
-                                <div style="color: #10b981; font-size: 14px; font-weight: 700;">Airdrop Reward</div>
+                                <div style="color: #10b981; font-size: 14px; font-weight: 700;">${typeLabel} ${message}</div>
                                 <div style="color: rgba(139, 92, 246, 0.7); font-size: 11px; margin-top: 2px;">${date}</div>
                             </div>
                             <div style="color: #10b981; font-size: 18px; font-weight: 800;">+${airdrop.amount.toFixed(2)}</div>
@@ -9059,6 +9085,10 @@ try {
                         }
                         
                         console.log('✅ Backend confirmed claim:', data.totalClaimed);
+                        
+                        // Clear airdrops cache
+                        window.cachedAirdrops = [];
+                        window.cachedTotalAirdropAmount = 0;
                         
                         // Update menu notification (remove green border)
                         await checkNotifications();
