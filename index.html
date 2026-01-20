@@ -4022,7 +4022,11 @@ window.__resetEmail = email;
             return parseInt(localStorage.getItem('activeReferralCount_' + currentUser.email)) || 0;
         }
         
-        // ✅ YENİ: Backend'den referral sayılarını güncelle
+        // ============================================
+        // UPDATE REFERRAL COUNTS (DISABLED - Not needed anymore)
+        // Backend's activeReferralCount field is auto-updated on mining start/end
+        // ============================================
+        /*
         async function updateReferralCounts() {
             if (!currentUser || !currentUser.userId) return;
             
@@ -4050,8 +4054,9 @@ window.__resetEmail = email;
             }
         }
         
-        // ✅ Her 30 saniyede bir referral sayılarını güncelle
-        setInterval(updateReferralCounts, 30000);
+        // ❌ REMOVED: No longer polling every 30 seconds
+        // setInterval(updateReferralCounts, 30000);
+        */
 
         function save() {
             const users = JSON.parse(localStorage.getItem('users') || '{}');
