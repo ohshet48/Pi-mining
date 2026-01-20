@@ -8985,68 +8985,132 @@ try {
         }
 
         async function claimAllAirdrops() {
+            // ⚡ DOUBLE-CLICK PROTECTION - Return silently if already claiming
             if (isClaimingAirdrop) {
-                return; // Silent return, no toast
+                return;
             }
             
+            // Lock immediately to prevent double-clicks
             isClaimingAirdrop = true;
             
-            try {
-                const userId = currentUser.userId;
-                
-                showToast('🔄 Claiming airdrops...', false, 999999);
-                
-                // Call backend API
-                const response = await fetch(API_ENDPOINTS.claimAirdrops, {
-                    method: 'POST',
-                    headers: getApiHeaders(),
-                    body: JSON.stringify({ userId: userId })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok && data.success) {
-                    if (data.totalClaimed === 0) {
-                        showToast('No airdrops to claim', true);
-                        isClaimingAirdrop = false;
-                        return;
+            const userId = currentUser.userId;
+            
+            // ⚡ STEP 1: Get airdrop amount from DOM BEFORE backend call
+            const totalAmountElement = document.querySelector('div[style*="font-size: 36px"]');
+            let estimatedAmount = 0;
+            if (totalAmountElement) {
+                const amountText = totalAmountElement.textContent.trim().split(' ')[0];
+                estimatedAmount = parseFloat(amountText) || 0;
+            }
+            
+            // If no amount found, check backend first
+            if (estimatedAmount === 0) {
+                showToast('No airdrops to claim', true);
+                isClaimingAirdrop = false;
+                return;
+            }
+            
+            // ⚡ STEP 2: OPTIMISTIC UI - Update immediately (0ms delay!)
+            const oldBalance = currentUser.balance;
+            currentUser.balance += estimatedAmount;
+            d.balance = currentUser.balance;
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            // ⚡ STEP 3: Hide claim button INSTANTLY from DOM
+            const claimButton = document.querySelector('button[onclick="claimAllAirdrops()"]');
+            if (claimButton) {
+                const container = claimButton.closest('div[style*="background: linear-gradient"]');
+                if (container) {
+                    container.style.transition = 'opacity 0.2s ease';
+                    container.style.opacity = '0';
+                    setTimeout(() => {
+                        container.style.display = 'none';
+                    }, 200);
+                }
+            }
+            
+            // ⚡ STEP 4: Update balance display instantly
+            render();
+            
+            // ⚡ STEP 5: Show success message immediately
+            showToast('✓ Claimed ' + estimatedAmount.toFixed(2) + ' ARCASTRA!');
+            
+            // ⚡ STEP 6: Backend call in background (async, non-blocking)
+            (async () => {
+                try {
+                    const response = await fetch(API_ENDPOINTS.claimAirdrops, {
+                        method: 'POST',
+                        headers: getApiHeaders(),
+                        body: JSON.stringify({ userId: userId })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok && data.success) {
+                        // Backend confirmed - use exact amount from backend
+                        if (data.totalClaimed !== estimatedAmount) {
+                            // Adjust if there was a discrepancy
+                            const difference = data.totalClaimed - estimatedAmount;
+                            currentUser.balance += difference;
+                            d.balance = currentUser.balance;
+                            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                            render();
+                            console.log('✅ Adjusted balance by', difference);
+                        }
+                        
+                        console.log('✅ Backend confirmed claim:', data.totalClaimed);
+                        
+                        // Update menu notification (remove green border)
+                        await checkNotifications();
+                        
+                        // Reload page to show "No Airdrops" message
+                        const pageContent = document.getElementById('fullPageContent');
+                        if (pageContent) {
+                            const html = await getAirdropPageContent();
+                            pageContent.innerHTML = html;
+                        }
+                    } else {
+                        // Backend failed - rollback
+                        console.error('❌ Backend claim failed:', data);
+                        currentUser.balance = oldBalance;
+                        d.balance = oldBalance;
+                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                        render();
+                        
+                        // Show the button again
+                        if (claimButton) {
+                            const container = claimButton.closest('div[style*="background: linear-gradient"]');
+                            if (container) {
+                                container.style.display = 'block';
+                                container.style.opacity = '1';
+                            }
+                        }
+                        
+                        showToast('❌ Failed to claim airdrops. Please try again.', true);
                     }
                     
-                    // ⚡ OPTIMISTIC UI - Update immediately
-                    currentUser.balance += data.totalClaimed;
-                    d.balance = currentUser.balance;
+                } catch (error) {
+                    // Network error - rollback
+                    console.error('❌ Network error:', error);
+                    currentUser.balance = oldBalance;
+                    d.balance = oldBalance;
                     localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    render();
                     
-                    // IMMEDIATELY hide claim button from DOM (instant!)
-                    const claimButton = document.querySelector('button[onclick="claimAllAirdrops()"]');
+                    // Show the button again
                     if (claimButton) {
                         const container = claimButton.closest('div[style*="background: linear-gradient"]');
                         if (container) {
-                            container.style.display = 'none'; // Hide entire claim section instantly
+                            container.style.display = 'block';
+                            container.style.opacity = '1';
                         }
                     }
                     
-                    showToast('✓ Claimed ' + data.totalClaimed.toFixed(2) + ' ARCASTRA!');
-                    
-                    // Update menu notification (remove green border)
-                    await checkNotifications();
-                    
-                    // Reload page to show "No Airdrops" message
-                    const pageContent = document.getElementById('fullPageContent');
-                    if (pageContent) {
-                        const html = await getAirdropPageContent();
-                        pageContent.innerHTML = html;
-                    }
-                } else {
-                    showToast('❌ Failed to claim airdrops', true);
+                    showToast('❌ Network error. Please try again.', true);
+                } finally {
+                    isClaimingAirdrop = false;
                 }
-                
-            } catch (error) {
-                console.error('Claim error:', error);
-                showToast('❌ Failed to claim', true);
-            } finally {
-                isClaimingAirdrop = false;
-            }
+            })();
         }
 
 </script>
