@@ -3681,7 +3681,7 @@ window.__resetEmail = email;
             console.log('✅ User data yüklendi');
             
             // Process Referral Counts (no detailed list - modal will fetch that)
-            localStorage.setItem('activeReferralsCount_' + currentUser.email, allData.activeCount || 0);
+            localStorage.setItem('activeReferralCount_' + currentUser.email, allData.activeCount || 0);
             localStorage.setItem('totalReferralsCount_' + currentUser.email, allData.totalCount || 0);
             console.log('✅ Referral counts loaded:', {
                 active: allData.activeCount || 0,
@@ -3775,7 +3775,7 @@ window.__resetEmail = email;
                 balance: currentUser.balance || 0,
                 level: currentUser.level || 1,
                 refs: parseInt(localStorage.getItem('totalReferralsCount_' + currentUser.email)) || 0,
-                activeRefs: parseInt(localStorage.getItem('activeReferralsCount_' + currentUser.email)) || 0,
+                activeRefs: parseInt(localStorage.getItem('activeReferralCount_' + currentUser.email)) || 0,
                 streak: currentUser.streak || 0,
                 lastDate: currentUser.lastDate || null,
                 refCode: currentUser.referralCode || currentUser.refCode,
@@ -4019,7 +4019,7 @@ window.__resetEmail = email;
         
         function calculateActiveRefs() {
             // Backend'den gelen active referrals count'u kullan
-            return parseInt(localStorage.getItem('activeReferralsCount_' + currentUser.email)) || 0;
+            return parseInt(localStorage.getItem('activeReferralCount_' + currentUser.email)) || 0;
         }
         
         // ✅ YENİ: Backend'den referral sayılarını güncelle
@@ -4033,7 +4033,7 @@ window.__resetEmail = email;
                 
                 if (response.ok) {
                     const data = await response.json();
-                    localStorage.setItem('activeReferralsCount_' + currentUser.email, data.activeCount || 0);
+                    localStorage.setItem('activeReferralCount_' + currentUser.email, data.activeCount || 0);
                     localStorage.setItem('totalReferralsCount_' + currentUser.email, data.totalCount || 0);
                     
                     // UI'yi güncelle
@@ -4286,11 +4286,8 @@ window.__resetEmail = email;
                  menuUsername.textContent = currentUser.username;
             }
             
-            // Update referral counts from cache if available
-            if (cachedReferralsData) {
-                d.activeRefs = cachedReferralsData.activeRefs.length;
-                d.refs = cachedReferralsData.activeRefs.length + cachedReferralsData.inactiveRefs.length;
-            }
+            // ✅ Ana sayfa HER ZAMAN backend'den gelen sayıyı kullanmalı (cache kullanma!)
+            // d.activeRefs ve d.refs zaten initApp'te backend'den dolduruluyor
             
             // Update Watch Ad button separately (don't recreate it)
             updateWatchAdButton();
