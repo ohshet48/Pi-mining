@@ -8587,6 +8587,30 @@ window.__doConfirmReset = __doConfirmReset;
 })();
 </script>
 
+
+<script>
+/* === SAFE LEADERBOARD PRELOAD (NO UI BLOCK, NO ERROR) === */
+(function () {
+  try {
+    if (window.__leaderboardPreloaded) return;
+    window.__leaderboardPreloaded = true;
+
+    window.addEventListener('load', function () {
+      setTimeout(function () {
+        try {
+          if (typeof getLeaderboardPageContent === 'function') {
+            // silent preload to fill cache
+            getLeaderboardPageContent();
+          }
+        } catch (e) {
+          console.log('Leaderboard preload skipped');
+        }
+      }, 500);
+    });
+  } catch (e) {}
+})();
+</script>
+
 </body>
 </html>
 
