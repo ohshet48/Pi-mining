@@ -4398,7 +4398,7 @@ window.__resetEmail = email;
                         <div class="balance-value">
                             ${balanceVisible ? d.balance.toFixed(2) : '••••••'}
                         </div>
-                        <img id="balanceIcon" src="assets/balance-icon.webp" class="balance-icon" alt="" loading="eager">
+                        <div id="balanceIconSlot"></div>
                         <div class="balance-unit">ARCASTRA</div>
                         <button class="balance-toggle" onclick="toggleBalance()">
                             ${balanceVisible ? `
@@ -8583,6 +8583,18 @@ window.__doConfirmReset = __doConfirmReset;
         text-align: center;
     ">Loading…</div>
 </div>
+
+
+<script>
+(function(){
+  const srcIconWrap = document.getElementById('fixedBalanceIcon');
+  const slot = document.getElementById('balanceIconSlot');
+  if (!srcIconWrap || !slot) return;
+  if (!slot.hasChildNodes()) {
+    slot.appendChild(srcIconWrap.firstElementChild.cloneNode(true));
+  }
+})();
+</script>
 
 </body>
 </html>
