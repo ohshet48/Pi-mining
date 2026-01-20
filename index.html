@@ -4019,8 +4019,10 @@ window.__resetEmail = email;
                     ? userCreatedDate 
                     : lastViewedTimestamp;
                 
+                // ⚡ ELIGIBILITY CHECK: Only show announcements where user was registered BEFORE announcement
                 const announcementsSnap = await db.collection('announcements')
                     .where('createdAt', '>', checkAfterTimestamp)
+                    .where('eligibleBefore', '>', userCreatedDate)
                     .limit(1)
                     .get();
                 const hasNewAnnouncements = !announcementsSnap.empty;
@@ -4407,7 +4409,7 @@ window.__resetEmail = email;
                             <div class="timer-circle">
                                 <svg viewBox="0 0 150 150">
                                     <circle class="timer-bg" cx="75" cy="75" r="70"/>
-                                    <circle class="timer-progress" cx="75" cy="75" r="70" stroke-dasharray="440" 
+                                    <circle id="timerProgressCircle" class="timer-progress" cx="75" cy="75" r="70" stroke-dasharray="440" 
                                         stroke-dashoffset="${440 - ((86400 - d.timeLeft) / 86400) * 440}"/>
                                 </svg>
                                 <div class="timer-icon">
@@ -4417,7 +4419,7 @@ window.__resetEmail = email;
                                 </div>
                             </div>
                             <p class="mining-active">⚡ Active</p>
-                            <p class="timer-time">${fmt(d.timeLeft)}</p>
+                            <p id="timerTimeText" class="timer-time">${fmt(d.timeLeft)}</p>
                             <p class="timer-label">Time Remaining</p>
                             <div class="earning-box">
                                 <p class="earning-text">Target: <span class="earning-amount">${(() => {
@@ -5158,6 +5160,21 @@ async function startMiningOnBackend() {
 
         let timerStarted = false;
         
+        // ⚡ OPTIMIZED: Partial timer update - no full render
+        function updateTimerOnly() {
+            const timerText = document.getElementById('timerTimeText');
+            const progressCircle = document.getElementById('timerProgressCircle');
+            
+            if (timerText) {
+                timerText.textContent = fmt(d.timeLeft);
+            }
+            
+            if (progressCircle) {
+                const offset = 440 - ((86400 - d.timeLeft) / 86400) * 440;
+                progressCircle.setAttribute('stroke-dashoffset', offset);
+            }
+        }
+        
         function startTimer() {
             if (timerStarted) return; // Prevent multiple timers
             timerStarted = true;
@@ -5167,8 +5184,10 @@ async function startMiningOnBackend() {
                     d.timeLeft--;
                     if (d.timeLeft <= 0) {
                         completeMine();
+                    } else {
+                        // ⚡ OPTIMIZED: Only update timer elements, not full render
+                        updateTimerOnly();
                     }
-                    render();
                 }
                 
                 // Update Watch Ad button every second to check if ad is ready
@@ -6257,9 +6276,10 @@ async function startMiningOnBackend() {
                     userCreatedDate = firebase.firestore.Timestamp.now();
                 }
                 
-                // Fetch announcements that were sent AFTER user registered
+                // ⚡ ELIGIBILITY CHECK: Fetch announcements where user was registered BEFORE announcement
                 const snapshot = await db.collection('announcements')
                     .where('createdAt', '>', userCreatedDate) // AFTER registration
+                    .where('eligibleBefore', '>', userCreatedDate) // User registered BEFORE announcement
                     .orderBy('createdAt', 'desc')
                     .limit(10)
                     .get();
