@@ -5727,6 +5727,9 @@ async function startMiningOnBackend() {
                     pageContent.innerHTML = '<div style="text-align: center; padding: 60px 20px; color: #00d4ff;">Loading...</div>';
                     getAnnouncementsPageContent().then(html => { pageContent.innerHTML = html; });
                     
+                    // Save last viewed timestamp
+                    localStorage.setItem('lastViewedAnnouncements_' + currentUser.userId, Date.now().toString());
+                    
                     // Clear notification flag
                     localStorage.removeItem('hasNewAnnouncements_' + currentUser.userId);
                     
