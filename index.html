@@ -3885,7 +3885,7 @@ window.__resetEmail = email;
           }
           
         // keep loading until app fully ready  
-            checkMining();
+            await checkMining(); // ✅ WAIT for mining check to complete
             checkLevelUp(); // Level up kontrolü ekle
             checkNotifications(); // Announcement ve Airdrop notification check
             render();
@@ -5051,7 +5051,7 @@ async function startMiningOnBackend() {
             }, 15000);
         }
 
-        function checkMining() {
+        async function checkMining() {
             const end = localStorage.getItem('miningEndTime_' + currentUser.email);
             if (end) {
                 const now = Date.now();
@@ -5060,9 +5060,39 @@ async function startMiningOnBackend() {
                     d.mining = true;
                     d.timeLeft = Math.floor((endTime - now) / 1000);
                 } else {
-                    completeMine();
+                    // Mining completed - reload data to get daily reward
+                    await completeMineOnStartup();
                 }
             }
+        }
+        
+        // Special version for startup (doesn't call completeMine twice)
+        async function completeMineOnStartup() {
+            console.log('⛏️ Mining completed on startup - reloading data...');
+            
+            d.mining = false;
+            d.timeLeft = 0;
+            localStorage.removeItem('miningEndTime_' + currentUser.email);
+            
+            // Clear referrals cache
+            cachedReferralsData = null;
+            cachedReferralsTimestamp = 0;
+            localStorage.removeItem('referralsCache_' + currentUser.email);
+            localStorage.removeItem('referralsCacheTime_' + currentUser.email);
+            
+            // Clear ad boost
+            try {
+                const users = JSON.parse(localStorage.getItem('users') || '{}');
+                const userEmail = localStorage.getItem('currentUser');
+                if (users[userEmail]) {
+                    users[userEmail].adBoostAmount = 0;
+                    localStorage.setItem('users', JSON.stringify(users));
+                    currentUser = users[userEmail];
+                }
+            } catch(e) {}
+
+            // Reload user data (this will fetch daily reward if available)
+            await initApp();
         }
 
         let timerStarted = false;
