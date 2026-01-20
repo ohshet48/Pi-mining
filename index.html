@@ -2061,7 +2061,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             console.log('Calling initApp...');
             initApp();
             console.log('initApp completed');
-        }, 500);
+        }, 1000);
     } else {
         console.log('Auto-login FAILED - missing data');
     }
@@ -3223,7 +3223,7 @@ window.__resetEmail = email;
                 document.getElementById('app').style.display = 'none';
                 
                 initApp();
-            }, 500);
+            }, 1000);
         }
     } catch (error) {
         console.error('Login error:', error);
@@ -7140,7 +7140,7 @@ async function startMiningOnBackend() {
                     showToast('✓ Loaded all referrals!');
                     setTimeout(() => {
                         openPage('referrals');
-                    }, 500);
+                    }, 1000);
                 } else {
                     showToast('❌ Failed to load more', true);
                 }
@@ -8306,7 +8306,7 @@ async function startMiningOnBackend() {
         lockInterval = setInterval(() => {
           hookAdFunction();
           enforce();
-        }, 500);
+        }, 1000);
       }
       
       // Mining bittiyse interval'ı temizle
@@ -8605,7 +8605,7 @@ window.__doConfirmReset = __doConfirmReset;
         } catch (e) {
           console.log('Leaderboard preload skipped');
         }
-      }, 500);
+      }, 1000);
     });
   } catch (e) {}
 })();
