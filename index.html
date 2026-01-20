@@ -4016,12 +4016,42 @@ window.__resetEmail = email;
             }
         }
 
-
         
         function calculateActiveRefs() {
             // Backend'den gelen active referrals count'u kullan
             return parseInt(localStorage.getItem('activeReferralsCount_' + currentUser.email)) || 0;
         }
+        
+        // ✅ YENİ: Backend'den referral sayılarını güncelle
+        async function updateReferralCounts() {
+            if (!currentUser || !currentUser.userId) return;
+            
+            try {
+                const response = await fetch(API_ENDPOINTS.getActiveReferrals + '?userId=' + currentUser.userId, {
+                    headers: getApiHeaders()
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('activeReferralsCount_' + currentUser.email, data.activeCount || 0);
+                    localStorage.setItem('totalReferralsCount_' + currentUser.email, data.totalCount || 0);
+                    
+                    // UI'yi güncelle
+                    d.activeRefs = data.activeCount || 0;
+                    d.refs = data.totalCount || 0;
+                    
+                    console.log('✅ Referral counts updated:', {
+                        active: data.activeCount,
+                        total: data.totalCount
+                    });
+                }
+            } catch (err) {
+                console.error('Failed to update referral counts:', err);
+            }
+        }
+        
+        // ✅ Her 30 saniyede bir referral sayılarını güncelle
+        setInterval(updateReferralCounts, 30000);
 
         function save() {
             const users = JSON.parse(localStorage.getItem('users') || '{}');
@@ -6812,8 +6842,27 @@ async function startMiningOnBackend() {
                     `).join('') : '<div style="text-align: center; padding: 40px 20px; color: rgba(255, 255, 255, 0.4); font-size: 14px;">No active referrals yet</div>'}
                     
                     ${hasMore ? `
-                        <button id="loadMoreBtn" onclick="loadMoreReferrals()" style="background: linear-gradient(135deg, #0ea5e9, #0284c7); border: none; border-radius: 12px; padding: 14px; color: white; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 10px;">
-                            📥 Load More (${totalRefs - 10} remaining)
+                        <button id="loadMoreBtn" onclick="loadMoreReferrals()" style="
+                            width: 100%;
+                            background: rgba(0, 0, 0, 0.3);
+                            border: 1px solid rgba(16, 185, 129, 0.3);
+                            border-radius: 12px;
+                            padding: 16px;
+                            color: rgba(255, 255, 255, 0.8);
+                            font-size: 13px;
+                            font-weight: 600;
+                            cursor: pointer;
+                            margin-top: 16px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 8px;
+                            transition: all 0.2s ease;
+                        " onmouseover="this.style.background='rgba(16, 185, 129, 0.1)'; this.style.borderColor='rgba(16, 185, 129, 0.5)'" onmouseout="this.style.background='rgba(0, 0, 0, 0.3)'; this.style.borderColor='rgba(16, 185, 129, 0.3)'">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                            Show ${totalRefs - 10} more
                         </button>
                     ` : ''}
                 </div>
@@ -6836,8 +6885,27 @@ async function startMiningOnBackend() {
                         `).join('')}
                         
                         ${hasMore ? `
-                            <button id="loadMoreBtnInactive" onclick="loadMoreReferrals()" style="background: linear-gradient(135deg, #0ea5e9, #0284c7); border: none; border-radius: 12px; padding: 14px; color: white; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 10px;">
-                                📥 Load More (${totalRefs - 10} remaining)
+                            <button id="loadMoreBtnInactive" onclick="loadMoreReferrals()" style="
+                                width: 100%;
+                                background: rgba(0, 0, 0, 0.3);
+                                border: 1px solid rgba(139, 92, 246, 0.3);
+                                border-radius: 12px;
+                                padding: 16px;
+                                color: rgba(255, 255, 255, 0.8);
+                                font-size: 13px;
+                                font-weight: 600;
+                                cursor: pointer;
+                                margin-top: 16px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 8px;
+                                transition: all 0.2s ease;
+                            " onmouseover="this.style.background='rgba(139, 92, 246, 0.1)'; this.style.borderColor='rgba(139, 92, 246, 0.5)'" onmouseout="this.style.background='rgba(0, 0, 0, 0.3)'; this.style.borderColor='rgba(139, 92, 246, 0.3)'">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                                Show ${totalRefs - 10} more
                             </button>
                         ` : ''}
                         
