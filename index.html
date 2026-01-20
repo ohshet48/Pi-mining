@@ -1420,6 +1420,21 @@
             padding: 2px;
             margin: 4px 0;
         }
+        .balance-icon-bg {
+            width: 16px;
+            height: 16px;
+            display: inline-block;
+            vertical-align: middle;
+            border: 0.3px solid #00d9ff;
+            border-radius: 4px;
+            padding: 2px;
+            margin: 4px 0;
+            background-image: url('assets/balance-icon.webp');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
         .balance-unit { 
             font-size: 16px; 
             color: #fbbf24; 
@@ -4315,7 +4330,7 @@ window.__resetEmail = email;
                         <div class="balance-value">
                             ${balanceVisible ? d.balance.toFixed(2) : '••••••'}
                         </div>
-                        <img src="assets/balance-icon.webp" class="balance-icon" alt="ArcAstra">
+                        <span class="balance-icon-bg" aria-hidden="true"></span>
                         <div class="balance-unit">ARCASTRA</div>
                         <button class="balance-toggle" onclick="toggleBalance()">
                             ${balanceVisible ? `
