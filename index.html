@@ -4803,8 +4803,8 @@ async function startMiningOnBackend() {
                 }
             } catch(e) {}
 
-            // Reload user data to get updated balance from backend
-            await initApp();
+            // ✅ NO initApp() call - UI already updated in timer callback
+            // Rewards will be available on next app open
             
             // Reset flag
             isCompletingMining = false;
@@ -5227,11 +5227,20 @@ async function startMiningOnBackend() {
                 if (d.mining && d.timeLeft > 0) {
                     d.timeLeft--;
                     if (d.timeLeft <= 0) {
+                        console.log('🛑 TIMER REACHED ZERO - Stopping mining...');
+                        console.log('Before: d.mining =', d.mining, ', d.timeLeft =', d.timeLeft);
+                        
                         // ⚡ IMMEDIATELY stop mining and update UI
                         d.mining = false;
                         d.timeLeft = 0;
                         localStorage.removeItem('miningEndTime_' + currentUser.email);
+                        
+                        console.log('After: d.mining =', d.mining, ', d.timeLeft =', d.timeLeft);
+                        console.log('📱 Calling render()...');
+                        
                         render(); // Show Start Session button immediately
+                        
+                        console.log('✅ Render complete - calling completeMine()');
                         
                         // Then handle backend cleanup in background
                         completeMine();
