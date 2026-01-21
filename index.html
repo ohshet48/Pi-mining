@@ -4149,52 +4149,21 @@ window.__resetEmail = email;
         async function checkLevelUp() {
             if (d.level >= 20) return;
             
-            const nextLevel = d.level + 1;
-            const nextReq = levelRequirements[nextLevel];
-            
-            // Get claimed levels from backend (persisted in database)
-            const claimedLevels = currentUser.claimedLevels || [];
-            
-            // 🐛 DEBUG LOG
-            console.log('🎯 LEVEL CHECK:', {
-                currentLevel: d.level,
-                nextLevel: nextLevel,
-                miningDays: d.miningDays,
-                requiredDays: nextReq,
-                meetsRequirement: d.miningDays >= nextReq,
-                pendingLevelUp: d.pendingLevelUp,
-                alreadyPending: !!d.pendingLevelUp,
-                recentlyClaimed: recentlyClaimedLevels.has(nextLevel),
-                alreadyClaimedInBackend: claimedLevels.includes(nextLevel),
-                claimedLevels: claimedLevels
-            });
-            
-            // Don't set pendingLevelUp if:
-            // 1. Already pending
-            // 2. Recently claimed (prevents re-showing after claim)
-            // 3. Already claimed in backend (prevents duplicate after app restart)
-            if (d.miningDays >= nextReq && 
-                !d.pendingLevelUp && 
-                !recentlyClaimedLevels.has(nextLevel) &&
-                !claimedLevels.includes(nextLevel)) {
-                
-                console.log('✅ Level up conditions met! Setting pending level:', nextLevel);
-                
-                d.pendingLevelUp = nextLevel;
+            const nextReq = levelRequirements[d.level + 1];
+            if (d.miningDays >= nextReq && !d.pendingLevelUp) {
+                d.pendingLevelUp = d.level + 1;
                 save();
                 
                 // Save pending level up reward
-                const levelReward = levelRewards[nextLevel];
+                const levelReward = levelRewards[d.level + 1];
                 if (levelReward && currentUser && currentUser.userId) {
                     await addPendingReward('levelUp', levelReward.coins, {
-                        level: nextLevel,
+                        level: d.level + 1,
                         miningDays: d.miningDays
                     });
                 }
                 
                 render();
-            } else {
-                console.log('❌ Level up conditions NOT met');
             }
         }
         
@@ -4208,33 +4177,6 @@ window.__resetEmail = email;
             try {
                 showToast('Claiming level reward...');
                 
-                // ⚡ OPTIMISTIC UI - Update immediately
-                const levelReward = levelRewards[claimedLevel];
-                d.balance += levelReward.coins;
-                d.rate += levelReward.rate;
-                d.level = claimedLevel;
-                d.pendingLevelUp = null; // Clear immediately
-                
-                currentUser.balance = d.balance;
-                currentUser.rate = d.rate;
-                currentUser.level = claimedLevel;
-                
-                // Mark this level as claimed (prevents re-showing)
-                recentlyClaimedLevels.add(claimedLevel);
-                
-                // Clear from set after 5 seconds (enough time for backend to update)
-                setTimeout(() => {
-                    recentlyClaimedLevels.delete(claimedLevel);
-                    console.log(`✓ Level ${claimedLevel} removed from recently claimed set`);
-                }, 5000);
-                
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                save(); // Save to localStorage immediately
-                
-                render();
-                showToast(`✓ Claimed Level ${claimedLevel} reward! +${levelReward.coins} coins +${levelReward.rate} rate`);
-                
-                // Backend update in background
                 const response = await fetch(API_ENDPOINTS.claimLevelReward, {
                     method: 'POST',
                     headers: getApiHeaders(),
@@ -4245,16 +4187,32 @@ window.__resetEmail = email;
                 });
                 
                 if (!response.ok) {
-                    console.error('Backend claim failed, but UI already updated');
+                    throw new Error('Failed to claim level reward');
                 }
+                
+                const data = await response.json();
+                
+                // Update local data
+                d.balance = data.balance;
+                d.level = claimedLevel;
+                d.pendingLevelUp = null;
+                currentUser.balance = data.balance;
+                currentUser.rate = data.rate;
+                currentUser.level = claimedLevel;
+                
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                
+                render();
+                showToast(`✓ Claimed Level ${claimedLevel} reward!`);
+                
+                // Reload to refresh
+                await initApp();
+                if (d.level < 20) checkLevelUp();
+                render();
                 
             } catch (error) {
                 console.error('Level reward error:', error);
                 showToast('Failed to claim level reward', true);
-                // Revert on error
-                d.pendingLevelUp = claimedLevel;
-                recentlyClaimedLevels.delete(claimedLevel);
-                render();
             } finally {
                 isClaimingLevel = false;
             }
