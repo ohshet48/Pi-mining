@@ -4230,10 +4230,18 @@ window.__resetEmail = email;
                     currentUser.balance = data.balance;
                     currentUser.rate = data.rate;
                     
+                    // ✅ Update claimedLevels from backend to prevent re-showing
+                    if (!currentUser.claimedLevels) {
+                        currentUser.claimedLevels = [];
+                    }
+                    if (!currentUser.claimedLevels.includes(claimedLevel)) {
+                        currentUser.claimedLevels.push(claimedLevel);
+                    }
+                    
                     localStorage.setItem('currentUser', JSON.stringify(currentUser));
                     
-                    // Check for next level
-                    if (d.level < 20) checkLevelUp();
+                    // Don't call checkLevelUp - it might re-show the same level
+                    // Next level will be detected on next app open
                     render();
                     
                 } catch (error) {
@@ -4410,7 +4418,7 @@ window.__resetEmail = email;
                                 <svg viewBox="0 0 150 150">
                                     <circle class="timer-bg" cx="75" cy="75" r="70"/>
                                     <circle id="timerProgressCircle" class="timer-progress" cx="75" cy="75" r="70" stroke-dasharray="440" 
-                                        stroke-dashoffset="${440 - ((60 - d.timeLeft) / 60) * 440}"/>
+                                        stroke-dashoffset="${440 - ((86400 - d.timeLeft) / 86400) * 440}"/>
                                 </svg>
                                 <div class="timer-icon">
                                     <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5">
@@ -4423,7 +4431,7 @@ window.__resetEmail = email;
                             <p class="timer-label">Time Remaining</p>
                             <div class="earning-box">
                                 <p class="earning-text">Target: <span class="earning-amount">${(() => {
-                                    const miningDuration = localStorage.getItem('miningDuration_' + currentUser.email) || 60000; // Default 1 dakika
+                                    const miningDuration = localStorage.getItem('miningDuration_' + currentUser.email) || 86400000; // Default 24 saat
                                     const hours = parseInt(miningDuration) / (1000 * 60 * 60);
                                     return (d.rate * hours).toFixed(2);
                                 })()} <span style="font-size: 14px;">ARCASTRA</span></span></p>
@@ -4452,8 +4460,8 @@ window.__resetEmail = email;
                             <div style="display: flex; flex-direction: column; text-align: center; padding: 0 8px; min-height: 140px; justify-content: space-between;">
                                 <div style="margin-top: 12px;">
                                     <p style="font-size: 12px; font-weight: 700; line-height: 1.3; color: white; margin-bottom: 0;">🎉 Congratulations!<br>You reached Level <span style="color: white;">${d.pendingLevelUp}!</span></p>
-                                    <p style="font-size: 11px; font-weight: 600; line-height: 1.3; color: rgba(255, 255, 255, 0.6); margin-top: 6px; margin-bottom: 0;"><span style="color: #fbbf24;">+${levelRewards[d.pendingLevelUp].coins}</span> ARCASTRA Gained</p>
-                                    <p style="font-size: 11px; font-weight: 600; line-height: 1.3; color: rgba(255, 255, 255, 0.6); margin-top: 4px; margin-bottom: 0;"><span style="color: #00ffff;">+${levelRewards[d.pendingLevelUp].rate.toFixed(2)}</span> Rate Gained</p>
+                                    <p style="font-size: 11px; font-weight: 600; line-height: 1.3; color: rgba(255, 255, 255, 0.6); margin-top: 6px; margin-bottom: 0;"><span style="color: #fbbf24;">+${levelRewards[d.pendingLevelUp].coins}</span> Coins earned</p>
+                                    <p style="font-size: 11px; font-weight: 600; line-height: 1.3; color: rgba(255, 255, 255, 0.6); margin-top: 4px; margin-bottom: 0;"><span style="color: #00ffff;">+${levelRewards[d.pendingLevelUp].rate.toFixed(2)}</span> Mining Rate</p>
                                 </div>
                                 <button class="reward-claim-btn" onclick="claimLevelReward()" style="margin-top: 8px;">
                                     <span>CLAIM REWARD</span>
@@ -4535,7 +4543,7 @@ window.__resetEmail = email;
                                         <circle cx="50" cy="35" r="5" stroke="#00d4d4" stroke-width="3" fill="none"/>
                                     </svg>
                                 </div>
-                                ${dailyRewardAvailable ? '<div style="color: #fbbf24; font-size: 12px; font-weight: 700;">+5 <span style="font-size: 8px; color: rgba(255, 255, 255, 0.6); font-weight: 600;">ARCASTRA</span></div>' : ''}
+                                ${dailyRewardAvailable ? '<div style="color: #fbbf24; font-size: 12px; font-weight: 700;">+5 <span style="font-size: 9px; color: rgba(255, 255, 255, 0.6); font-weight: 600;">ARCASTRA</span></div>' : ''}
                             </div>
                             ${dailyRewardAvailable ? `
                                 <button class="reward-claim-btn" onclick="claimDailyReward()">
@@ -4651,12 +4659,12 @@ window.__resetEmail = email;
 	
         async function startMine() {
             const now = Date.now();
-            const miningDuration = 1 * 60 * 1000; // 1 dakika
+            const miningDuration = 24 * 60 * 60 * 1000; // 24 saat
             const end = now + miningDuration;
             
             // OPTIMISTIC UI: Update UI IMMEDIATELY (0ms delay)
             d.mining = true;
-            d.timeLeft = 60; // 1 dakika = 60 saniye
+            d.timeLeft = 86400; // 24 saat = 86400 saniye
             
             const today = new Date().toDateString();
             if (d.lastDate) {
@@ -5240,7 +5248,7 @@ async function startMiningOnBackend() {
             }
             
             if (progressCircle) {
-                const offset = 440 - ((60 - d.timeLeft) / 60) * 440;
+                const offset = 440 - ((86400 - d.timeLeft) / 86400) * 440;
                 progressCircle.setAttribute('stroke-dashoffset', offset);
             }
         }
