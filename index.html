@@ -4819,6 +4819,9 @@ async function startMiningOnBackend() {
             // ✅ Session bittiğinde daily reward'ı aktif et
             dailyRewardAvailable = true;
             
+            // ✅ Level kontrolü yap (miningDays arttı, level up olmuş olabilir)
+            await checkLevelUp();
+            
             // Render to show the claim button
             render();
             
@@ -4841,11 +4844,28 @@ async function startMiningOnBackend() {
             // Set lock
             isClaimingDaily = true;
             
+            // ⚡ INSTANT: Butonu DOM'dan ANINDA gizle (render beklemeden)
+            const claimButton = document.querySelector('button[onclick="claimDailyReward()"]');
+            if (claimButton) {
+                const container = claimButton.closest('div[style*="Daily Bonus"]')?.parentElement;
+                if (container) {
+                    container.style.transition = 'opacity 0.15s ease, transform 0.15s ease';
+                    container.style.opacity = '0';
+                    container.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        container.style.display = 'none';
+                    }, 150);
+                }
+            }
+            
             // ⚡ OPTIMISTIC UI - Update immediately (0ms)
             const rewardAmount = 5;
             const oldBalance = d.balance;
             d.balance += rewardAmount;
             dailyRewardAvailable = false;
+            
+            // ✅ Pending reward'ı localden HEMEN temizle
+            pendingRewardsData = pendingRewardsData.filter(r => r.rewardType !== 'daily');
             
             // CRITICAL: Mark claim time in localStorage to prevent re-showing
             localStorage.setItem('lastDailyClaimTime_' + currentUser.userId, Date.now().toString());
@@ -4882,8 +4902,9 @@ async function startMiningOnBackend() {
                         d.balance = data.newBalance || d.balance;
                         currentUser.balance = d.balance;
                         
-                        // Backend automatically claims pending reward ✅
-                        // Don't call initApp() - optimistic update already handled
+                        // ✅ Pending reward'ı localden temizle
+                        pendingRewardsData = pendingRewardsData.filter(r => r.rewardType !== 'daily');
+                        console.log('🧹 Pending daily reward removed from local cache');
                         
                         save();
                         localStorage.setItem('currentUser', JSON.stringify(currentUser));
@@ -5213,6 +5234,10 @@ async function startMiningOnBackend() {
             
             // ✅ Daily reward'ı aktif et
             dailyRewardAvailable = true;
+            
+            // ✅ Level kontrolü yap (miningDays arttı, level up olmuş olabilir)
+            await checkLevelUp();
+            
             render();
             
             console.log('✅ Daily reward activated on startup');
