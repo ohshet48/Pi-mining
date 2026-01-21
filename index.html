@@ -4185,48 +4185,74 @@ window.__resetEmail = email;
             isClaimingLevel = true;
             const claimedLevel = d.pendingLevelUp;
             
-            try {
-                showToast('Claiming level reward...');
-                
-                const response = await fetch(API_ENDPOINTS.claimLevelReward, {
-                    method: 'POST',
-                    headers: getApiHeaders(),
-                    body: JSON.stringify({
-                        userId: currentUser.userId,
-                        level: claimedLevel
-                    })
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Failed to claim level reward');
+            // ⚡ OPTIMISTIC UI - Update immediately
+            const levelReward = levelRewards[claimedLevel];
+            const oldBalance = d.balance;
+            const oldRate = d.rate;
+            const oldLevel = d.level;
+            
+            d.balance += levelReward.coins;
+            d.rate += levelReward.rate;
+            d.level = claimedLevel;
+            d.pendingLevelUp = null;
+            
+            currentUser.balance = d.balance;
+            currentUser.rate = d.rate;
+            currentUser.level = claimedLevel;
+            
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            // Update UI instantly
+            render();
+            showToast(`✓ Claimed Level ${claimedLevel} reward! +${levelReward.coins} coins`);
+            
+            // Backend call in background
+            (async () => {
+                try {
+                    const response = await fetch(API_ENDPOINTS.claimLevelReward, {
+                        method: 'POST',
+                        headers: getApiHeaders(),
+                        body: JSON.stringify({
+                            userId: currentUser.userId,
+                            level: claimedLevel
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to claim level reward');
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // Use backend's exact values
+                    d.balance = data.balance;
+                    d.rate = data.rate;
+                    currentUser.balance = data.balance;
+                    currentUser.rate = data.rate;
+                    
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    
+                    // Check for next level
+                    if (d.level < 20) checkLevelUp();
+                    render();
+                    
+                } catch (error) {
+                    console.error('Level reward error:', error);
+                    // Rollback on error
+                    d.balance = oldBalance;
+                    d.rate = oldRate;
+                    d.level = oldLevel;
+                    d.pendingLevelUp = claimedLevel;
+                    currentUser.balance = oldBalance;
+                    currentUser.rate = oldRate;
+                    currentUser.level = oldLevel;
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    render();
+                    showToast('Failed to claim level reward', true);
+                } finally {
+                    isClaimingLevel = false;
                 }
-                
-                const data = await response.json();
-                
-                // Update local data
-                d.balance = data.balance;
-                d.level = claimedLevel;
-                d.pendingLevelUp = null;
-                currentUser.balance = data.balance;
-                currentUser.rate = data.rate;
-                currentUser.level = claimedLevel;
-                
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                
-                render();
-                showToast(`✓ Claimed Level ${claimedLevel} reward!`);
-                
-                // Reload to refresh
-                await initApp();
-                if (d.level < 20) checkLevelUp();
-                render();
-                
-            } catch (error) {
-                console.error('Level reward error:', error);
-                showToast('Failed to claim level reward', true);
-            } finally {
-                isClaimingLevel = false;
-            }
+            })();
         }
 
 
@@ -4426,8 +4452,8 @@ window.__resetEmail = email;
                             <div style="display: flex; flex-direction: column; text-align: center; padding: 0 8px; min-height: 140px; justify-content: space-between;">
                                 <div style="margin-top: 12px;">
                                     <p style="font-size: 12px; font-weight: 700; line-height: 1.3; color: white; margin-bottom: 0;">🎉 Congratulations!<br>You reached Level <span style="color: white;">${d.pendingLevelUp}!</span></p>
-                                    <p style="font-size: 11px; font-weight: 600; line-height: 1.3; color: rgba(255, 255, 255, 0.6); margin-top: 6px; margin-bottom: 0;"><span style="color: #fbbf24;">+${levelRewards[d.pendingLevelUp].coins}</span> Coins earned</p>
-                                    <p style="font-size: 11px; font-weight: 600; line-height: 1.3; color: rgba(255, 255, 255, 0.6); margin-top: 4px; margin-bottom: 0;"><span style="color: #00ffff;">+${levelRewards[d.pendingLevelUp].rate.toFixed(2)}</span> Mining Rate</p>
+                                    <p style="font-size: 11px; font-weight: 600; line-height: 1.3; color: rgba(255, 255, 255, 0.6); margin-top: 6px; margin-bottom: 0;"><span style="color: #fbbf24;">+${levelRewards[d.pendingLevelUp].coins}</span> ARCASTRA Gained</p>
+                                    <p style="font-size: 11px; font-weight: 600; line-height: 1.3; color: rgba(255, 255, 255, 0.6); margin-top: 4px; margin-bottom: 0;"><span style="color: #00ffff;">+${levelRewards[d.pendingLevelUp].rate.toFixed(2)}</span> Rate Gained</p>
                                 </div>
                                 <button class="reward-claim-btn" onclick="claimLevelReward()" style="margin-top: 8px;">
                                     <span>CLAIM REWARD</span>
