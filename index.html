@@ -4794,22 +4794,13 @@ async function startMiningOnBackend() {
                 }
             } catch(e) {}
 
-            // ✅ Session bitti - Daily reward'ı HEMEN aktif et
-            console.log('🎁 Session completed - activating daily reward immediately');
-            
             // Reload user data to get updated balance from backend
             await initApp();
             
-            // ✅ Session bittiğinde daily reward'ı aktif et
-            dailyRewardAvailable = true;
-            
-            // ✅ Level kontrolü yap (miningDays arttı, level up olmuş olabilir)
-            await checkLevelUp();
-            
-            // Render to show the claim button
+            // Render to update UI (timer stopped)
             render();
             
-            console.log('✅ Daily reward activated and ready to claim');
+            console.log('✅ Mining session completed - rewards will be available on next app open');
         }
         
         async function claimDailyReward() {
