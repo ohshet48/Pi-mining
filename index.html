@@ -4311,14 +4311,16 @@ window.__resetEmail = email;
             // Calculate next reward
             let nextReward = 0;
             const nextCount = adBoostCount + 1;
-            if (nextCount <= 2) {
+            if (nextCount === 1) {
                 nextReward = 0.25;
-            } else if (nextCount === 3) {
+            } else if (nextCount === 2) {
                 nextReward = 0.50;
-            } else if (nextCount === 4) {
+            } else if (nextCount === 3) {
                 nextReward = 0.75;
+            } else if (nextCount === 4) {
+                nextReward = 1.25;
             } else if (nextCount === 5) {
-                nextReward = 1.00;
+                nextReward = 2.00;
             }
             
             container.innerHTML = `
