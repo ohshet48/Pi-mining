@@ -2064,7 +2064,6 @@ const API_ENDPOINTS = {
   loginUser: `${FUNCTIONS_BASE_URL}/loginUser`,
   updateFcmToken: `${FUNCTIONS_BASE_URL}/updateFcmToken`,
   startMining: `${FUNCTIONS_BASE_URL}/startMining`,
-  completeSession: `${FUNCTIONS_BASE_URL}/completeSession`,
   applyAdBoost: `${FUNCTIONS_BASE_URL}/applyAdBoost`,
   claimReward: `${FUNCTIONS_BASE_URL}/claimReward`,
   getUserData: `${FUNCTIONS_BASE_URL}/getUserData`,
@@ -3496,6 +3495,7 @@ window.__resetEmail = email;
         let balanceVisible = true;
         let dailyRewardAvailable = false;
         let hasPendingAirdrops = false;
+        let pendingRewardsData = []; // Global - pending rewards data
         let activeMiningSession = null; // Store active session for ad boost check
         let tempPendingLevelUp = null; // Temporary storage for pending level up from backend
         
@@ -3650,8 +3650,7 @@ window.__resetEmail = email;
         const appEl = document.getElementById('app');
         if (appEl) appEl.style.display = 'block';
         
-        // Declare pendingRewardsData at function scope
-        let pendingRewardsData = [];
+        // pendingRewardsData artık global - tekrar tanımlamaya gerek yok
         
         // localStorage'dan currentUser'ı oku
         const storedUser = localStorage.getItem('currentUser');
@@ -4398,7 +4397,7 @@ window.__resetEmail = email;
                                 <svg viewBox="0 0 150 150">
                                     <circle class="timer-bg" cx="75" cy="75" r="70"/>
                                     <circle id="timerProgressCircle" class="timer-progress" cx="75" cy="75" r="70" stroke-dasharray="440" 
-                                        stroke-dashoffset="${440 - ((86400 - d.timeLeft) / 86400) * 440}"/>
+                                        stroke-dashoffset="${440 - ((60 - d.timeLeft) / 60) * 440}"/>
                                 </svg>
                                 <div class="timer-icon">
                                     <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5">
@@ -4411,7 +4410,7 @@ window.__resetEmail = email;
                             <p class="timer-label">Time Remaining</p>
                             <div class="earning-box">
                                 <p class="earning-text">Target: <span class="earning-amount">${(() => {
-                                    const miningDuration = localStorage.getItem('miningDuration_' + currentUser.email) || 86400000; // Default 24 hours
+                                    const miningDuration = localStorage.getItem('miningDuration_' + currentUser.email) || 60000; // Default 1 dakika
                                     const hours = parseInt(miningDuration) / (1000 * 60 * 60);
                                     return (d.rate * hours).toFixed(2);
                                 })()} <span style="font-size: 14px;">ARCASTRA</span></span></p>
@@ -4639,12 +4638,12 @@ window.__resetEmail = email;
 	
         async function startMine() {
             const now = Date.now();
-            const miningDuration = 24 * 60 * 60 * 1000; // 24 hours in ms
+            const miningDuration = 1 * 60 * 1000; // 1 dakika
             const end = now + miningDuration;
             
             // OPTIMISTIC UI: Update UI IMMEDIATELY (0ms delay)
             d.mining = true;
-            d.timeLeft = 24 * 60 * 60;
+            d.timeLeft = 60; // 1 dakika = 60 saniye
             
             const today = new Date().toDateString();
             if (d.lastDate) {
@@ -4770,23 +4769,25 @@ async function startMiningOnBackend() {
             d.mining = false;
             d.timeLeft = 0;
             
-            // ✅ Session completion'ı backend'e bildir
+            // ✅ Pending daily reward oluştur
             const sessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
-            if (sessionId) {
-                try {
-                    // Backend'e session tamamlandı bilgisi gönder
-                    await fetch(API_ENDPOINTS.completeSession, {
-                        method: 'POST',
-                        headers: getApiHeaders(),
-                        body: JSON.stringify({
-                            userId: currentUser.userId,
-                            sessionId: sessionId
-                        })
-                    });
-                    console.log('✅ Session completion notified to backend');
-                } catch(err) {
-                    console.error('⚠️ Session completion notification failed:', err);
-                }
+            try {
+                await fetch(API_ENDPOINTS.addPendingReward, {
+                    method: 'POST',
+                    headers: getApiHeaders(),
+                    body: JSON.stringify({
+                        userId: currentUser.userId,
+                        rewardType: 'daily',
+                        amount: 5,
+                        metadata: {
+                            source: 'session_completion',
+                            sessionId: sessionId || 'unknown'
+                        }
+                    })
+                });
+                console.log('✅ Pending daily reward created');
+            } catch(err) {
+                console.error('❌ Failed to create pending reward:', err);
             }
             
             localStorage.removeItem('miningEndTime_' + currentUser.email);
@@ -4825,6 +4826,14 @@ async function startMiningOnBackend() {
         }
         
         async function claimDailyReward() {
+            // DEBUG: Log state before claim
+            console.log('🎯 CLAIM ATTEMPT:', {
+                userId: currentUser.userId,
+                dailyRewardAvailable: dailyRewardAvailable,
+                isClaimingDaily: isClaimingDaily,
+                pendingRewardsData: pendingRewardsData
+            });
+            
             // Prevent double-claiming
             if (isClaimingDaily) return;
             if (!dailyRewardAvailable) return;
@@ -4859,7 +4868,14 @@ async function startMiningOnBackend() {
                         })
                     });
 
+                    console.log('📡 Claim response:', {
+                        status: claimResponse.status,
+                        ok: claimResponse.ok
+                    });
+
                     const data = await claimResponse.json().catch(() => ({}));
+                    
+                    console.log('📦 Response data:', data);
 
                     if (claimResponse.ok && data.reward) {
                         // Use backend's exact balance (no flash!)
@@ -5151,6 +5167,28 @@ async function startMiningOnBackend() {
             
             d.mining = false;
             d.timeLeft = 0;
+            
+            // ✅ Pending daily reward oluştur
+            const sessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
+            try {
+                await fetch(API_ENDPOINTS.addPendingReward, {
+                    method: 'POST',
+                    headers: getApiHeaders(),
+                    body: JSON.stringify({
+                        userId: currentUser.userId,
+                        rewardType: 'daily',
+                        amount: 5,
+                        metadata: {
+                            source: 'session_completion_startup',
+                            sessionId: sessionId || 'unknown'
+                        }
+                    })
+                });
+                console.log('✅ Pending daily reward created on startup');
+            } catch(err) {
+                console.error('❌ Failed to create pending reward on startup:', err);
+            }
+            
             localStorage.removeItem('miningEndTime_' + currentUser.email);
             
             // Clear referrals cache
@@ -5172,6 +5210,12 @@ async function startMiningOnBackend() {
 
             // Reload user data (this will fetch daily reward if available)
             await initApp();
+            
+            // ✅ Daily reward'ı aktif et
+            dailyRewardAvailable = true;
+            render();
+            
+            console.log('✅ Daily reward activated on startup');
         }
 
         let timerStarted = false;
@@ -5186,7 +5230,7 @@ async function startMiningOnBackend() {
             }
             
             if (progressCircle) {
-                const offset = 440 - ((86400 - d.timeLeft) / 86400) * 440;
+                const offset = 440 - ((60 - d.timeLeft) / 60) * 440;
                 progressCircle.setAttribute('stroke-dashoffset', offset);
             }
         }
