@@ -4155,6 +4155,20 @@ window.__resetEmail = email;
             // Get claimed levels from backend (persisted in database)
             const claimedLevels = currentUser.claimedLevels || [];
             
+            // 🐛 DEBUG LOG
+            console.log('🎯 LEVEL CHECK:', {
+                currentLevel: d.level,
+                nextLevel: nextLevel,
+                miningDays: d.miningDays,
+                requiredDays: nextReq,
+                meetsRequirement: d.miningDays >= nextReq,
+                pendingLevelUp: d.pendingLevelUp,
+                alreadyPending: !!d.pendingLevelUp,
+                recentlyClaimed: recentlyClaimedLevels.has(nextLevel),
+                alreadyClaimedInBackend: claimedLevels.includes(nextLevel),
+                claimedLevels: claimedLevels
+            });
+            
             // Don't set pendingLevelUp if:
             // 1. Already pending
             // 2. Recently claimed (prevents re-showing after claim)
@@ -4163,6 +4177,8 @@ window.__resetEmail = email;
                 !d.pendingLevelUp && 
                 !recentlyClaimedLevels.has(nextLevel) &&
                 !claimedLevels.includes(nextLevel)) {
+                
+                console.log('✅ Level up conditions met! Setting pending level:', nextLevel);
                 
                 d.pendingLevelUp = nextLevel;
                 save();
@@ -4177,6 +4193,8 @@ window.__resetEmail = email;
                 }
                 
                 render();
+            } else {
+                console.log('❌ Level up conditions NOT met');
             }
         }
         
@@ -4769,25 +4787,33 @@ async function startMiningOnBackend() {
             d.mining = false;
             d.timeLeft = 0;
             
-            // ✅ Pending daily reward oluştur
+            // ✅ Pending daily reward oluştur (yoksa)
             const sessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
-            try {
-                await fetch(API_ENDPOINTS.addPendingReward, {
-                    method: 'POST',
-                    headers: getApiHeaders(),
-                    body: JSON.stringify({
-                        userId: currentUser.userId,
-                        rewardType: 'daily',
-                        amount: 5,
-                        metadata: {
-                            source: 'session_completion',
-                            sessionId: sessionId || 'unknown'
-                        }
-                    })
-                });
-                console.log('✅ Pending daily reward created');
-            } catch(err) {
-                console.error('❌ Failed to create pending reward:', err);
+            
+            // Kontrol: Zaten pending daily reward var mı?
+            const hasPendingDaily = pendingRewardsData.some(r => r.rewardType === 'daily' && !r.claimed);
+            
+            if (!hasPendingDaily) {
+                try {
+                    await fetch(API_ENDPOINTS.addPendingReward, {
+                        method: 'POST',
+                        headers: getApiHeaders(),
+                        body: JSON.stringify({
+                            userId: currentUser.userId,
+                            rewardType: 'daily',
+                            amount: 5,
+                            metadata: {
+                                source: 'session_completion',
+                                sessionId: sessionId || 'unknown'
+                            }
+                        })
+                    });
+                    console.log('✅ Pending daily reward created');
+                } catch(err) {
+                    console.error('❌ Failed to create pending reward:', err);
+                }
+            } else {
+                console.log('ℹ️ Pending daily reward already exists, skipping');
             }
             
             localStorage.removeItem('miningEndTime_' + currentUser.email);
@@ -5189,25 +5215,33 @@ async function startMiningOnBackend() {
             d.mining = false;
             d.timeLeft = 0;
             
-            // ✅ Pending daily reward oluştur
+            // ✅ Pending daily reward oluştur (yoksa)
             const sessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
-            try {
-                await fetch(API_ENDPOINTS.addPendingReward, {
-                    method: 'POST',
-                    headers: getApiHeaders(),
-                    body: JSON.stringify({
-                        userId: currentUser.userId,
-                        rewardType: 'daily',
-                        amount: 5,
-                        metadata: {
-                            source: 'session_completion_startup',
-                            sessionId: sessionId || 'unknown'
-                        }
-                    })
-                });
-                console.log('✅ Pending daily reward created on startup');
-            } catch(err) {
-                console.error('❌ Failed to create pending reward on startup:', err);
+            
+            // Kontrol: Zaten pending daily reward var mı?
+            const hasPendingDaily = pendingRewardsData.some(r => r.rewardType === 'daily' && !r.claimed);
+            
+            if (!hasPendingDaily) {
+                try {
+                    await fetch(API_ENDPOINTS.addPendingReward, {
+                        method: 'POST',
+                        headers: getApiHeaders(),
+                        body: JSON.stringify({
+                            userId: currentUser.userId,
+                            rewardType: 'daily',
+                            amount: 5,
+                            metadata: {
+                                source: 'session_completion_startup',
+                                sessionId: sessionId || 'unknown'
+                            }
+                        })
+                    });
+                    console.log('✅ Pending daily reward created on startup');
+                } catch(err) {
+                    console.error('❌ Failed to create pending reward on startup:', err);
+                }
+            } else {
+                console.log('ℹ️ Pending daily reward already exists, skipping');
             }
             
             localStorage.removeItem('miningEndTime_' + currentUser.email);
