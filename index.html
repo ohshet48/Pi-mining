@@ -4751,13 +4751,7 @@ async function startMiningOnBackend() {
             }
         }
         async function completeMine() {
-            console.log('⛏️ Mining completed - rewards already added by backend!');
-            
-            d.mining = false;
-            d.timeLeft = 0;
-            
-            // ⚡ CRITICAL: Remove miningEndTime FIRST - before initApp
-            localStorage.removeItem('miningEndTime_' + currentUser.email);
+            console.log('⛏️ Mining completed - processing backend cleanup...');
             
             // ✅ Set flag to prevent initApp from showing rewards immediately
             isCompletingMining = true;
@@ -4814,9 +4808,6 @@ async function startMiningOnBackend() {
             
             // Reset flag
             isCompletingMining = false;
-            
-            // Render to update UI (timer stopped)
-            render();
             
             console.log('✅ Mining session completed - rewards will be available on next app open');
         }
@@ -5236,6 +5227,13 @@ async function startMiningOnBackend() {
                 if (d.mining && d.timeLeft > 0) {
                     d.timeLeft--;
                     if (d.timeLeft <= 0) {
+                        // ⚡ IMMEDIATELY stop mining and update UI
+                        d.mining = false;
+                        d.timeLeft = 0;
+                        localStorage.removeItem('miningEndTime_' + currentUser.email);
+                        render(); // Show Start Session button immediately
+                        
+                        // Then handle backend cleanup in background
                         completeMine();
                     } else {
                         // ⚡ OPTIMIZED: Only update timer elements, not full render
