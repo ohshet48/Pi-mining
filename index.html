@@ -4855,14 +4855,6 @@ async function startMiningOnBackend() {
         }
         
         async function claimDailyReward() {
-            // DEBUG: Log state before claim
-            console.log('🎯 CLAIM ATTEMPT:', {
-                userId: currentUser.userId,
-                dailyRewardAvailable: dailyRewardAvailable,
-                isClaimingDaily: isClaimingDaily,
-                pendingRewardsData: pendingRewardsData
-            });
-            
             // Prevent double-claiming
             if (isClaimingDaily) return;
             if (!dailyRewardAvailable) return;
@@ -4870,31 +4862,11 @@ async function startMiningOnBackend() {
             // Set lock
             isClaimingDaily = true;
             
-            // ⚡ INSTANT: Butonu DOM'dan ANINDA gizle (render beklemeden)
-            const claimButton = document.querySelector('button[onclick="claimDailyReward()"]');
-            if (claimButton) {
-                const container = claimButton.closest('div[style*="Daily Bonus"]')?.parentElement;
-                if (container) {
-                    container.style.transition = 'opacity 0.15s ease, transform 0.15s ease';
-                    container.style.opacity = '0';
-                    container.style.transform = 'scale(0.95)';
-                    setTimeout(() => {
-                        container.style.display = 'none';
-                    }, 150);
-                }
-            }
-            
             // ⚡ OPTIMISTIC UI - Update immediately (0ms)
             const rewardAmount = 5;
             const oldBalance = d.balance;
             d.balance += rewardAmount;
             dailyRewardAvailable = false;
-            
-            // ✅ Pending reward'ı localden HEMEN temizle
-            pendingRewardsData = pendingRewardsData.filter(r => r.rewardType !== 'daily');
-            
-            // CRITICAL: Mark claim time in localStorage to prevent re-showing
-            localStorage.setItem('lastDailyClaimTime_' + currentUser.userId, Date.now().toString());
             
             // Update UI instantly
             render();
@@ -4914,29 +4886,24 @@ async function startMiningOnBackend() {
                         })
                     });
 
-                    console.log('📡 Claim response:', {
-                        status: claimResponse.status,
-                        ok: claimResponse.ok
-                    });
-
                     const data = await claimResponse.json().catch(() => ({}));
-                    
-                    console.log('📦 Response data:', data);
 
                     if (claimResponse.ok && data.reward) {
                         // Use backend's exact balance (no flash!)
                         d.balance = data.newBalance || d.balance;
                         currentUser.balance = d.balance;
                         
-                        // ✅ Pending reward'ı localden temizle
-                        pendingRewardsData = pendingRewardsData.filter(r => r.rewardType !== 'daily');
-                        console.log('🧹 Pending daily reward removed from local cache');
+                        // Backend automatically claims pending reward ✅
                         
                         save();
                         localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                        render();
                         
-                        console.log('✅ Daily reward claimed successfully');
+                        // Wait for backend to update pending rewards
+                        await new Promise(resolve => setTimeout(resolve, 1500));
+                        
+                        // Reload app to refresh pending rewards and hide button
+                        await initApp();
+                        render();
                     } else {
                         // Rollback on error
                         d.balance = oldBalance;
