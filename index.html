@@ -6928,31 +6928,10 @@ async function startMiningOnBackend() {
                 `);
             });
             
-            // ⚡ Join first 50 rows immediately (fast initial render)
-            const INITIAL_RENDER = 50;
-            const firstBatch = userRows.slice(0, INITIAL_RENDER).join('');
-            html += firstBatch;
+            // Render all 100 users immediately
+            html += userRows.join('');
             
             html += '</div></div>'; // Close items container and main container
-            
-            // ⚡ Load remaining rows after page shows (progressive render)
-            if (userRows.length > INITIAL_RENDER) {
-                setTimeout(() => {
-                    const pageContent = document.getElementById('fullPageContent');
-                    if (!pageContent) return;
-                    
-                    const remainingBatch = userRows.slice(INITIAL_RENDER).join('');
-                    const closingDivs = '</div></div>';
-                    const currentHTML = pageContent.innerHTML;
-                    const insertPosition = currentHTML.lastIndexOf(closingDivs);
-                    
-                    if (insertPosition !== -1) {
-                        const newHTML = currentHTML.slice(0, insertPosition) + remainingBatch + currentHTML.slice(insertPosition);
-                        pageContent.innerHTML = newHTML;
-                        console.log('✅ Loaded remaining', userRows.length - INITIAL_RENDER, 'users in background');
-                    }
-                }, 100);
-            }
             
             return html;
         }
