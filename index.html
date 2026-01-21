@@ -4756,6 +4756,9 @@ async function startMiningOnBackend() {
             d.mining = false;
             d.timeLeft = 0;
             
+            // ⚡ CRITICAL: Remove miningEndTime FIRST - before initApp
+            localStorage.removeItem('miningEndTime_' + currentUser.email);
+            
             // ✅ Set flag to prevent initApp from showing rewards immediately
             isCompletingMining = true;
             
@@ -4787,8 +4790,6 @@ async function startMiningOnBackend() {
             } else {
                 console.log('ℹ️ Pending daily reward already exists, skipping');
             }
-            
-            localStorage.removeItem('miningEndTime_' + currentUser.email);
             
             // Clear referrals cache - mining status changed!
             cachedReferralsData = null;
