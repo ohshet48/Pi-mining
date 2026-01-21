@@ -3515,6 +3515,9 @@ window.__resetEmail = email;
         let isInitializing = false;
         let initAppTimeout = null;
         
+        // Track if initApp is called from completeMine (don't show rewards immediately)
+        let isCompletingMining = false;
+        
         // Track claimed levels to prevent re-showing after claim (temporary memory)
         let recentlyClaimedLevels = new Set();
         
@@ -3761,8 +3764,13 @@ window.__resetEmail = email;
                     if (reward.rewardType === 'daily') {
                         // Don't show if recently claimed in this session
                         if (!recentlyClaimed) {
-                            dailyRewardAvailable = true;
-                            console.log('✅ Daily reward flag set');
+                            // ✅ Only set if NOT called from completeMine
+                            if (!isCompletingMining) {
+                                dailyRewardAvailable = true;
+                                console.log('✅ Daily reward flag set');
+                            } else {
+                                console.log('ℹ️ Mining just completed - daily reward will show on next app open');
+                            }
                         } else {
                             console.log('🚫 Daily reward recently claimed, skipping');
                         }
@@ -3940,7 +3948,10 @@ window.__resetEmail = email;
           
         // keep loading until app fully ready  
             await checkMining(); // ✅ WAIT for mining check to complete
-            checkLevelUp(); // Level up kontrolü ekle
+            // ✅ Only check level up if NOT called from completeMine
+            if (!isCompletingMining) {
+                checkLevelUp(); // Level up kontrolü ekle
+            }
             checkNotifications(); // Announcement ve Airdrop notification check
             render();
             startTimer();
@@ -4745,6 +4756,9 @@ async function startMiningOnBackend() {
             d.mining = false;
             d.timeLeft = 0;
             
+            // ✅ Set flag to prevent initApp from showing rewards immediately
+            isCompletingMining = true;
+            
             // ✅ Pending daily reward oluştur (yoksa)
             const sessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
             
@@ -4796,6 +4810,9 @@ async function startMiningOnBackend() {
 
             // Reload user data to get updated balance from backend
             await initApp();
+            
+            // Reset flag
+            isCompletingMining = false;
             
             // Render to update UI (timer stopped)
             render();
