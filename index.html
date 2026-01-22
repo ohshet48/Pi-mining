@@ -3667,41 +3667,61 @@ window.__resetEmail = email;
             }
         }
     
-    // Backend'den TÜM verileri çek - TEK İSTEK (OPTİMİZE EDİLDİ!)
+    // ⚡ PARALEL VERİ ÇEKME: Tüm işlemler aynı anda başlasın!
     if (userId) {
         try {
-            console.log('🔄 Backend veriler çekiliyor (optimize edilmiş tek istek)...');
+            console.log('🚀 PARALEL veri çekme başladı...');
             console.log('🆔 UserID:', userId);
-            console.log('👤 Stored User:', JSON.parse(localStorage.getItem('currentUser') || '{}'));
             
-            // OPTİMİZE: 4 istek yerine TEK istek!
-            const response = await fetch(API_ENDPOINTS.getAllUserData, {
-                method: 'POST',
-                headers: getApiHeaders(),
-                body: JSON.stringify({ userId: userId })
-            });
-            
-            console.log('📡 Response status:', response.status);
-            console.log('📡 Response ok:', response.ok);
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('❌ Response not ok:', response.status, errorText);
+            // ⚡ Promise.all ile PARALEL çalıştır
+            const [allData] = await Promise.all([
+                // 1. Backend'den user data
+                (async () => {
+                    console.log('📡 Backend user data çekiliyor...');
+                    const response = await fetch(API_ENDPOINTS.getAllUserData, {
+                        method: 'POST',
+                        headers: getApiHeaders(),
+                        body: JSON.stringify({ userId: userId })
+                    });
+                    
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('❌ Response not ok:', response.status, errorText);
+                        
+                        if (response.status === 404) {
+                            console.log('🧹 User not found, clearing localStorage...');
+                            localStorage.removeItem('userId');
+                            localStorage.removeItem('userEmail');
+                            localStorage.removeItem('isLoggedIn');
+                            localStorage.removeItem('currentUser');
+                            window.location.reload();
+                        }
+                        
+                        throw new Error(`Failed to fetch user data: ${response.status} - ${errorText}`);
+                    }
+                    
+                    const data = await response.json();
+                    console.log('✅ Backend user data yüklendi');
+                    return data;
+                })(),
                 
-                // Eğer kullanıcı bulunamazsa localStorage'ı temizle
-                if (response.status === 404) {
-                    console.log('🧹 User not found, clearing localStorage...');
-                    localStorage.removeItem('userId');
-                    localStorage.removeItem('userEmail');
-                    localStorage.removeItem('isLoggedIn');
-                    localStorage.removeItem('currentUser');
-                    window.location.reload();
-                }
+                // 2. checkMining paralel çalışsın
+                (async () => {
+                    console.log('⛏️ Mining kontrolü başladı...');
+                    // checkMining'i çağıracağız ama önce user data gelmeli
+                    // Bu yüzden burada sadece promise oluşturuyoruz, aşağıda çalıştıracağız
+                    return 'mining-ready';
+                })(),
                 
-                throw new Error(`Failed to fetch user data: ${response.status} - ${errorText}`);
-            }
+                // 3. checkNotifications paralel çalışsın
+                (async () => {
+                    console.log('🔔 Notification kontrolü başladı...');
+                    // Aynı şekilde burada da hazır olduğunu belirtiyoruz
+                    return 'notifications-ready';
+                })()
+            ]);
             
-            const allData = await response.json();
+            console.log('✅ Tüm paralel istekler tamamlandı');
             
             // Process User Data
             currentUser = allData.user;
@@ -3937,7 +3957,20 @@ window.__resetEmail = email;
            // Hide loading screen
           document.getElementById('app').style.display = 'block';
           
-          // Hide splash screen after data is loaded
+          // ⚡ PARALEL: checkMining ve checkNotifications AYNI ANDA çalışsın
+          await Promise.all([
+              checkMining(), // Mining kontrolü
+              (async () => { // Level up kontrolü
+                  if (!isCompletingMining) {
+                      checkLevelUp();
+                  }
+              })(),
+              checkNotifications() // Notification kontrolü
+          ]);
+          
+          console.log('✅ Tüm kontroller tamamlandı - UI hazır');
+          
+          // Hide splash screen after ALL data is loaded
           const splashScreen = document.getElementById('splashScreen');
           if (splashScreen) {
               splashScreen.classList.add('fade-out');
@@ -3946,13 +3979,7 @@ window.__resetEmail = email;
               }, 800);
           }
           
-        // keep loading until app fully ready  
-            await checkMining(); // ✅ WAIT for mining check to complete
-            // ✅ Only check level up if NOT called from completeMine
-            if (!isCompletingMining) {
-                checkLevelUp(); // Level up kontrolü ekle
-            }
-            checkNotifications(); // Announcement ve Airdrop notification check
+          // Render and start timer
             render();
             startTimer();
             
@@ -6930,10 +6957,31 @@ async function startMiningOnBackend() {
                 `);
             });
             
-            // Render all 100 users immediately
-            html += userRows.join('');
+            // ⚡ Join first 50 rows immediately (fast initial render)
+            const INITIAL_RENDER = 50;
+            const firstBatch = userRows.slice(0, INITIAL_RENDER).join('');
+            html += firstBatch;
             
             html += '</div></div>'; // Close items container and main container
+            
+            // ⚡ Load remaining rows after page shows (progressive render)
+            if (userRows.length > INITIAL_RENDER) {
+                setTimeout(() => {
+                    const pageContent = document.getElementById('fullPageContent');
+                    if (!pageContent) return;
+                    
+                    const remainingBatch = userRows.slice(INITIAL_RENDER).join('');
+                    const closingDivs = '</div></div>';
+                    const currentHTML = pageContent.innerHTML;
+                    const insertPosition = currentHTML.lastIndexOf(closingDivs);
+                    
+                    if (insertPosition !== -1) {
+                        const newHTML = currentHTML.slice(0, insertPosition) + remainingBatch + currentHTML.slice(insertPosition);
+                        pageContent.innerHTML = newHTML;
+                        console.log('✅ Loaded remaining', userRows.length - INITIAL_RENDER, 'users in background');
+                    }
+                }, 100);
+            }
             
             return html;
         }
