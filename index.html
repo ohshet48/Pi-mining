@@ -4055,17 +4055,30 @@ window.__resetEmail = email;
                 // Check airdrops (use cache from getAllUserData)
                 const hasAirdrops = (window.cachedAirdrops && window.cachedAirdrops.length > 0) || false;
                 
-                // Update global state
+                // ⚡ SADECE GLOBAL DEĞİŞKENLERİ GÜNCELLE (DOM'a dokunma)
                 hasNewAnnouncementsGlobal = hasNewAnnouncements;
                 hasAirdropsGlobal = hasAirdrops;
                 
-                // Update menu items with inline styles (stronger than class)
+                console.log('✅ Notifications checked:', { hasNewAnnouncements, hasAirdrops });
+            } catch (error) {
+                console.error('Error checking notifications:', error);
+            }
+        }
+        
+        // ⚡ YENİ FONKSİYON: Sadece menüyü güncelle (Firebase sorgusu YOK)
+        function updateMenuNotifications() {
+            try {
                 const announcementsMenuItem = document.getElementById('announcementsMenuItem');
                 const airdropMenuItem = document.getElementById('airdropMenuItem');
                 const menuButton = document.getElementById('menuButton');
                 
+                // Menü yoksa çık (hata verme)
+                if (!menuButton) {
+                    return;
+                }
+                
                 if (announcementsMenuItem) {
-                    if (hasNewAnnouncements) {
+                    if (hasNewAnnouncementsGlobal) {
                         announcementsMenuItem.style.border = '2px solid #10b981';
                         announcementsMenuItem.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.5)';
                         announcementsMenuItem.style.background = 'rgba(16, 185, 129, 0.2)';
@@ -4077,7 +4090,7 @@ window.__resetEmail = email;
                 }
                 
                 if (airdropMenuItem) {
-                    if (hasAirdrops) {
+                    if (hasAirdropsGlobal) {
                         airdropMenuItem.style.border = '2px solid #10b981';
                         airdropMenuItem.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.5)';
                         airdropMenuItem.style.background = 'rgba(16, 185, 129, 0.2)';
@@ -4088,20 +4101,15 @@ window.__resetEmail = email;
                     }
                 }
                 
-                // CRITICAL: Always update hamburger button, even if menu items not in DOM
-                if (menuButton) {
-                    if (hasNewAnnouncements || hasAirdrops) {
-                        menuButton.style.cssText = 'border: 2px solid #10b981 !important; box-shadow: 0 0 15px rgba(16, 185, 129, 0.5) !important;';
-                        console.log('✅ Hamburger button notification set');
-                    } else {
-                        menuButton.style.border = '';
-                        menuButton.style.boxShadow = '';
-                    }
+                // Hamburger button güncelle
+                if (hasNewAnnouncementsGlobal || hasAirdropsGlobal) {
+                    menuButton.style.cssText = 'border: 2px solid #10b981 !important; box-shadow: 0 0 15px rgba(16, 185, 129, 0.5) !important;';
                 } else {
-                    console.warn('⚠️ Menu button not found in DOM yet');
+                    menuButton.style.border = '';
+                    menuButton.style.boxShadow = '';
                 }
             } catch (error) {
-                console.error('Error checking notifications:', error);
+                console.error('Error updating menu notifications:', error);
             }
         }
 
@@ -4397,6 +4405,9 @@ window.__resetEmail = email;
             
             // Update Watch Ad button separately (don't recreate it)
             updateWatchAdButton();
+            
+            // ⚡ Update menu notifications after render (menü artık hazır)
+            setTimeout(() => updateMenuNotifications(), 0);
             
             document.getElementById('app').innerHTML = `
                 <div class="header">
