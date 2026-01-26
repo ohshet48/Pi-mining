@@ -4710,10 +4710,39 @@ window.__resetEmail = email;
             btn.style.cursor = 'not-allowed';
             
             // ⚡ BACKEND'E HEMEN İSTEK GÖNDER (0. saniye)
-            console.log('🚀 Backend isteği GÖNDERİLİYOR...');
-            startMiningOnBackend().catch(err => {
-                console.error('❌ Backend mining start failed:', err);
-            });
+            console.log('🚀 Backend isteği GÖNDERİLİYOR (HEMEN)...');
+            
+            // setTimeout(0) ile event queue'ya HEMEN ekle
+            setTimeout(() => {
+                fetch(API_ENDPOINTS.startMining, {
+                    method: 'POST',
+                    headers: getApiHeaders(),
+                    body: JSON.stringify({
+                        userId: currentUser.userId,
+                        level: d.level
+                    })
+                }).then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else if (response.status === 400) {
+                        return response.json();
+                    }
+                    throw new Error('Backend request failed');
+                }).then(data => {
+                    console.log('✅ Backend mining başlatıldı:', data);
+                    if (data.session) {
+                        localStorage.setItem('currentSessionId_' + currentUser.email, data.session.sessionId);
+                        activeMiningSession = {
+                            sessionId: data.session.sessionId,
+                            adBoostCount: 0,
+                            adBoostActive: false,
+                            adBoostTotal: 0
+                        };
+                    }
+                }).catch(err => {
+                    console.error('❌ Backend mining start failed:', err);
+                });
+            }, 0); // 0ms delay = event queue'ya HEMEN ekle
             
             // 🎬 GÖRSEL GERİ SAYIM (3-2-1)
             let countdown = 3;
