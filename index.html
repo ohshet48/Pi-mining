@@ -4446,11 +4446,11 @@ window.__resetEmail = email;
 
                 <div class="card ${d.mining ? 'mining-glow' : ''}" id="miningCard">
                     ${!d.mining ? `
-                        <button class="btn-mine" onclick="startMine()">
+                        <button class="btn-mine" id="startMineBtn" onclick="startMineWithCountdown()">
                             <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
                                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
                             </svg>
-                            Start Session
+                            <span id="startMineText">Start Session</span>
                         </button>
                     ` : `
                         <div class="timer-wrap">
@@ -4697,7 +4697,42 @@ window.__resetEmail = email;
             updateWatchAdButton();
         }
 	
-        async function startMine() {
+        // ✅ START MINING WITH COUNTDOWN - Backend'e hemen istek gönder, UI'da geri sayım göster
+        async function startMineWithCountdown() {
+            const btn = document.getElementById('startMineBtn');
+            const btnText = document.getElementById('startMineText');
+            
+            if (!btn || !btnText) return;
+            
+            // Butonu devre dışı bırak
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+            btn.style.cursor = 'not-allowed';
+            
+            // ⚡ BACKEND'E HEMEN İSTEK GÖNDER (0. saniye)
+            console.log('🚀 Backend isteği GÖNDERİLİYOR...');
+            startMiningOnBackend().catch(err => {
+                console.error('❌ Backend mining start failed:', err);
+            });
+            
+            // 🎬 GÖRSEL GERİ SAYIM (3-2-1)
+            let countdown = 3;
+            btnText.textContent = `Starting... ${countdown}`;
+            
+            const countdownInterval = setInterval(() => {
+                countdown--;
+                if (countdown > 0) {
+                    btnText.textContent = `Starting... ${countdown}`;
+                } else {
+                    clearInterval(countdownInterval);
+                    // 3 saniye sonra mining ekranını aç
+                    startMineUI();
+                }
+            }, 1000);
+        }
+        
+        // Mining UI'ını başlat (sadece görsel)
+        function startMineUI() {
             const now = Date.now();
             const miningDuration = 1 * 60 * 1000; // 1 dakika (TEST MODE)
             const end = now + miningDuration;
@@ -4755,20 +4790,9 @@ window.__resetEmail = email;
             
             // Update Watch Ad button immediately (don't wait for backend)
             updateWatchAdButton();
-            
-            // Backend call in background (user won't wait for this)
-            startMiningOnBackend().catch(err => {
-                console.error('❌ Backend mining start failed:', err);
-                // Rollback if backend fails
-                d.mining = false;
-                d.timeLeft = 0;
-                localStorage.removeItem('miningEndTime_' + currentUser.email);
-                localStorage.removeItem('miningStartTime_' + currentUser.email);
-                render();
-                showToast('❌ Failed to start mining. Please try again.', true);
-            });
         }
-async function startMiningOnBackend() {
+        
+        async function startMiningOnBackend() {
             try {
                 const response = await fetch(API_ENDPOINTS.startMining, {
                     method: 'POST',
