@@ -4249,6 +4249,103 @@ window.__resetEmail = email;
             }
         }
         
+        // ✅ CLAIM LEVEL REWARD WITH COUNTDOWN
+        async function claimLevelRewardWithCountdown() {
+            if (isClaimingLevel) return;
+            if (!d.pendingLevelUp) return;
+            
+            const btn = document.querySelector('.reward-claim-btn');
+            if (!btn) return;
+            
+            // Butonu disable et
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+            btn.style.cursor = 'not-allowed';
+            
+            // ⚡ BACKEND'E HEMEN İSTEK GÖNDER (0. saniye)
+            console.log('🚀 Level reward backend isteği GÖNDERİLİYOR (HEMEN)...');
+            claimLevelRewardBackend();
+            
+            // 🎬 GÖRSEL GERİ SAYIM (3-2-1)
+            let countdown = 3;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<span>Claiming... ${countdown}</span>`;
+            
+            const countdownInterval = setInterval(() => {
+                countdown--;
+                if (countdown > 0) {
+                    btn.innerHTML = `<span>Claiming... ${countdown}</span>`;
+                } else {
+                    clearInterval(countdownInterval);
+                    // 3 saniye sonra işlemi tamamla
+                    claimLevelRewardUI();
+                }
+            }, 1000);
+        }
+        
+        // UI güncelleme (sadece görsel)
+        function claimLevelRewardUI() {
+            if (!d.pendingLevelUp) return;
+            
+            const claimedLevel = d.pendingLevelUp;
+            const levelReward = levelRewards[claimedLevel];
+            
+            d.balance += levelReward.coins;
+            d.rate += levelReward.rate;
+            d.level = claimedLevel;
+            d.pendingLevelUp = null;
+            
+            currentUser.balance = d.balance;
+            currentUser.rate = d.rate;
+            currentUser.level = claimedLevel;
+            
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            render();
+            showToast(`✓ Claimed Level ${claimedLevel} reward! +${levelReward.coins} coins`);
+        }
+        
+        // Backend isteği (arka planda)
+        async function claimLevelRewardBackend() {
+            if (!d.pendingLevelUp) return;
+            
+            const claimedLevel = d.pendingLevelUp;
+            
+            try {
+                const response = await fetch(API_ENDPOINTS.claimLevelReward, {
+                    method: 'POST',
+                    headers: getApiHeaders(),
+                    body: JSON.stringify({
+                        userId: currentUser.userId,
+                        level: claimedLevel
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to claim level reward');
+                }
+                
+                const data = await response.json();
+                console.log('✅ Level reward backend tamamlandı:', data);
+                
+                // Backend'den gelen değerleri sync et
+                currentUser.balance = data.balance;
+                currentUser.rate = data.rate;
+                
+                if (!currentUser.claimedLevels) {
+                    currentUser.claimedLevels = [];
+                }
+                if (!currentUser.claimedLevels.includes(claimedLevel)) {
+                    currentUser.claimedLevels.push(claimedLevel);
+                }
+                
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                
+            } catch (error) {
+                console.error('❌ Level reward backend failed:', error);
+            }
+        }
+
         async function claimLevelReward() {
             if (isClaimingLevel) return;
             if (!d.pendingLevelUp) return;
@@ -4539,7 +4636,7 @@ window.__resetEmail = email;
                                     <p style="font-size: 11px; font-weight: 600; line-height: 1.3; color: rgba(255, 255, 255, 0.6); margin-top: 6px; margin-bottom: 0;"><span style="color: #fbbf24;">+${levelRewards[d.pendingLevelUp].coins}</span> Coins earned</p>
                                     <p style="font-size: 11px; font-weight: 600; line-height: 1.3; color: rgba(255, 255, 255, 0.6); margin-top: 4px; margin-bottom: 0;"><span style="color: #00ffff;">+${levelRewards[d.pendingLevelUp].rate.toFixed(2)}</span> Mining Rate</p>
                                 </div>
-                                <button class="reward-claim-btn" onclick="claimLevelReward()" style="margin-top: 8px;">
+                                <button class="reward-claim-btn" onclick="claimLevelRewardWithCountdown()" style="margin-top: 8px;">
                                     <span>CLAIM REWARD</span>
                                 </button>
                             </div>
@@ -4622,7 +4719,7 @@ window.__resetEmail = email;
                                 ${dailyRewardAvailable ? '<div style="color: #fbbf24; font-size: 12px; font-weight: 700;">+5 <span style="font-size: 9px; color: rgba(255, 255, 255, 0.6); font-weight: 600;">ARCASTRA</span></div>' : ''}
                             </div>
                             ${dailyRewardAvailable ? `
-                                <button class="reward-claim-btn" onclick="claimDailyReward()">
+                                <button class="reward-claim-btn" onclick="claimDailyRewardWithCountdown()">
                                     <span>CLAIM REWARD</span>
                                 </button>
                             ` : ''}
@@ -4975,6 +5072,84 @@ window.__resetEmail = email;
             console.log('✅ Mining session completed - rewards will be available on next app open');
         }
         
+        // ✅ CLAIM DAILY REWARD WITH COUNTDOWN
+        async function claimDailyRewardWithCountdown() {
+            if (isClaimingDaily) return;
+            if (!dailyRewardAvailable) return;
+            
+            const btn = document.querySelector('.reward-claim-btn[onclick*="claimDailyReward"]');
+            if (!btn) return;
+            
+            // Butonu disable et
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+            btn.style.cursor = 'not-allowed';
+            
+            // ⚡ BACKEND'E HEMEN İSTEK GÖNDER (0. saniye)
+            console.log('🚀 Daily reward backend isteği GÖNDERİLİYOR (HEMEN)...');
+            claimDailyRewardBackend();
+            
+            // 🎬 GÖRSEL GERİ SAYIM (3-2-1)
+            let countdown = 3;
+            btn.innerHTML = `<span>Claiming... ${countdown}</span>`;
+            
+            const countdownInterval = setInterval(() => {
+                countdown--;
+                if (countdown > 0) {
+                    btn.innerHTML = `<span>Claiming... ${countdown}</span>`;
+                } else {
+                    clearInterval(countdownInterval);
+                    // 3 saniye sonra UI'ı güncelle
+                    claimDailyRewardUI();
+                }
+            }, 1000);
+        }
+        
+        // UI güncelleme (sadece görsel)
+        function claimDailyRewardUI() {
+            isClaimingDaily = true;
+            
+            const rewardAmount = 5;
+            d.balance += rewardAmount;
+            dailyRewardAvailable = false;
+            
+            render();
+            showToast('✓ Claimed +5 Coins daily reward!');
+        }
+        
+        // Backend isteği (arka planda)
+        async function claimDailyRewardBackend() {
+            try {
+                const response = await fetch(API_ENDPOINTS.claimDailyReward, {
+                    method: 'POST',
+                    headers: getApiHeaders(),
+                    body: JSON.stringify({
+                        userId: currentUser.userId
+                    })
+                });
+
+                const data = await response.json().catch(() => ({}));
+                console.log('✅ Daily reward backend tamamlandı:', data);
+
+                if (response.ok && data.reward) {
+                    d.balance = data.newBalance || d.balance;
+                    currentUser.balance = d.balance;
+                    
+                    save();
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    
+                    // Pending rewards'ı yenile
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    await initApp();
+                    render();
+                }
+            } catch (err) {
+                console.error('❌ Daily reward backend failed:', err);
+            } finally {
+                isClaimingDaily = false;
+            }
+        }
+
         async function claimDailyReward() {
             // Prevent double-claiming
             if (isClaimingDaily) return;
@@ -7546,6 +7721,12 @@ window.__resetEmail = email;
                     name: 'Telegram', 
                     url: 'https://t.me/arcastranetwork',
                     svg: '<svg width="18" height="18" viewBox="0 0 24 24" fill="#0088cc"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>'
+                },
+                { 
+                    id: 'twitter_rt', 
+                    name: 'X (Twitter) RT', 
+                    url: 'https://x.com/arcastranetwork',
+                    svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>'
                 }
             ];
             
@@ -7597,7 +7778,7 @@ window.__resetEmail = email;
                                         <div>
                                             <div style="color: #fff; font-size: 16px; font-weight: 700; margin-bottom: 4px;">${task.name}</div>
                                             <div style="color: ${isCompleted ? '#00ff00' : '#00ffff'}; font-size: 13px; font-weight: 600;">
-                                                ${isCompleted ? '✅ Completed +5' : 'Follow us • Progress +5'}
+                                                ${isCompleted ? '✅ Completed +10' : (task.id === 'twitter_rt' ? 'RT • Progress +10' : 'Follow us • Progress +5')}
                                             </div>
                                         </div>
                                     </div>
@@ -7641,7 +7822,7 @@ window.__resetEmail = email;
                                                 cursor: pointer;
                                                 white-space: nowrap;
                                                 box-shadow: 0 4px 20px rgba(0, 255, 255, 0.4);
-                                            ">Follow</button>
+                                            ">${task.id === 'twitter_rt' ? 'GO' : 'Follow'}</button>
                                         `}
                                     </div>
                                 </div>
@@ -7715,7 +7896,7 @@ window.__resetEmail = email;
             isProcessingTask = true;
             
             const buttonContainer = document.getElementById('taskButton_' + taskId);
-            const reward = 5;
+            const reward = taskId === 'twitter_rt' ? 10 : 5; // Twitter RT = 10, diğerleri = 5
             
             // Update UI immediately (optimistic update)
             if (buttonContainer) {
@@ -7743,7 +7924,7 @@ window.__resetEmail = email;
             d.balance = currentUser.balance;
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             
-            showToast('✅ Task completed! +5 ARCASTRA', false);
+            showToast(`✅ Task completed! +${reward} ARCASTRA`, false);
             render();
             
             // Send to backend in background (don't await)
