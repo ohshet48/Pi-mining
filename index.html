@@ -3429,19 +3429,55 @@ window.__resetEmail = email;
         }
         
         function confirmLogout() {
-            // Clear referrals cache
+            const userEmail = currentUser?.email || '';
+            const userId = currentUser?.userId || '';
+            
+            // 🧹 CLEAR ALL USER-SPECIFIC DATA
+            
+            // 1. Referrals cache
             cachedReferralsData = null;
             cachedReferralsTimestamp = 0;
-            localStorage.removeItem('referralsCache_' + currentUser.email);
-            localStorage.removeItem('referralsCacheTime_' + currentUser.email);
+            localStorage.removeItem('referralsCache_' + userEmail);
+            localStorage.removeItem('referralsCacheTime_' + userEmail);
+            localStorage.removeItem('activeReferralCount_' + userEmail);
+            localStorage.removeItem('totalReferralsCount_' + userEmail);
+            localStorage.removeItem('lastReferralNotif_' + userEmail);
+            localStorage.removeItem('lastReferralClaimTime_' + userId);
             
-            // Clear leaderboard cache
+            // 2. Mining data
+            localStorage.removeItem('miningEndTime_' + userEmail);
+            localStorage.removeItem('miningStartTime_' + userEmail);
+            localStorage.removeItem('miningDuration_' + userEmail);
+            localStorage.removeItem('currentSessionId_' + userEmail);
+            
+            // 3. Ad data
+            localStorage.removeItem('adCooldown_' + userEmail);
+            localStorage.removeItem('adStartTime_' + userEmail);
+            
+            // 4. Task data
+            localStorage.removeItem('clickedTasks_' + userEmail);
+            localStorage.removeItem('lastDailyClaimTime_' + userId);
+            
+            // 5. UI preferences
+            localStorage.removeItem('balanceVisible_' + userEmail);
+            
+            // 6. Notifications
+            localStorage.removeItem('hasNewAnnouncements_' + userId);
+            localStorage.removeItem('hasNewAirdrops_' + userId);
+            localStorage.removeItem('lastViewedAnnouncements_' + userId);
+            
+            // 7. Leaderboard cache (global)
             cachedLeaderboardData = null;
+            localStorage.removeItem('leaderboard_cache');
+            localStorage.removeItem('leaderboard_cache_time');
             
-            // Clear ALL auth data to prevent auto-login
+            // 8. Auth data
             localStorage.removeItem('currentUser');
             localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('userId');
+            localStorage.removeItem('userEmail');
+            
+            console.log('🧹 All user data cleared from localStorage');
             
             window.location.reload();
         }
@@ -6708,6 +6744,7 @@ window.__resetEmail = email;
                         localStorage.setItem('leaderboard_cache', JSON.stringify(leaderboardData));
                         localStorage.setItem('leaderboard_cache_time', Date.now().toString());
                         console.log('✅ Leaderboard cached:', leaderboardData.length, 'users');
+                        console.log('📊 [DEBUG] Backend response user count:', data.leaderboard.length);
                     }
                 }
             } catch (err) {
@@ -6811,6 +6848,8 @@ window.__resetEmail = email;
             
             // ⚡ OPTIMIZATION: Use array instead of string concatenation
             const userRows = [];
+            
+            console.log('📊 [DEBUG] Rendering leaderboard with', leaderboardData.length, 'users');
             
             // Top 100 list
             leaderboardData.forEach((user, index) => {
@@ -7021,8 +7060,8 @@ window.__resetEmail = email;
                 `);
             });
             
-            // ⚡ Join first 50 rows immediately (fast initial render)
-            const INITIAL_RENDER = 50;
+            // ⚡ Join first 100 rows immediately (fast initial render)
+            const INITIAL_RENDER = 100;
             const firstBatch = userRows.slice(0, INITIAL_RENDER).join('');
             html += firstBatch;
             
@@ -7073,39 +7112,33 @@ window.__resetEmail = email;
             const now = Date.now();
             let activeRefs = [];
             let inactiveRefs = [];
-            let hasMore = false;
-            let totalRefs = 0;
             
-            // Check if cache is valid (less than 1 hour old)
+            // Check if cache is valid (less than 30 minutes old)
             const cacheAge = now - cachedReferralsTimestamp;
-            const oneHour = 60 * 60 * 1000; // 1 hour in milliseconds
-            const isCacheValid = cachedReferralsData && cacheAge < oneHour;
+            const thirtyMinutes = 30 * 60 * 1000; // 30 dakika
+            const isCacheValid = cachedReferralsData && cacheAge < thirtyMinutes;
             
             try {
                 // Use cache if available and valid
                 if (isCacheValid) {
                     activeRefs = cachedReferralsData.activeRefs;
                     inactiveRefs = cachedReferralsData.inactiveRefs;
-                    hasMore = cachedReferralsData.hasMore || false;
-                    totalRefs = cachedReferralsData.total || 0;
                 } else {
-                    // Get first 10 referrals
-                    const refResponse = await fetch(API_ENDPOINTS.getReferrals + '?userId=' + currentUser.userId + '&offset=0', {
+                    // ✅ HEPSİNİ GETİR (Show More kaldırıldı)
+                    const refResponse = await fetch(API_ENDPOINTS.getReferrals + '?userId=' + currentUser.userId, {
                         headers: getApiHeaders()
                     });
                     const refData = await refResponse.json();
                     
                     if (refResponse.ok && refData.referrals) {
                         const allReferrals = refData.referrals;
-                        hasMore = refData.hasMore || false;
-                        totalRefs = refData.total || 0;
                         
                         // Backend now provides isActive field for each referral
                         activeRefs = allReferrals.filter(r => r.isActive === true);
                         inactiveRefs = allReferrals.filter(r => r.isActive === false);
                         
                         // Cache the results in memory and localStorage
-                        cachedReferralsData = { activeRefs, inactiveRefs, hasMore, total: totalRefs };
+                        cachedReferralsData = { activeRefs, inactiveRefs };
                         cachedReferralsTimestamp = now;
                         
                         localStorage.setItem('referralsCache_' + currentEmail, JSON.stringify(cachedReferralsData));
@@ -7164,31 +7197,6 @@ window.__resetEmail = email;
                             </div>
                         </div>
                     `).join('') : '<div style="text-align: center; padding: 40px 20px; color: rgba(255, 255, 255, 0.4); font-size: 14px;">No active referrals yet</div>'}
-                    
-                    ${hasMore ? `
-                        <button id="loadMoreBtn" onclick="loadMoreReferrals()" style="
-                            width: 100%;
-                            background: rgba(0, 0, 0, 0.3);
-                            border: 1px solid rgba(16, 185, 129, 0.3);
-                            border-radius: 12px;
-                            padding: 16px;
-                            color: rgba(255, 255, 255, 0.8);
-                            font-size: 13px;
-                            font-weight: 600;
-                            cursor: pointer;
-                            margin-top: 16px;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            gap: 8px;
-                            transition: all 0.2s ease;
-                        " onmouseover="this.style.background='rgba(16, 185, 129, 0.1)'; this.style.borderColor='rgba(16, 185, 129, 0.5)'" onmouseout="this.style.background='rgba(0, 0, 0, 0.3)'; this.style.borderColor='rgba(16, 185, 129, 0.3)'">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="6 9 12 15 18 9"></polyline>
-                            </svg>
-                            Show ${totalRefs - 10} more
-                        </button>
-                    ` : ''}
                 </div>
                 
                 <!-- Inactive List -->
@@ -7207,31 +7215,6 @@ window.__resetEmail = email;
                                 </div>
                             </div>
                         `).join('')}
-                        
-                        ${hasMore ? `
-                            <button id="loadMoreBtnInactive" onclick="loadMoreReferrals()" style="
-                                width: 100%;
-                                background: rgba(0, 0, 0, 0.3);
-                                border: 1px solid rgba(139, 92, 246, 0.3);
-                                border-radius: 12px;
-                                padding: 16px;
-                                color: rgba(255, 255, 255, 0.8);
-                                font-size: 13px;
-                                font-weight: 600;
-                                cursor: pointer;
-                                margin-top: 16px;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                gap: 8px;
-                                transition: all 0.2s ease;
-                            " onmouseover="this.style.background='rgba(139, 92, 246, 0.1)'; this.style.borderColor='rgba(139, 92, 246, 0.5)'" onmouseout="this.style.background='rgba(0, 0, 0, 0.3)'; this.style.borderColor='rgba(139, 92, 246, 0.3)'">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="6 9 12 15 18 9"></polyline>
-                                </svg>
-                                Show ${totalRefs - 10} more
-                            </button>
-                        ` : ''}
                         
                         <!-- Notify Button -->
                         <button onclick="sendReferralNotification()" ${!canSendNotif ? 'disabled' : ''} style="background: ${canSendNotif ? 'linear-gradient(135deg, #8b5cf6, #7c3aed)' : 'rgba(0, 0, 0, 0.3)'}; border: none; border-radius: 12px; padding: 14px; color: white; font-size: 14px; font-weight: 700; cursor: ${canSendNotif ? 'pointer' : 'not-allowed'}; margin-top: 10px; opacity: ${canSendNotif ? '1' : '0.5'};">
@@ -7269,53 +7252,6 @@ window.__resetEmail = email;
             }
         }
         
-        async function loadMoreReferrals() {
-            const btn = document.getElementById('loadMoreBtn');
-            const btnInactive = document.getElementById('loadMoreBtnInactive');
-            
-            if (btn) btn.disabled = true;
-            if (btnInactive) btnInactive.disabled = true;
-            
-            showToast('🔄 Loading more referrals...', false, 999999);
-            
-            try {
-                // Load remaining referrals (offset = 10)
-                const refResponse = await fetch(API_ENDPOINTS.getReferrals + '?userId=' + currentUser.userId + '&offset=10', {
-                    headers: getApiHeaders()
-                });
-                const refData = await refResponse.json();
-                
-                if (refResponse.ok && refData.referrals) {
-                    const newReferrals = refData.referrals;
-                    const newActive = newReferrals.filter(r => r.isActive === true);
-                    const newInactive = newReferrals.filter(r => r.isActive === false);
-                    
-                    // Update cache
-                    if (cachedReferralsData) {
-                        cachedReferralsData.activeRefs.push(...newActive);
-                        cachedReferralsData.inactiveRefs.push(...newInactive);
-                        cachedReferralsData.hasMore = false; // All loaded now
-                        
-                        const currentEmail = localStorage.getItem('currentUser');
-                        localStorage.setItem('referralsCache_' + currentEmail, JSON.stringify(cachedReferralsData));
-                    }
-                    
-                    // Reload page to show all referrals
-                    showToast('✓ Loaded all referrals!');
-                    setTimeout(() => {
-                        openPage('referrals');
-                    }, 1000);
-                } else {
-                    showToast('❌ Failed to load more', true);
-                }
-            } catch (err) {
-                console.error('Load more error:', err);
-                showToast('❌ Failed to load more', true);
-            } finally {
-                if (btn) btn.disabled = false;
-                if (btnInactive) btnInactive.disabled = false;
-            }
-        }
         
         function sendReferralNotification() {
             const currentEmail = localStorage.getItem('currentUser');
