@@ -4458,7 +4458,7 @@ window.__resetEmail = email;
                                 <svg viewBox="0 0 150 150">
                                     <circle class="timer-bg" cx="75" cy="75" r="70"/>
                                     <circle id="timerProgressCircle" class="timer-progress" cx="75" cy="75" r="70" stroke-dasharray="440" 
-                                        stroke-dashoffset="${440 - ((86400 - d.timeLeft) / 86400) * 440}"/>
+                                        stroke-dashoffset="${440 - ((60 - d.timeLeft) / 60) * 440}"/>
                                 </svg>
                                 <div class="timer-icon">
                                     <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5">
@@ -4471,7 +4471,7 @@ window.__resetEmail = email;
                             <p class="timer-label">Time Remaining</p>
                             <div class="earning-box">
                                 <p class="earning-text">Target: <span class="earning-amount">${(() => {
-                                    const miningDuration = localStorage.getItem('miningDuration_' + currentUser.email) || 86400000; // Default 24 saat
+                                    const miningDuration = localStorage.getItem('miningDuration_' + currentUser.email) || 60000; // Default 1 dakika (TEST MODE)
                                     const hours = parseInt(miningDuration) / (1000 * 60 * 60);
                                     return (d.rate * hours).toFixed(2);
                                 })()} <span style="font-size: 14px;">ARCASTRA</span></span></p>
@@ -4699,12 +4699,12 @@ window.__resetEmail = email;
 	
         async function startMine() {
             const now = Date.now();
-            const miningDuration = 24 * 60 * 60 * 1000; // 24 saat
+            const miningDuration = 1 * 60 * 1000; // 1 dakika (TEST MODE)
             const end = now + miningDuration;
             
             // OPTIMISTIC UI: Update UI IMMEDIATELY (0ms delay)
             d.mining = true;
-            d.timeLeft = 86400; // 24 saat = 86400 saniye
+            d.timeLeft = 60; // 1 dakika = 60 saniye (TEST MODE)
             
             const today = new Date().toDateString();
             if (d.lastDate) {
@@ -5288,7 +5288,7 @@ async function startMiningOnBackend() {
             }
             
             if (progressCircle) {
-                const offset = 440 - ((86400 - d.timeLeft) / 86400) * 440;
+                const offset = 440 - ((60 - d.timeLeft) / 60) * 440;
                 progressCircle.setAttribute('stroke-dashoffset', offset);
             }
         }
@@ -6533,7 +6533,7 @@ async function startMiningOnBackend() {
                 
                 airdropsData.forEach(airdrop => {
                     const date = airdrop.createdAt ? new Date(airdrop.createdAt.toDate ? airdrop.createdAt.toDate() : airdrop.createdAt._seconds * 1000).toLocaleDateString() : 'Recent';
-                    const typeLabel = airdrop.type === 'global' ? '🌍 Global' : '🎁 Personal';
+                    const typeLabel = airdrop.type === 'global' ? '🌍 Global' : '🎁 Special';
                     const message = airdrop.message || 'Airdrop Reward';
                     
                     html += `
