@@ -6833,7 +6833,11 @@ window.__resetEmail = email;
                     }
                 }
                 
-                if (!airdropsData || airdropsData.length === 0) {
+                // Airdrop history'yi de al
+                const airdropHistory = window.cachedAirdropHistory || [];
+                
+                // Eğer hem unclaimed airdrops hem de history yoksa "No Events"
+                if ((!airdropsData || airdropsData.length === 0) && airdropHistory.length === 0) {
                     return `
                         <div style="display: flex; align-items: center; justify-content: center; min-height: 400px; padding: 20px;">
                             <div style="background: rgba(0, 0, 0, 0.5); border: 2px solid rgba(100, 100, 100, 0.4); border-radius: 20px; padding: 40px 30px; max-width: 340px; width: 100%; text-align: center; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
@@ -6845,9 +6849,11 @@ window.__resetEmail = email;
                     `;
                 }
                 
-                let html = `
-                    <div style="padding: 20px;">
-                        <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(5, 150, 105, 0.3)); border: 2px solid #10b981; border-radius: 20px; padding: 24px; text-align: center; box-shadow: 0 0 30px rgba(16, 185, 129, 0.5); margin-bottom: 20px;">
+                let html = '<div style="padding: 20px;">';
+                
+                // Unclaimed airdrops varsa göster
+                if (airdropsData && airdropsData.length > 0) {
+                    html += `
                             <svg width="64" height="64" viewBox="0 0 64 64" style="margin: 0 auto 12px; filter: drop-shadow(0 4px 12px rgba(16, 185, 129, 0.4));">
                                 <rect x="8" y="24" width="48" height="32" rx="4" fill="#10b981" opacity="0.3"/>
                                 <rect x="8" y="24" width="48" height="32" rx="4" fill="none" stroke="#10b981" stroke-width="2"/>
@@ -6886,9 +6892,10 @@ window.__resetEmail = email;
                 });
                 
                 html += '</div>'; // Close airdrops list
+                } // Close if (airdropsData && airdropsData.length > 0)
                 
-                // 📜 AIRDROP HISTORY
-                let airdropHistory = window.cachedAirdropHistory || [];
+                // 📜 AIRDROP HISTORY (unclaimed yoksa da göster)
+                // airdropHistory zaten 6837'de tanımlı
                 
                 // Tarihe göre sırala (yeniden eskiye)
                 if (airdropHistory.length > 0) {
