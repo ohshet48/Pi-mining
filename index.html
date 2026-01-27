@@ -5701,11 +5701,10 @@ window.__resetEmail = email;
                     }
                 }, 100); // Small delay to ensure menu items are in DOM
                 
-                // Clear hamburger highlight when menu opens
+                // Clear hamburger highlight when menu opens - CLASS KALDIR
                 const menuButton = document.getElementById('menuButton');
                 if (menuButton) {
-                    menuButton.style.border = '';
-                    menuButton.style.boxShadow = '';
+                    menuButton.classList.remove('menu-btn-highlight');
                 }
                 
                 // Push state for back button handling
