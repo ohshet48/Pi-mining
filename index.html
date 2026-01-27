@@ -3865,13 +3865,10 @@ window.__resetEmail = email;
                     if (reward.rewardType === 'daily') {
                         // Don't show if recently claimed in this session
                         if (!recentlyClaimed) {
-                            // ✅ Only set if NOT called from completeMine
-                            if (!isCompletingMining) {
-                                dailyRewardAvailable = true;
-                                console.log('✅ Daily reward flag set');
-                            } else {
-                                console.log('ℹ️ Mining just completed - daily reward will show on next app open');
-                            }
+                            // ✅ STARTUP DURUMUNDA GÖSTER (completeMineOnStartup'tan geliyorsa)
+                            // isCompletingMining sadece timer callback için geçerli
+                            dailyRewardAvailable = true;
+                            console.log('✅ Daily reward flag set');
                         } else {
                             console.log('🚫 Daily reward recently claimed, skipping');
                         }
@@ -4182,7 +4179,7 @@ window.__resetEmail = email;
                     }
                 }
                 
-                // Hamburger button güncelle - CLASS KULLAN (inline style değil)
+                // Hamburger button güncelle - CLASS KULLAN
                 if (hasNewAnnouncementsGlobal || hasAirdropsGlobal) {
                     menuButton.classList.add('menu-btn-highlight');
                 } else {
