@@ -5111,8 +5111,7 @@ window.__resetEmail = email;
         function claimDailyRewardUI() {
             isClaimingDaily = true;
             
-            const rewardAmount = 5;
-            d.balance += rewardAmount;
+            // Balance artırma! Backend artıracak
             dailyRewardAvailable = false;
             
             render();
@@ -5137,17 +5136,15 @@ window.__resetEmail = email;
                 console.log('✅ Daily reward backend tamamlandı:', data);
 
                 if (response.ok && data.reward) {
-                    // Backend'den gelen değeri KULLANMA (zaten UI'da +5 ekledik)
-                    // Sadece localStorage'ı sync et
-                    currentUser.balance = data.newBalance || d.balance;
+                    // Backend'den gelen balance'ı KULLAN
+                    d.balance = data.newBalance;
+                    currentUser.balance = data.newBalance;
                     localStorage.setItem('currentUser', JSON.stringify(currentUser));
                     
                     save();
+                    render(); // Balance güncellensin
                     
-                    // Pending rewards'ı yenile (render YAPMA, zaten yapıldı)
-                    await new Promise(resolve => setTimeout(resolve, 1500));
-                    await initApp();
-                    // render() KALDIRDIM - zaten UI güncellendi
+                    console.log('✅ Daily reward synced:', data.newBalance);
                 }
             } catch (err) {
                 console.error('❌ Daily reward backend failed:', err);
