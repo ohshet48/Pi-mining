@@ -6729,14 +6729,21 @@ window.__resetEmail = email;
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     const title = data.title || 'Announcement';
-                    const message = data.message || '';
+                    let message = data.message || '';
                     const date = data.date || '';
                     let link = data.link || '';
                     
-                    // Eğer link yoksa ama message URL ise, onu kullan
-                    if (!link && message.startsWith('http')) {
-                        link = message;
+                    // Eğer link yoksa ama message'da URL varsa, onu çıkar
+                    if (!link) {
+                        // Mesajda http/https linki var mı ara
+                        const urlMatch = message.match(/(https?:\/\/[^\s]+)/);
+                        if (urlMatch) {
+                            link = urlMatch[0];
+                        }
                     }
+                    
+                    // Newline'ları <br> yap (\n veya \r\n)
+                    message = message.replace(/\r\n|\r|\n/g, '<br>');
                     
                     html += `
                         <div style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);">
