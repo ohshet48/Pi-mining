@@ -3792,9 +3792,11 @@ window.__resetEmail = email;
             // Process Airdrops (cache for airdrop page)
             window.cachedAirdrops = allData.airdrops || [];
             window.cachedTotalAirdropAmount = allData.totalAirdropAmount || 0;
+            window.cachedAirdropHistory = allData.airdropHistory || [];
             console.log('✅ Airdrops loaded:', {
                 count: window.cachedAirdrops.length,
-                total: window.cachedTotalAirdropAmount
+                total: window.cachedTotalAirdropAmount,
+                history: window.cachedAirdropHistory.length
             });
             
             // Process Referral Counts (no detailed list - modal will fetch that)
