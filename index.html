@@ -3466,6 +3466,10 @@ window.__resetEmail = email;
             localStorage.removeItem('hasNewAirdrops_' + userId);
             localStorage.removeItem('lastViewedAnnouncements_' + userId);
             
+            // 6.5. Airdrop cache
+            localStorage.removeItem('last5Airdrops_' + userId);
+            localStorage.removeItem('cachedTotalAirdrop_' + userId);
+            
             // 7. Leaderboard cache (global)
             cachedLeaderboardData = null;
             localStorage.removeItem('leaderboard_cache');
@@ -4845,37 +4849,35 @@ window.__resetEmail = email;
             // ⚡ BACKEND'E HEMEN İSTEK GÖNDER (0. saniye)
             console.log('🚀 Backend isteği GÖNDERİLİYOR (HEMEN)...');
             
-            // setTimeout(0) ile event queue'ya HEMEN ekle
-            setTimeout(() => {
-                fetch(API_ENDPOINTS.startMining, {
-                    method: 'POST',
-                    headers: getApiHeaders(),
-                    body: JSON.stringify({
-                        userId: currentUser.userId,
-                        level: d.level
-                    })
-                }).then(response => {
-                    if (response.ok) {
-                        return response.json();
-                    } else if (response.status === 400) {
-                        return response.json();
-                    }
-                    throw new Error('Backend request failed');
-                }).then(data => {
-                    console.log('✅ Backend mining başlatıldı:', data);
-                    if (data.session) {
-                        localStorage.setItem('currentSessionId_' + currentUser.email, data.session.sessionId);
-                        activeMiningSession = {
-                            sessionId: data.session.sessionId,
-                            adBoostCount: 0,
-                            adBoostActive: false,
-                            adBoostTotal: 0
-                        };
-                    }
-                }).catch(err => {
-                    console.error('❌ Backend mining start failed:', err);
-                });
-            }, 0); // 0ms delay = event queue'ya HEMEN ekle
+            // Fetch HEMEN gidiyor (setTimeout YOK!)
+            fetch(API_ENDPOINTS.startMining, {
+                method: 'POST',
+                headers: getApiHeaders(),
+                body: JSON.stringify({
+                    userId: currentUser.userId,
+                    level: d.level
+                })
+            }).then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else if (response.status === 400) {
+                    return response.json();
+                }
+                throw new Error('Backend request failed');
+            }).then(data => {
+                console.log('✅ Backend mining başlatıldı:', data);
+                if (data.session) {
+                    localStorage.setItem('currentSessionId_' + currentUser.email, data.session.sessionId);
+                    activeMiningSession = {
+                        sessionId: data.session.sessionId,
+                        adBoostCount: 0,
+                        adBoostActive: false,
+                        adBoostTotal: 0
+                    };
+                }
+            }).catch(err => {
+                console.error('❌ Backend mining start failed:', err);
+            });
             
             // 🎬 GÖRSEL GERİ SAYIM (3-2-1)
             let countdown = 3;
@@ -5119,7 +5121,9 @@ window.__resetEmail = email;
         
         // Backend isteği (arka planda)
         async function claimDailyRewardBackend() {
+            console.log('📡 [DEBUG] claimDailyRewardBackend BAŞLADI');
             try {
+                console.log('📡 [DEBUG] Fetch GÖNDERİLİYOR:', API_ENDPOINTS.claimDailyReward);
                 const response = await fetch(API_ENDPOINTS.claimDailyReward, {
                     method: 'POST',
                     headers: getApiHeaders(),
@@ -5128,20 +5132,22 @@ window.__resetEmail = email;
                     })
                 });
 
+                console.log('📡 [DEBUG] Fetch CEVAP GELDİ:', response.status);
                 const data = await response.json().catch(() => ({}));
                 console.log('✅ Daily reward backend tamamlandı:', data);
 
                 if (response.ok && data.reward) {
-                    d.balance = data.newBalance || d.balance;
-                    currentUser.balance = d.balance;
-                    
-                    save();
+                    // Backend'den gelen değeri KULLANMA (zaten UI'da +5 ekledik)
+                    // Sadece localStorage'ı sync et
+                    currentUser.balance = data.newBalance || d.balance;
                     localStorage.setItem('currentUser', JSON.stringify(currentUser));
                     
-                    // Pending rewards'ı yenile
+                    save();
+                    
+                    // Pending rewards'ı yenile (render YAPMA, zaten yapıldı)
                     await new Promise(resolve => setTimeout(resolve, 1500));
                     await initApp();
-                    render();
+                    // render() KALDIRDIM - zaten UI güncellendi
                 }
             } catch (err) {
                 console.error('❌ Daily reward backend failed:', err);
@@ -6701,11 +6707,27 @@ window.__resetEmail = email;
                     const title = data.title || 'Announcement';
                     const message = data.message || '';
                     const date = data.date || '';
+                    const link = data.link || ''; // Link field
                     
                     html += `
                         <div style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);">
                             <div style="color: #00ffff; font-size: 16px; font-weight: 800; margin-bottom: 10px;">${title}</div>
-                            <div style="color: rgba(255, 255, 255, 0.85); font-size: 14px; line-height: 1.5; margin-bottom: 10px;">${message}</div>
+                            <div style="color: rgba(255, 255, 255, 0.85); font-size: 14px; line-height: 1.5; margin-bottom: ${link ? '12px' : '10px'};">${message}</div>
+                            ${link ? `
+                                <button onclick="openExternalLink('${link}')" style="
+                                    width: 100%;
+                                    padding: 12px 24px;
+                                    background: linear-gradient(135deg, #00ffff, #0088cc);
+                                    border: none;
+                                    border-radius: 12px;
+                                    color: #000;
+                                    font-size: 14px;
+                                    font-weight: 700;
+                                    cursor: pointer;
+                                    box-shadow: 0 4px 20px rgba(0, 255, 255, 0.4);
+                                    margin-bottom: 10px;
+                                ">GO</button>
+                            ` : ''}
                             <div style="color: rgba(139, 92, 246, 0.7); font-size: 11px; font-weight: 600;">${date}</div>
                         </div>
                     `;
@@ -6732,12 +6754,26 @@ window.__resetEmail = email;
         
         async function getAirdropPageContent() {
             try {
-                // Backend'den airdrops verisi gelecek (initApp'de zaten çekildi)
-                // Eğer yoksa backend'e istek at
+                // 1. Önce localStorage'dan son 5 airdrop'u oku (hızlı göster)
+                const cachedAirdrops = localStorage.getItem('last5Airdrops_' + currentUser.userId);
+                const cachedTotal = localStorage.getItem('cachedTotalAirdrop_' + currentUser.userId);
+                
                 let airdropsData = window.cachedAirdrops || null;
                 let totalAmount = window.cachedTotalAirdropAmount || 0;
                 
-                if (!airdropsData) {
+                // 2. Cache varsa hemen göster
+                if (cachedAirdrops && !airdropsData) {
+                    try {
+                        airdropsData = JSON.parse(cachedAirdrops);
+                        totalAmount = parseFloat(cachedTotal || '0');
+                        console.log('📦 Showing cached airdrops (last 5)');
+                    } catch (e) {
+                        console.error('Failed to parse cached airdrops:', e);
+                    }
+                }
+                
+                // 3. Backend'den güncel veriyi çek
+                if (!window.cachedAirdrops) {
                     // Backend'den çek
                     const response = await fetch(API_ENDPOINTS.getAllUserData, {
                         method: 'POST',
@@ -6750,12 +6786,18 @@ window.__resetEmail = email;
                         airdropsData = data.airdrops || [];
                         totalAmount = data.totalAirdropAmount || 0;
                         
-                        // Cache et
+                        // Memory cache
                         window.cachedAirdrops = airdropsData;
                         window.cachedTotalAirdropAmount = totalAmount;
+                        
+                        // 4. Son 5 airdrop'u localStorage'a kaydet
+                        const last5 = airdropsData.slice(0, 5);
+                        localStorage.setItem('last5Airdrops_' + currentUser.userId, JSON.stringify(last5));
+                        localStorage.setItem('cachedTotalAirdrop_' + currentUser.userId, totalAmount.toString());
+                        console.log('💾 Saved last 5 airdrops to localStorage');
                     } else {
-                        airdropsData = [];
-                        totalAmount = 0;
+                        airdropsData = airdropsData || [];
+                        totalAmount = totalAmount || 0;
                     }
                 }
                 
