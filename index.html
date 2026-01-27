@@ -4258,6 +4258,8 @@ window.__resetEmail = email;
             if (isClaimingLevel) return;
             if (!d.pendingLevelUp) return;
             
+            levelRewardUICompleted = false;  // Flag sıfırla
+            
             const btn = document.querySelector('.reward-claim-btn');
             if (!btn) return;
             
@@ -4287,22 +4289,20 @@ window.__resetEmail = email;
             }, 1000);
         }
         
-        // UI güncelleme (sadece görsel)
+        // UI güncelleme (3. saniyede)
         function claimLevelRewardUI() {
             if (!d.pendingLevelUp) return;
             
             const claimedLevel = d.pendingLevelUp;
             const levelReward = levelRewards[claimedLevel];
             
-            d.balance += levelReward.coins;
-            d.rate += levelReward.rate;
+            levelRewardUICompleted = true;  // Flag: UI tamamlandı!
+            
+            // Balance/rate ARTIRMA! Backend artıracak
             d.level = claimedLevel;
             d.pendingLevelUp = null;
             
-            currentUser.balance = d.balance;
-            currentUser.rate = d.rate;
             currentUser.level = claimedLevel;
-            
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             
             render();
@@ -4310,6 +4310,8 @@ window.__resetEmail = email;
         }
         
         // Backend isteği (arka planda)
+        let levelRewardUICompleted = false;  // Flag: UI tamamlandı mı?
+        
         async function claimLevelRewardBackend() {
             if (!d.pendingLevelUp) return;
             
@@ -4332,7 +4334,9 @@ window.__resetEmail = email;
                 const data = await response.json();
                 console.log('✅ Level reward backend tamamlandı:', data);
                 
-                // Backend'den gelen değerleri sync et
+                // Backend'den gelen değerleri KULLAN
+                d.balance = data.balance;
+                d.rate = data.rate;
                 currentUser.balance = data.balance;
                 currentUser.rate = data.rate;
                 
@@ -4344,6 +4348,14 @@ window.__resetEmail = email;
                 }
                 
                 localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                
+                // Eğer UI tamamlandıysa (3 saniye geçti), render et
+                if (levelRewardUICompleted) {
+                    render();
+                    console.log('✅ Level reward backend geç geldi, render yapıldı');
+                } else {
+                    console.log('✅ Level reward backend erken geldi, render bekliyor');
+                }
                 
             } catch (error) {
                 console.error('❌ Level reward backend failed:', error);
@@ -5079,6 +5091,8 @@ window.__resetEmail = email;
             if (isClaimingDaily) return;
             if (!dailyRewardAvailable) return;
             
+            dailyRewardUICompleted = false;  // Flag sıfırla
+            
             const btn = document.querySelector('.reward-claim-btn[onclick*="claimDailyReward"]');
             if (!btn) return;
             
@@ -5110,6 +5124,7 @@ window.__resetEmail = email;
         // UI güncelleme (3. saniyede)
         function claimDailyRewardUI() {
             isClaimingDaily = true;
+            dailyRewardUICompleted = true;  // Flag: UI tamamlandı!
             
             // Backend artırdı, dailyRewardAvailable'ı kapat
             dailyRewardAvailable = false;
@@ -5122,6 +5137,8 @@ window.__resetEmail = email;
         }
         
         // Backend isteği (arka planda)
+        let dailyRewardUICompleted = false;  // Flag: UI tamamlandı mı?
+        
         async function claimDailyRewardBackend() {
             console.log('📡 [DEBUG] claimDailyRewardBackend BAŞLADI');
             try {
@@ -5145,9 +5162,14 @@ window.__resetEmail = email;
                     localStorage.setItem('currentUser', JSON.stringify(currentUser));
                     
                     save();
-                    // render() YAPMA! Countdown bitince render edilecek
                     
-                    console.log('✅ Daily reward synced:', data.newBalance, '(render yok, countdown bitince olacak)');
+                    // Eğer UI tamamlandıysa (3 saniye geçti), render et
+                    if (dailyRewardUICompleted) {
+                        render();
+                        console.log('✅ Backend geç geldi, render yapıldı:', data.newBalance);
+                    } else {
+                        console.log('✅ Backend erken geldi, render bekliyor (countdown bitince):', data.newBalance);
+                    }
                 }
             } catch (err) {
                 console.error('❌ Daily reward backend failed:', err);
