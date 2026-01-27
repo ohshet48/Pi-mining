@@ -4182,12 +4182,11 @@ window.__resetEmail = email;
                     }
                 }
                 
-                // Hamburger button güncelle
+                // Hamburger button güncelle - CLASS KULLAN (inline style değil)
                 if (hasNewAnnouncementsGlobal || hasAirdropsGlobal) {
-                    menuButton.style.cssText = 'border: 2px solid #10b981 !important; box-shadow: 0 0 15px rgba(16, 185, 129, 0.5) !important;';
+                    menuButton.classList.add('menu-btn-highlight');
                 } else {
-                    menuButton.style.border = '';
-                    menuButton.style.boxShadow = '';
+                    menuButton.classList.remove('menu-btn-highlight');
                 }
             } catch (error) {
                 console.error('Error updating menu notifications:', error);
