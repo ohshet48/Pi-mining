@@ -5107,15 +5107,18 @@ window.__resetEmail = email;
             }, 1000);
         }
         
-        // UI güncelleme (sadece görsel)
+        // UI güncelleme (3. saniyede)
         function claimDailyRewardUI() {
             isClaimingDaily = true;
             
-            // Balance artırma! Backend artıracak
+            // Backend artırdı, dailyRewardAvailable'ı kapat
             dailyRewardAvailable = false;
             
+            // Balance backend'den gelmiş olabilir, render et
             render();
             showToast('✓ Claimed +5 Coins daily reward!');
+            
+            console.log('✅ 3 saniye bitti - UI güncellendi, buton kapandı');
         }
         
         // Backend isteği (arka planda)
@@ -5142,9 +5145,9 @@ window.__resetEmail = email;
                     localStorage.setItem('currentUser', JSON.stringify(currentUser));
                     
                     save();
-                    render(); // Balance güncellensin
+                    // render() YAPMA! Countdown bitince render edilecek
                     
-                    console.log('✅ Daily reward synced:', data.newBalance);
+                    console.log('✅ Daily reward synced:', data.newBalance, '(render yok, countdown bitince olacak)');
                 }
             } catch (err) {
                 console.error('❌ Daily reward backend failed:', err);
