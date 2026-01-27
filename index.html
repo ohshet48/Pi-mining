@@ -4948,12 +4948,12 @@ window.__resetEmail = email;
         // Mining UI'ını başlat (sadece görsel)
         function startMineUI() {
             const now = Date.now();
-            const miningDuration = 1 * 60 * 1000; // 1 dakika (TEST MODE)
+            const miningDuration = 24 * 60 * 60 * 1000; // 24 saat
             const end = now + miningDuration;
             
             // OPTIMISTIC UI: Update UI IMMEDIATELY (0ms delay)
             d.mining = true;
-            d.timeLeft = 60; // 1 dakika = 60 saniye (TEST MODE)
+            d.timeLeft = 86400; // 24 saat = 86400 saniye
             
             const today = new Date().toDateString();
             if (d.lastDate) {
