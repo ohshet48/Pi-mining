@@ -6729,7 +6729,12 @@ window.__resetEmail = email;
                     const title = data.title || 'Announcement';
                     const message = data.message || '';
                     const date = data.date || '';
-                    const link = data.link || ''; // Link field
+                    let link = data.link || '';
+                    
+                    // Eğer link yoksa ama message URL ise, onu kullan
+                    if (!link && message.startsWith('http')) {
+                        link = message;
+                    }
                     
                     html += `
                         <div style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);">
@@ -6883,8 +6888,16 @@ window.__resetEmail = email;
                 html += '</div>'; // Close airdrops list
                 
                 // 📜 AIRDROP HISTORY
-                const airdropHistory = window.cachedAirdropHistory || [];
+                let airdropHistory = window.cachedAirdropHistory || [];
+                
+                // Tarihe göre sırala (yeniden eskiye)
                 if (airdropHistory.length > 0) {
+                    airdropHistory = airdropHistory.sort((a, b) => {
+                        const timeA = a.createdAt ? (a.createdAt.toDate ? a.createdAt.toDate().getTime() : a.createdAt._seconds * 1000) : 0;
+                        const timeB = b.createdAt ? (b.createdAt.toDate ? b.createdAt.toDate().getTime() : b.createdAt._seconds * 1000) : 0;
+                        return timeB - timeA; // Yeniden eskiye
+                    });
+                    
                     html += `
                         <div style="margin-top: 24px; padding: 0 20px;">
                             <h3 style="color: rgba(255, 255, 255, 0.6); font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Recent History</h3>
