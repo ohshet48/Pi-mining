@@ -9454,14 +9454,18 @@ try {
                         
                         console.log('✅ Backend confirmed claim:', data.totalClaimed);
                         
-                        // Clear airdrops cache
-                        window.cachedAirdrops = [];
+                        // Clear ALL airdrop cache
+                        window.cachedAirdrops = null;  // null yap ki tekrar çeksin
+                        window.cachedAirdropHistory = null;
                         window.cachedTotalAirdropAmount = 0;
+                        
+                        // Backend'den fresh data çek
+                        await initApp();
                         
                         // Update menu notification (remove green border)
                         await checkNotifications();
                         
-                        // Reload page to show "No Airdrops" message
+                        // Reload page to show updated airdrops/history
                         const pageContent = document.getElementById('fullPageContent');
                         if (pageContent) {
                             const html = await getAirdropPageContent();
