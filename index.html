@@ -622,6 +622,45 @@
             background: linear-gradient(135deg, #10b981, #059669) !important;
         }
         
+        /* Notification Bell Icon */
+        .menu-notification-bell {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.6);
+            animation: bellPulse 2s ease-in-out infinite;
+            z-index: 1;
+        }
+        
+        .menu-btn-highlight .menu-notification-bell {
+            display: flex;
+        }
+        
+        .menu-notification-bell::before {
+            content: '🔔';
+            font-size: 11px;
+            display: block;
+            transform: translateY(-0.5px);
+        }
+        
+        @keyframes bellPulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 15px rgba(16, 185, 129, 0.6);
+            }
+            50% {
+                transform: scale(1.1);
+                box-shadow: 0 0 25px rgba(16, 185, 129, 0.8);
+            }
+        }
+        
         /* Menu Sidebar */
         .menu-sidebar {
             position: fixed;
@@ -4569,6 +4608,7 @@ window.__resetEmail = email;
                         <span></span>
                         <span></span>
                         <span></span>
+                        <div class="menu-notification-bell"></div>
                     </button>
                 </div>
 
