@@ -4645,7 +4645,11 @@ window.__resetEmail = email;
                                 <svg viewBox="0 0 150 150">
                                     <circle class="timer-bg" cx="75" cy="75" r="70"/>
                                     <circle id="timerProgressCircle" class="timer-progress" cx="75" cy="75" r="70" stroke-dasharray="440" 
-                                        stroke-dashoffset="${440 - ((60 - d.timeLeft) / 60) * 440}"/>
+                                        stroke-dashoffset="${(() => {
+                                            const miningDuration = localStorage.getItem('miningDuration_' + currentUser.email) || 86400000;
+                                            const totalSeconds = parseInt(miningDuration) / 1000;
+                                            return 440 - ((totalSeconds - d.timeLeft) / totalSeconds) * 440;
+                                        })()}"/>
                                 </svg>
                                 <div class="timer-icon">
                                     <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5">
@@ -4658,7 +4662,7 @@ window.__resetEmail = email;
                             <p class="timer-label">Time Remaining</p>
                             <div class="earning-box">
                                 <p class="earning-text">Target: <span class="earning-amount">${(() => {
-                                    const miningDuration = localStorage.getItem('miningDuration_' + currentUser.email) || 60000; // Default 1 dakika (TEST MODE)
+                                    const miningDuration = localStorage.getItem('miningDuration_' + currentUser.email) || 86400000; // Default 24 saat
                                     const hours = parseInt(miningDuration) / (1000 * 60 * 60);
                                     return (d.rate * hours).toFixed(2);
                                 })()} <span style="font-size: 14px;">ARCASTRA</span></span></p>
@@ -5618,7 +5622,9 @@ window.__resetEmail = email;
             }
             
             if (progressCircle) {
-                const offset = 440 - ((60 - d.timeLeft) / 60) * 440;
+                const miningDuration = localStorage.getItem('miningDuration_' + currentUser.email) || 86400000;
+                const totalSeconds = parseInt(miningDuration) / 1000;
+                const offset = 440 - ((totalSeconds - d.timeLeft) / totalSeconds) * 440;
                 progressCircle.setAttribute('stroke-dashoffset', offset);
             }
         }
