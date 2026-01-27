@@ -7841,7 +7841,7 @@ window.__resetEmail = email;
                 { 
                     id: 'twitter_rt', 
                     name: 'X (Twitter) RT', 
-                    url: 'https://x.com/arcastranetwork',
+                    url: 'https://x.com/i/status/2007067048229196255',
                     svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>'
                 }
             ];
@@ -7894,7 +7894,7 @@ window.__resetEmail = email;
                                         <div>
                                             <div style="color: #fff; font-size: 16px; font-weight: 700; margin-bottom: 4px;">${task.name}</div>
                                             <div style="color: ${isCompleted ? '#00ff00' : '#00ffff'}; font-size: 13px; font-weight: 600;">
-                                                ${isCompleted ? '✅ Completed +10' : (task.id === 'twitter_rt' ? 'RT • Progress +10' : 'Follow us • Progress +5')}
+                                                ${isCompleted ? '✅ Completed +5' : 'RT • Progress +5'}
                                             </div>
                                         </div>
                                     </div>
@@ -8012,7 +8012,7 @@ window.__resetEmail = email;
             isProcessingTask = true;
             
             const buttonContainer = document.getElementById('taskButton_' + taskId);
-            const reward = taskId === 'twitter_rt' ? 10 : 5; // Twitter RT = 10, diğerleri = 5
+            const reward = 5; // Tüm tasklar +5
             
             // Update UI immediately (optimistic update)
             if (buttonContainer) {
