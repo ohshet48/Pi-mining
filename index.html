@@ -7942,7 +7942,7 @@ window.__resetEmail = email;
                                         <div>
                                             <div style="color: #fff; font-size: 16px; font-weight: 700; margin-bottom: 4px;">${task.name}</div>
                                             <div style="color: ${isCompleted ? '#00ff00' : '#00ffff'}; font-size: 13px; font-weight: 600;">
-                                                ${isCompleted ? '✅ Completed +5' : 'RT • Progress +5'}
+                                                ${isCompleted ? '✅ Completed +5' : (task.id === 'twitter_rt' ? 'RT • Progress +5' : 'Follow us • Progress +5')}
                                             </div>
                                         </div>
                                     </div>
