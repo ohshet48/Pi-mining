@@ -2111,7 +2111,6 @@ const API_ENDPOINTS = {
   sendMiningNotification: `${FUNCTIONS_BASE_URL}/sendMiningNotification`,
   updateLevel: `${FUNCTIONS_BASE_URL}/updateLevel`,
   claimLevelReward: `${FUNCTIONS_BASE_URL}/claimLevelReward`,
-  claimDailyReward: `${FUNCTIONS_BASE_URL}/claimDailyReward`,
   claimReferralEarnings: `${FUNCTIONS_BASE_URL}/claimReferralEarnings`,
   claimAirdrops: `${FUNCTIONS_BASE_URL}/claimAirdrops`,
   getReferrals: `${FUNCTIONS_BASE_URL}/getReferrals`,
@@ -3862,17 +3861,7 @@ window.__resetEmail = email;
                 
                 // Restore flags from pending rewards
                 for (const reward of pendingRewardsData) {
-                    if (reward.rewardType === 'daily') {
-                        // Don't show if recently claimed in this session
-                        if (!recentlyClaimed) {
-                            // ✅ STARTUP DURUMUNDA GÖSTER (completeMineOnStartup'tan geliyorsa)
-                            // isCompletingMining sadece timer callback için geçerli
-                            dailyRewardAvailable = true;
-                            console.log('✅ Daily reward flag set');
-                        } else {
-                            console.log('🚫 Daily reward recently claimed, skipping');
-                        }
-                    } else if (reward.rewardType === 'levelUp') {
+                    if (reward.rewardType === 'levelUp') {
                         const metadata = reward.metadata || {};
                         const level = metadata.level || (currentUser.level + 1);
                         
@@ -4004,17 +3993,8 @@ window.__resetEmail = email;
             // Check for pending airdrops
             hasPendingAirdrops = (currentUser.pendingAirdrops && currentUser.pendingAirdrops.length > 0) || false;
             
-            // Set dailyRewardAvailable - ONLY use pending rewards system
-            // Backend's dailyRewardAvailable may be stale, so ignore it
-            // If there's a pending daily reward → available = true
-            // If no pending daily reward → available = false
-            const hasPendingDaily = pendingRewardsData.some(r => r.rewardType === 'daily');
-            dailyRewardAvailable = hasPendingDaily;
-            
             console.log('🎁 Pending rewards check:', {
                 totalPendingRewards: pendingRewardsData.length,
-                hasPendingDaily: hasPendingDaily,
-                dailyRewardAvailable: dailyRewardAvailable,
                 allRewards: pendingRewardsData.map(r => ({ type: r.rewardType, amount: r.amount }))
             });
             
@@ -4774,11 +4754,11 @@ window.__resetEmail = email;
                                         <circle cx="50" cy="35" r="5" stroke="#00d4d4" stroke-width="3" fill="none"/>
                                     </svg>
                                 </div>
-                                ${dailyRewardAvailable ? '<div style="color: #fbbf24; font-size: 12px; font-weight: 700;">+5 <span style="font-size: 9px; color: rgba(255, 255, 255, 0.6); font-weight: 600;">ARCASTRA</span></div>' : ''}
+                                ${dailyRewardAvailable ? '<div style="color: rgba(255, 255, 255, 0.7); font-size: 8px; font-weight: 600; text-align: center; line-height: 1.3; margin-top: 2px;">Daily bonus added to<br>your account.<br><span style="color: #fbbf24; font-size: 9px; font-weight: 700;">+5 ARCASTRA</span></div>' : ''}
                             </div>
                             ${dailyRewardAvailable ? `
-                                <button class="reward-claim-btn" onclick="claimDailyRewardWithCountdown()">
-                                    <span>CLAIM REWARD</span>
+                                <button class="reward-claim-btn" onclick="dismissDailyReward()" style="background: linear-gradient(135deg, #10b981, #059669); cursor: pointer;">
+                                    <span>✓ DONE</span>
                                 </button>
                             ` : ''}
                         </div>
@@ -5072,33 +5052,16 @@ window.__resetEmail = email;
             // ✅ Set flag to prevent initApp from showing rewards immediately
             isCompletingMining = true;
             
-            // ✅ Pending daily reward oluştur (yoksa)
+            // ✅ Show daily reward notification (no backend call needed)
             const sessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
+            const dismissKey = `dailyRewardDismissed_${currentUser.userId}_${sessionId}`;
             
-            // Kontrol: Zaten pending daily reward var mı?
-            const hasPendingDaily = pendingRewardsData.some(r => r.rewardType === 'daily' && !r.claimed);
-            
-            if (!hasPendingDaily) {
-                try {
-                    await fetch(API_ENDPOINTS.addPendingReward, {
-                        method: 'POST',
-                        headers: getApiHeaders(),
-                        body: JSON.stringify({
-                            userId: currentUser.userId,
-                            rewardType: 'daily',
-                            amount: 5,
-                            metadata: {
-                                source: 'session_completion',
-                                sessionId: sessionId || 'unknown'
-                            }
-                        })
-                    });
-                    console.log('✅ Pending daily reward created');
-                } catch(err) {
-                    console.error('❌ Failed to create pending reward:', err);
-                }
+            // Only show if not dismissed for this session
+            if (!localStorage.getItem(dismissKey)) {
+                dailyRewardAvailable = true;
+                console.log('✅ Daily reward notification enabled');
             } else {
-                console.log('ℹ️ Pending daily reward already exists, skipping');
+                console.log('ℹ️ Daily reward already dismissed for this session');
             }
             
             // Clear referrals cache - mining status changed!
@@ -5290,6 +5253,21 @@ window.__resetEmail = email;
                     isClaimingDaily = false;
                 }
             })();
+        }
+
+        // Dismiss daily reward notification (no backend call)
+        function dismissDailyReward() {
+            if (!currentUser || !currentUser.userId) return;
+            
+            // Get current session ID
+            const sessionId = d.sessionId || localStorage.getItem('currentSessionId_' + currentUser.email) || 'unknown';
+            localStorage.setItem(`dailyRewardDismissed_${currentUser.userId}_${sessionId}`, 'true');
+            
+            // Hide the card
+            dailyRewardAvailable = false;
+            render();
+            
+            console.log('✅ Daily reward notification dismissed (informational only - no backend action)');
         }
 
         function claimBonus() {
@@ -5548,33 +5526,16 @@ window.__resetEmail = email;
             d.mining = false;
             d.timeLeft = 0;
             
-            // ✅ Pending daily reward oluştur (yoksa)
+            // ✅ Show daily reward notification (no backend call needed)
             const sessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
+            const dismissKey = `dailyRewardDismissed_${currentUser.userId}_${sessionId}`;
             
-            // Kontrol: Zaten pending daily reward var mı?
-            const hasPendingDaily = pendingRewardsData.some(r => r.rewardType === 'daily' && !r.claimed);
-            
-            if (!hasPendingDaily) {
-                try {
-                    await fetch(API_ENDPOINTS.addPendingReward, {
-                        method: 'POST',
-                        headers: getApiHeaders(),
-                        body: JSON.stringify({
-                            userId: currentUser.userId,
-                            rewardType: 'daily',
-                            amount: 5,
-                            metadata: {
-                                source: 'session_completion_startup',
-                                sessionId: sessionId || 'unknown'
-                            }
-                        })
-                    });
-                    console.log('✅ Pending daily reward created on startup');
-                } catch(err) {
-                    console.error('❌ Failed to create pending reward on startup:', err);
-                }
+            // Only show if not dismissed for this session
+            if (!localStorage.getItem(dismissKey)) {
+                dailyRewardAvailable = true;
+                console.log('✅ Daily reward notification enabled on startup');
             } else {
-                console.log('ℹ️ Pending daily reward already exists, skipping');
+                console.log('ℹ️ Daily reward already dismissed for this session');
             }
             
             localStorage.removeItem('miningEndTime_' + currentUser.email);
@@ -5595,19 +5556,16 @@ window.__resetEmail = email;
                     currentUser = users[userEmail];
                 }
             } catch(e) {}
-
+            
             // Reload user data (this will fetch daily reward if available)
             await initApp();
-            
-            // ✅ Daily reward'ı aktif et
-            dailyRewardAvailable = true;
             
             // ✅ Level kontrolü yap (miningDays arttı, level up olmuş olabilir)
             await checkLevelUp();
             
             render();
             
-            console.log('✅ Daily reward activated on startup');
+            console.log('✅ Daily reward check completed on startup');
         }
 
         let timerStarted = false;
