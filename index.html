@@ -3987,7 +3987,18 @@ window.__resetEmail = email;
                 mining: false,
                 timeLeft: 0,
                 miningDays: currentUser.miningDays || 0,
-                levelUpNotification: currentUser.levelUpNotification || null,
+                levelUpNotification: (() => {
+                    const notification = currentUser.levelUpNotification || null;
+                    if (notification) {
+                        // Check if already dismissed
+                        const dismissKey = `levelRewardDismissed_${currentUser.userId}_${notification.level}`;
+                        if (localStorage.getItem(dismissKey)) {
+                            console.log('🚫 Level', notification.level, 'reward already dismissed');
+                            return null;
+                        }
+                    }
+                    return notification;
+                })(),
                 pendingReferralEarnings: currentUser.pendingReferralEarnings || 0
             };
             
