@@ -2110,7 +2110,6 @@ const API_ENDPOINTS = {
   sendMiningNotification: `${FUNCTIONS_BASE_URL}/sendMiningNotification`,
   updateLevel: `${FUNCTIONS_BASE_URL}/updateLevel`,
   claimLevelReward: `${FUNCTIONS_BASE_URL}/claimLevelReward`,
-  claimReferralEarnings: `${FUNCTIONS_BASE_URL}/claimReferralEarnings`,
   claimAirdrops: `${FUNCTIONS_BASE_URL}/claimAirdrops`,
   getReferrals: `${FUNCTIONS_BASE_URL}/getReferrals`,
   getActiveReferrals: `${FUNCTIONS_BASE_URL}/getActiveReferrals`,
@@ -3998,7 +3997,18 @@ window.__resetEmail = email;
                     }
                     return notification;
                 })(),
-                pendingReferralEarnings: currentUser.pendingReferralEarnings || 0
+                referralNotification: (() => {
+                    const notification = currentUser.referralNotification || null;
+                    if (notification) {
+                        // Check if already dismissed
+                        const dismissKey = `referralRewardDismissed_${currentUser.userId}`;
+                        if (localStorage.getItem(dismissKey)) {
+                            console.log('🚫 Referral reward already dismissed');
+                            return null;
+                        }
+                    }
+                    return notification;
+                })()
             };
             
             // Calculate active mining referrals
@@ -4754,13 +4764,14 @@ window.__resetEmail = email;
                         `}
                     </div>
 
-                    ${(d.pendingReferralEarnings && d.pendingReferralEarnings > 0) ? `
+                    ${d.referralNotification ? `
                         <div class="stat reward-available">
                             <div style="text-align: center; padding: 16px 8px 12px; position: relative; min-height: 140px;">
-                                <div style="color: white; font-size: 12px; font-weight: 700; margin-bottom: 6px; line-height: 1.3;">🎉 Congratulations!<br>Referral reward earned!</div>
-                                <div style="color: #fbbf24; font-size: 14px; font-weight: 700; margin-bottom: 8px; white-space: nowrap; overflow: visible;">+${d.pendingReferralEarnings} <span style="font-size: 11px; color: rgba(255, 255, 255, 0.6); font-weight: 600;">Coins</span></div>
-                                <button onclick="claimReferralEarnings()" style="position: absolute; bottom: 5px; left: 8px; right: 8px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 8px; padding: 8px; color: white; font-size: 13px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);">
-                                    CLAIM REWARD
+                                <div style="color: white; font-size: 12px; font-weight: 700; margin-bottom: 6px; line-height: 1.3;">Congratulations!<br>Referral reward earned!</div>
+                                <div style="color: rgba(255, 255, 255, 0.7); font-size: 9px; font-weight: 600; margin-top: 6px; margin-bottom: 4px; line-height: 1.3;">You Reward added your account.</div>
+                                <div style="color: #fbbf24; font-size: 14px; font-weight: 700; margin-bottom: 8px; white-space: nowrap; overflow: visible;">+${d.referralNotification.amount} ARCASTRA</div>
+                                <button onclick="dismissReferralReward()" style="position: absolute; bottom: 5px; left: 8px; right: 8px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 8px; padding: 8px; color: white; font-size: 13px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);">
+                                    ✓ DONE
                                 </button>
                             </div>
                         </div>
@@ -5353,6 +5364,25 @@ window.__resetEmail = email;
                 render();
                 
                 console.log('✅ Level reward notification dismissed (informational only - level', level, ')');
+            }
+        }
+
+        // Dismiss referral reward notification (no backend call, just close the card)
+        function dismissReferralReward() {
+            if (!currentUser || !currentUser.userId) return;
+            
+            if (d.referralNotification) {
+                // Mark as dismissed in localStorage
+                localStorage.setItem(`referralRewardDismissed_${currentUser.userId}`, 'true');
+                
+                // Hide the card
+                d.referralNotification = null;
+                currentUser.referralNotification = null;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                
+                render();
+                
+                console.log('✅ Referral reward notification dismissed (informational only)');
             }
         }
 
@@ -7753,89 +7783,6 @@ window.__resetEmail = email;
             openPage('referrals');
         }
         
-        async function claimReferralEarnings() {
-            // Prevent double-claiming
-            if (isClaimingReferral) return;
-            
-            if (!currentUser.pendingReferralEarnings || currentUser.pendingReferralEarnings === 0) {
-                showToast('❌ No earnings to claim', true);
-                return;
-            }
-            
-            // Set lock
-            isClaimingReferral = true;
-            
-            // Store old values for rollback
-            const oldBalance = d.balance;
-            const oldPendingEarnings = d.pendingReferralEarnings;
-            const earningsAmount = currentUser.pendingReferralEarnings;
-            
-            // ⚡ OPTIMISTIC UI - Update immediately (0ms)
-            d.balance += earningsAmount;
-            d.pendingReferralEarnings = 0;
-            currentUser.pendingReferralEarnings = 0;
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
-            
-            // CRITICAL: Mark claim time in localStorage to prevent re-showing
-            localStorage.setItem('lastReferralClaimTime_' + currentUser.userId, Date.now().toString());
-            
-            save();
-            
-            // Update UI instantly
-            render();
-            showToast(`✓ Claimed ${earningsAmount} Coins from referrals!`);
-            
-            // ⚡ PARALLEL backend calls (all at once!)
-            (async () => {
-                try {
-                    // 🔥 SINGLE REQUEST - Backend handles pending rewards!
-                    const claimResponse = await fetch(API_ENDPOINTS.claimReferralEarnings, {
-                        method: 'POST',
-                        headers: getApiHeaders(),
-                        body: JSON.stringify({
-                            userId: currentUser.userId
-                        })
-                    });
-                    
-                    const data = await claimResponse.json();
-                    
-                    if (data.earnings) {
-                        // Use backend's exact balance (no flash!)
-                        d.balance = data.newBalance || d.balance;
-                        currentUser.balance = d.balance;
-                        
-                        // Backend automatically claims all pending referral rewards ✅
-                        // Don't call initApp() - it might reload old data before DELETE propagates
-                        // Optimistic update already handled above
-                        
-                        save();
-                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                        render();
-                        
-                        console.log('✅ Referral earnings claimed successfully');
-                    } else {
-                        // Rollback on error
-                        d.balance = oldBalance;
-                        d.pendingReferralEarnings = oldPendingEarnings;
-                        currentUser.pendingReferralEarnings = oldPendingEarnings;
-                        render();
-                        showToast('❌ Failed to claim referral earnings', true);
-                    }
-                } catch (err) {
-                    console.error('Referral claim failed:', err);
-                    // Rollback on error
-                    d.balance = oldBalance;
-                    d.pendingReferralEarnings = oldPendingEarnings;
-                    currentUser.pendingReferralEarnings = oldPendingEarnings;
-                    render();
-                    showToast('❌ Failed to claim referral earnings', true);
-                } finally {
-                    setTimeout(() => {
-                        isClaimingReferral = false;
-                    }, 1000);
-                }
-            })();
-        }
         
         function getProfilePageContent() {
             return `
