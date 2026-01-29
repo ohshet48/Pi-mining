@@ -5130,13 +5130,13 @@ window.__resetEmail = email;
                 }
             } catch(e) {}
 
-            // ✅ NO initApp() call - UI already updated in timer callback
-            // Rewards will be available on next app open
-            
             // Reset flag
             isCompletingMining = false;
             
-            console.log('✅ Mining session completed - rewards will be available on next app open');
+            // ✅ RENDER to show green card immediately
+            render();
+            
+            console.log('✅ Mining completed - Daily reward card should be green now!');
         }
         
         // ✅ CLAIM DAILY REWARD WITH COUNTDOWN
