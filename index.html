@@ -3743,6 +3743,13 @@ window.__resetEmail = email;
             if (!currentUser.username && currentUser.email) {
                 currentUser.username = currentUser.email.split('@')[0];
             }
+            
+            // ✅ Restore dailyRewardAvailable from localStorage
+            const savedDailyReward = localStorage.getItem('dailyRewardAvailable_' + currentUser.email);
+            if (savedDailyReward === 'true') {
+                dailyRewardAvailable = true;
+                console.log('✅ Daily reward status restored from localStorage: true');
+            }
         }
     
     // ⚡ PARALEL VERİ ÇEKME: Tüm işlemler aynı anda başlasın!
@@ -5107,6 +5114,8 @@ window.__resetEmail = email;
             // Only show if not dismissed for this session
             if (!localStorage.getItem(dismissKey)) {
                 dailyRewardAvailable = true;
+                // Save to localStorage so it persists across app restarts
+                localStorage.setItem('dailyRewardAvailable_' + currentUser.email, 'true');
                 console.log('✅ Daily reward notification enabled');
             } else {
                 console.log('ℹ️ Daily reward already dismissed for this session');
@@ -5313,6 +5322,10 @@ window.__resetEmail = email;
             
             // Hide the card
             dailyRewardAvailable = false;
+            
+            // Remove from localStorage
+            localStorage.removeItem('dailyRewardAvailable_' + currentUser.email);
+            
             render();
             
             console.log('✅ Daily reward notification dismissed (informational only - no backend action)');
@@ -5583,6 +5596,8 @@ window.__resetEmail = email;
             
             if (shouldShowReward) {
                 dailyRewardAvailable = true;
+                // Save to localStorage so it persists
+                localStorage.setItem('dailyRewardAvailable_' + currentUser.email, 'true');
                 console.log('✅ Daily reward notification enabled on startup');
             } else {
                 console.log('ℹ️ Daily reward already dismissed for this session');
@@ -5614,6 +5629,7 @@ window.__resetEmail = email;
             // ✅ Re-apply daily reward flag after initApp (in case it was reset)
             if (shouldShowReward) {
                 dailyRewardAvailable = true;
+                localStorage.setItem('dailyRewardAvailable_' + currentUser.email, 'true');
                 console.log('✅ Daily reward re-enabled after initApp');
             }
             
