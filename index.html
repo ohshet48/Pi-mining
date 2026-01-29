@@ -3828,21 +3828,46 @@ window.__resetEmail = email;
                 const lastEndTime = localStorage.getItem('miningEndTime_' + currentUser.email);
                 const lastSessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
                 
+                console.log('🔍 Daily reward check:', {
+                    lastEndTime: lastEndTime,
+                    lastSessionId: lastSessionId,
+                    userEmail: currentUser.email,
+                    userId: currentUser.userId
+                });
+                
                 if (lastEndTime && lastSessionId) {
                     const endTime = parseInt(lastEndTime);
                     const now = Date.now();
+                    
+                    console.log('⏰ Time check:', {
+                        endTime: new Date(endTime).toLocaleString(),
+                        now: new Date(now).toLocaleString(),
+                        difference: now - endTime,
+                        miningComplete: now >= endTime
+                    });
                     
                     // Mining bitmiş mi?
                     if (now >= endTime) {
                         // Bu session için daha önce dismiss edilmiş mi?
                         const dismissKey = `dailyRewardDismissed_${currentUser.userId}_${lastSessionId}`;
-                        if (!localStorage.getItem(dismissKey)) {
+                        const isDismissed = localStorage.getItem(dismissKey);
+                        
+                        console.log('✅ Mining completed! Checking dismiss status:', {
+                            dismissKey: dismissKey,
+                            isDismissed: isDismissed
+                        });
+                        
+                        if (!isDismissed) {
                             dailyRewardAvailable = true;
-                            console.log('✅ Mining completed - Daily reward notification enabled');
+                            console.log('🎁 Daily reward notification ENABLED!');
                         } else {
                             console.log('ℹ️ Daily reward already dismissed for this session');
                         }
+                    } else {
+                        console.log('⏳ Mining still in progress');
                     }
+                } else {
+                    console.log('ℹ️ No previous mining session found');
                 }
             }
             
@@ -4048,6 +4073,8 @@ window.__resetEmail = email;
           ]);
           
           console.log('✅ Tüm kontroller tamamlandı - UI hazır');
+          
+          console.log('🎁 Final dailyRewardAvailable status:', dailyRewardAvailable);
           
           // Hide splash screen after ALL data is loaded
           const splashScreen = document.getElementById('splashScreen');
