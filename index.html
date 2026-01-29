@@ -5579,14 +5579,17 @@ window.__resetEmail = email;
             const dismissKey = `dailyRewardDismissed_${currentUser.userId}_${sessionId}`;
             
             // Only show if not dismissed for this session
-            if (!localStorage.getItem(dismissKey)) {
+            const shouldShowReward = !localStorage.getItem(dismissKey);
+            
+            if (shouldShowReward) {
                 dailyRewardAvailable = true;
                 console.log('✅ Daily reward notification enabled on startup');
             } else {
                 console.log('ℹ️ Daily reward already dismissed for this session');
             }
             
-            localStorage.removeItem('miningEndTime_' + currentUser.email);
+            // DON'T remove miningEndTime yet - keep it for initApp check
+            // localStorage.removeItem('miningEndTime_' + currentUser.email);
             
             // Clear referrals cache
             cachedReferralsData = null;
@@ -5607,6 +5610,12 @@ window.__resetEmail = email;
             
             // Reload user data (this will fetch daily reward if available)
             await initApp();
+            
+            // ✅ Re-apply daily reward flag after initApp (in case it was reset)
+            if (shouldShowReward) {
+                dailyRewardAvailable = true;
+                console.log('✅ Daily reward re-enabled after initApp');
+            }
             
             // ✅ Level kontrolü yap (miningDays arttı, level up olmuş olabilir)
             await checkLevelUp();
