@@ -3987,15 +3987,7 @@ window.__resetEmail = email;
                 mining: false,
                 timeLeft: 0,
                 miningDays: currentUser.miningDays || 0,
-                // Only set pendingLevelUp if not recently claimed
-                pendingLevelUp: (() => {
-                    const pending = tempPendingLevelUp || currentUser.pendingLevelUp || null;
-                    if (pending && recentlyClaimedLevels.has(pending)) {
-                        console.log(`🚫 Level ${pending} recently claimed, ignoring backend pendingLevelUp`);
-                        return null;
-                    }
-                    return pending;
-                })(),
+                levelUpNotification: currentUser.levelUpNotification || null,
                 pendingReferralEarnings: currentUser.pendingReferralEarnings || 0
             };
             
@@ -4721,16 +4713,17 @@ window.__resetEmail = email;
                         <div class="stat-unit">ARCASTRA/hour</div>
                     </div>
 
-                    <div class="stat ${d.pendingLevelUp ? 'reward-available' : ''}">
-                        ${d.pendingLevelUp ? `
+                    <div class="stat ${d.levelUpNotification ? 'reward-available' : ''}">
+                        ${d.levelUpNotification ? `
                             <div style="display: flex; flex-direction: column; text-align: center; padding: 0 8px; min-height: 140px; justify-content: space-between;">
                                 <div style="margin-top: 12px;">
-                                    <p style="font-size: 12px; font-weight: 700; line-height: 1.3; color: white; margin-bottom: 0;">🎉 Congratulations!<br>You reached Level <span style="color: white;">${d.pendingLevelUp}!</span></p>
-                                    <p style="font-size: 11px; font-weight: 600; line-height: 1.3; color: rgba(255, 255, 255, 0.6); margin-top: 6px; margin-bottom: 0;"><span style="color: #fbbf24;">+${levelRewards[d.pendingLevelUp].coins}</span> Coins earned</p>
-                                    <p style="font-size: 11px; font-weight: 600; line-height: 1.3; color: rgba(255, 255, 255, 0.6); margin-top: 4px; margin-bottom: 0;"><span style="color: #00ffff;">+${levelRewards[d.pendingLevelUp].rate.toFixed(2)}</span> Mining Rate</p>
+                                    <p style="font-size: 12px; font-weight: 700; line-height: 1.3; color: white; margin-bottom: 0;">Congratulations!<br>You reached Level <span style="color: white;">${d.levelUpNotification.level}!</span></p>
+                                    <p style="font-size: 9px; font-weight: 600; line-height: 1.3; color: rgba(255, 255, 255, 0.6); margin-top: 6px; margin-bottom: 0;">You Reward added your account.</p>
+                                    <p style="font-size: 11px; font-weight: 600; line-height: 1.3; color: rgba(255, 255, 255, 0.6); margin-top: 4px; margin-bottom: 0;"><span style="color: #fbbf24;">+${d.levelUpNotification.coins} ARCASTRA</span></p>
+                                    <p style="font-size: 11px; font-weight: 600; line-height: 1.3; color: rgba(255, 255, 255, 0.6); margin-top: 4px; margin-bottom: 0;"><span style="color: #00ffff;">+${d.levelUpNotification.rate.toFixed(2)} Rate</span></p>
                                 </div>
-                                <button class="reward-claim-btn" onclick="claimLevelRewardWithCountdown()" style="margin-top: 8px;">
-                                    <span>CLAIM REWARD</span>
+                                <button class="reward-claim-btn" onclick="dismissLevelReward()" style="margin-top: 8px; background: linear-gradient(135deg, #10b981, #059669); cursor: pointer;">
+                                    <span>✓ DONE</span>
                                 </button>
                             </div>
                         ` : `
@@ -5107,8 +5100,9 @@ window.__resetEmail = email;
             // ✅ Set flag to prevent initApp from showing rewards immediately
             isCompletingMining = true;
             
-            // ✅ Show daily reward notification (no backend call needed)
             const sessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
+            
+            // ✅ Show daily reward notification (no backend call needed)
             const dismissKey = `dailyRewardDismissed_${currentUser.userId}_${sessionId}`;
             
             // Only show if not dismissed for this session
@@ -5146,6 +5140,7 @@ window.__resetEmail = email;
             render();
             
             console.log('✅ Mining completed - Daily reward card should be green now!');
+            console.log('💡 Balance will be updated on next initApp() call (getAllUserData auto-claims)');
         }
         
         // ✅ CLAIM DAILY REWARD WITH COUNTDOWN
@@ -5329,6 +5324,26 @@ window.__resetEmail = email;
             render();
             
             console.log('✅ Daily reward notification dismissed (informational only - no backend action)');
+        }
+
+        // Dismiss level reward notification (no backend call, just close the card)
+        function dismissLevelReward() {
+            if (!currentUser || !currentUser.userId) return;
+            
+            // Mark as dismissed
+            if (d.levelUpNotification) {
+                const level = d.levelUpNotification.level;
+                localStorage.setItem(`levelRewardDismissed_${currentUser.userId}_${level}`, 'true');
+                
+                // Hide the card
+                d.levelUpNotification = null;
+                currentUser.levelUpNotification = null;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                
+                render();
+                
+                console.log('✅ Level reward notification dismissed (informational only - level', level, ')');
+            }
         }
 
         function claimBonus() {
