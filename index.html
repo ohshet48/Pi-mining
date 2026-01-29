@@ -3823,6 +3823,27 @@ window.__resetEmail = email;
                 });
             } else {
                 console.log('✓ No active mining session');
+                
+                // Check if last session was completed and not claimed
+                const lastEndTime = localStorage.getItem('miningEndTime_' + currentUser.email);
+                const lastSessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
+                
+                if (lastEndTime && lastSessionId) {
+                    const endTime = parseInt(lastEndTime);
+                    const now = Date.now();
+                    
+                    // Mining bitmiş mi?
+                    if (now >= endTime) {
+                        // Bu session için daha önce dismiss edilmiş mi?
+                        const dismissKey = `dailyRewardDismissed_${currentUser.userId}_${lastSessionId}`;
+                        if (!localStorage.getItem(dismissKey)) {
+                            dailyRewardAvailable = true;
+                            console.log('✅ Mining completed - Daily reward notification enabled');
+                        } else {
+                            console.log('ℹ️ Daily reward already dismissed for this session');
+                        }
+                    }
+                }
             }
             
             console.log('✅ User data yüklendi');
