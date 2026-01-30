@@ -2009,6 +2009,1065 @@ const firebaseConfig = {
   appId: "1:547925747222:web:01a6b875fe14624d777737"
 };
 
+// ============================================
+// Translation System
+// ============================================
+const translations = {
+  en: {
+    welcome: "Welcome",
+    total: "Total",
+    startSession: "Start Session",
+    rate: "Rate",
+    level: "Level",
+    referrals: "Referrals",
+    active: "Active",
+    dailyBonus: "Daily Bonus",
+    yourReferralCode: "Your Referral Code",
+    copy: "Copy",
+    miningInProgress: "Mining in Progress",
+    target: "Target",
+    earnedToday: "Earned Today",
+    settings: "Settings",
+    language: "Language",
+    notifications: "Notifications",
+    pushNotifications: "Push Notifications",
+    getNotified: "Get notified about important updates",
+    about: "About",
+    version: "Version",
+    allRightsReserved: "All rights reserved",
+    congratulations: "Congratulations!",
+    referralRewardEarned: "Referral reward earned!",
+    referralRewardsEarned: "Referral rewards earned!",
+    youRewardAdded: "You Reward added your account.",
+    done: "DONE",
+    youReachedLevel: "You reached Level",
+    dailyBonusAdded: "Daily bonus added to your account.",
+    days: "Days",
+    // Menu
+    home: "Home",
+    tasks: "Tasks",
+    leaderboard: "Leaderboard",
+    announcements: "Announcements",
+    events: "Events",
+    verification: "Verification",
+    comingSoon: "Coming Soon",
+    viewRoadmap: "View Roadmap",
+    whitepaper: "Whitepaper",
+    logout: "Logout",
+    // Messages
+    copied: "Copied!",
+    notificationsEnabled: "Notifications enabled",
+    notificationsDisabled: "Notifications disabled",
+    timeRemaining: "Time Remaining",
+    maxLevel: "MAX LEVEL",
+    applicationLanguage: "Application language",
+    // Pages
+    profile: "Profile",
+    upgradesBoosts: "Upgrades / Boosts",
+    myReferrals: "My Referrals",
+    // Referrals page
+    totalReferrals: "Total Referrals",
+    activeReferrals: "Active Referrals",
+    totalEarned: "Total Earned",
+    noReferralsYet: "No referrals yet",
+    shareCode: "Share your code to earn rewards",
+    // Toast messages
+    referralCodeCopied: "Referral code copied",
+    failedToCopy: "Failed to copy code",
+    // Login/Register Forms
+    login: "Login",
+    register: "Register",
+    email: "Email",
+    password: "Password",
+    confirmPassword: "Confirm Password",
+    fullName: "Full Name",
+    country: "Country",
+    birthDate: "Birth Date",
+    referralCodeOptional: "Referral Code (Optional)",
+    alreadyHaveAccount: "Already have an account?",
+    dontHaveAccount: "Don't have an account?",
+    loginButton: "Login",
+    registerButton: "Register",
+    enterEmail: "Enter your email",
+    enterPassword: "Enter your password",
+    confirmYourPassword: "Confirm your password",
+    enterFullName: "Enter your full name",
+    selectCountry: "Select or type your country",
+    enterBirthDate: "Enter your birth date",
+    enterReferralCode: "Enter referral code (optional)",
+    // Modals
+    confirmLogout: "Confirm Logout",
+    areYouSure: "Are you sure you want to logout?",
+    cancel: "Cancel",
+    // Content pages
+    noDataYet: "No data yet",
+    loading: "Loading",
+    rank: "Rank",
+    username: "Username",
+    balance: "Balance",
+    // General
+    back: "Back",
+    close: "Close",
+    save: "Save",
+    delete: "Delete",
+    // Toast messages - detailed
+    waitingServer: "Waiting for server response...",
+    pleaseEnterEmailPassword: "Please enter email and password",
+    loginSuccessful: "Login successful!",
+    invalidEmailPassword: "Invalid email or password",
+    usernameMustBe: "Username must be 3-12 characters",
+    usernameOnlyEnglish: "Username: only English letters and numbers allowed",
+    pleaseFillAllFields: "Please fill in all fields",
+    passwordsDoNotMatch: "Passwords do not match",
+    passwordMinLength: "Password must be at least 6 characters",
+    accountCreated: "Account created successfully!",
+    registrationFailed: "Registration failed",
+    loginFailed: "Login failed",
+    claimedLevelReward: "Claimed Level reward!",
+    failedClaimLevel: "Failed to claim level reward",
+    claimedDailyReward: "Claimed +5 Coins daily reward!",
+    failedClaimDaily: "Failed to claim daily reward",
+    dayStreakBonus: "day streak bonus",
+    noActiveSession: "No active session! Please start mining first.",
+    loadingAd: "Loading ad...",
+    adCouldntLoad: "Ad couldn't load. Please Disable VPN/ad blocker or try again in 5 seconds.",
+    useMobileApp: "Please use the mobile app for ads.",
+    adServiceNotAvailable: "Ad service not available. Please update the app.",
+    adBlockerDisable: "Ad couldn't load. VPN or ad blocker must be disabled..",
+    failedEarnReward: "Failed to earn reward",
+    adNotWatchedCompletely: "Ad not watched completely",
+    watchFullAd: "Watch the full ad to earn reward",
+    boostEarned: "boost earned!",
+    failedApplyBoost: "Failed to apply boost",
+    // Forgot Password
+    forgotPassword: "Forgot Password?",
+    resetPassword: "Reset Password",
+    enterEmailForReset: "Enter your email address and we'll send you a password reset link.",
+    sendResetLink: "Send Reset Link",
+    resetLinkSent: "Reset link sent. Check your email.",
+    failedSendResetLink: "Failed to send reset link",
+    invalidEmailFormat: "Invalid email format",
+    waitingServerResponse: "Waiting for server response..",
+    emailNotFound: "Email not found"
+  },
+  tr: {
+    welcome: "Hoş Geldiniz",
+    total: "Toplam",
+    startSession: "Oturumu Başlat",
+    rate: "Hız",
+    level: "Seviye",
+    referrals: "Referanslar",
+    active: "Aktif",
+    dailyBonus: "Günlük Bonus",
+    yourReferralCode: "Referans Kodunuz",
+    copy: "Kopyala",
+    miningInProgress: "Madencilik Devam Ediyor",
+    target: "Hedef",
+    earnedToday: "Bugün Kazanılan",
+    settings: "Ayarlar",
+    language: "Dil",
+    notifications: "Bildirimler",
+    pushNotifications: "Anlık Bildirimler",
+    getNotified: "Önemli güncellemeler hakkında bildirim al",
+    about: "Hakkında",
+    version: "Sürüm",
+    allRightsReserved: "Tüm hakları saklıdır",
+    congratulations: "Tebrikler!",
+    referralRewardEarned: "Referans ödülü kazandınız!",
+    referralRewardsEarned: "Referans ödülü kazandınız!",
+    youRewardAdded: "Ödülünüz hesabınıza eklendi.",
+    done: "TAMAM",
+    youReachedLevel: "Seviyeye Ulaştınız",
+    dailyBonusAdded: "Günlük bonus hesabınıza eklendi.",
+    days: "Gün",
+    // Menu
+    home: "Ana Sayfa",
+    tasks: "Görevler",
+    leaderboard: "Sıralama",
+    announcements: "Duyurular",
+    events: "Etkinlikler",
+    verification: "Doğrulama",
+    comingSoon: "Yakında",
+    viewRoadmap: "Yol Haritası",
+    whitepaper: "Teknik Döküman",
+    logout: "Çıkış",
+    // Messages
+    copied: "Kopyalandı!",
+    notificationsEnabled: "Bildirimler açıldı",
+    notificationsDisabled: "Bildirimler kapatıldı",
+    timeRemaining: "Kalan Süre",
+    maxLevel: "MAKS SEVİYE",
+    applicationLanguage: "Uygulama dili",
+    // Pages
+    profile: "Profil",
+    upgradesBoosts: "Yükseltmeler / Güçlendirmeler",
+    myReferrals: "Referanslarım",
+    // Referrals page
+    totalReferrals: "Toplam Referans",
+    activeReferrals: "Aktif Referanslar",
+    totalEarned: "Toplam Kazanılan",
+    noReferralsYet: "Henüz referans yok",
+    shareCode: "Ödül kazanmak için kodunuzu paylaşın",
+    // Toast messages
+    referralCodeCopied: "Referans kodu kopyalandı",
+    failedToCopy: "Kopyalama başarısız",
+    // Login/Register Forms
+    login: "Giriş",
+    register: "Kayıt Ol",
+    email: "E-posta",
+    password: "Şifre",
+    confirmPassword: "Şifre Tekrar",
+    fullName: "Ad Soyad",
+    country: "Ülke",
+    birthDate: "Doğum Tarihi",
+    referralCodeOptional: "Referans Kodu (Opsiyonel)",
+    alreadyHaveAccount: "Hesabın var mı?",
+    dontHaveAccount: "Hesabın yok mu?",
+    loginButton: "Giriş Yap",
+    registerButton: "Kayıt Ol",
+    enterEmail: "E-posta adresinizi girin",
+    enterPassword: "Şifrenizi girin",
+    confirmYourPassword: "Şifrenizi tekrar girin",
+    enterFullName: "Ad ve soyadınızı girin",
+    selectCountry: "Ülkenizi seçin veya yazın",
+    enterBirthDate: "Doğum tarihinizi girin",
+    enterReferralCode: "Referans kodunu girin (opsiyonel)",
+    // Modals
+    confirmLogout: "Çıkış Onayla",
+    areYouSure: "Çıkış yapmak istediğinizden emin misiniz?",
+    cancel: "İptal",
+    // Content pages
+    noDataYet: "Henüz veri yok",
+    loading: "Yükleniyor",
+    rank: "Sıra",
+    username: "Kullanıcı Adı",
+    balance: "Bakiye",
+    // General
+    back: "Geri",
+    close: "Kapat",
+    save: "Kaydet",
+    delete: "Sil",
+    // Toast messages - detailed
+    waitingServer: "Sunucu yanıtı bekleniyor...",
+    pleaseEnterEmailPassword: "Lütfen e-posta ve şifre girin",
+    loginSuccessful: "Giriş başarılı!",
+    invalidEmailPassword: "Geçersiz e-posta veya şifre",
+    usernameMustBe: "Kullanıcı adı 3-12 karakter olmalı",
+    usernameOnlyEnglish: "Kullanıcı adı: sadece İngilizce harf ve rakam",
+    pleaseFillAllFields: "Lütfen tüm alanları doldurun",
+    passwordsDoNotMatch: "Şifreler eşleşmiyor",
+    passwordMinLength: "Şifre en az 6 karakter olmalı",
+    accountCreated: "Hesap başarıyla oluşturuldu!",
+    registrationFailed: "Kayıt başarısız",
+    loginFailed: "Giriş başarısız",
+    claimedLevelReward: "Seviye ödülü alındı!",
+    failedClaimLevel: "Seviye ödülü alınamadı",
+    claimedDailyReward: "+5 Coin günlük ödül alındı!",
+    failedClaimDaily: "Günlük ödül alınamadı",
+    dayStreakBonus: "günlük seri bonusu",
+    noActiveSession: "Aktif oturum yok! Lütfen önce madenciliği başlatın.",
+    loadingAd: "Reklam yükleniyor...",
+    adCouldntLoad: "Reklam yüklenemedi. Lütfen VPN/reklam engelleyiciyi kapatın veya 5 saniye sonra tekrar deneyin.",
+    useMobileApp: "Reklamlar için lütfen mobil uygulamayı kullanın.",
+    adServiceNotAvailable: "Reklam servisi mevcut değil. Lütfen uygulamayı güncelleyin.",
+    adBlockerDisable: "Reklam yüklenemedi. VPN veya reklam engelleyici kapatılmalı..",
+    failedEarnReward: "Ödül kazanılamadı",
+    adNotWatchedCompletely: "Reklam tamamen izlenmedi",
+    watchFullAd: "Ödül kazanmak için reklamı tamamen izleyin",
+    boostEarned: "güçlendirme kazanıldı!",
+    failedApplyBoost: "Güçlendirme uygulanamadı",
+    // Forgot Password
+    forgotPassword: "Şifremi Unuttum?",
+    resetPassword: "Şifre Sıfırla",
+    enterEmailForReset: "E-posta adresinizi girin, size şifre sıfırlama bağlantısı gönderelim.",
+    sendResetLink: "Sıfırlama Bağlantısı Gönder",
+    resetLinkSent: "Sıfırlama bağlantısı gönderildi. E-postanızı kontrol edin.",
+    failedSendResetLink: "Sıfırlama bağlantısı gönderilemedi",
+    invalidEmailFormat: "Geçersiz e-posta formatı",
+    waitingServerResponse: "Sunucu yanıtı bekleniyor..",
+    emailNotFound: "E-posta bulunamadı"
+  },
+  vi: {
+    welcome: "Chào mừng",
+    total: "Tổng cộng",
+    startSession: "Bắt đầu",
+    rate: "Tốc độ",
+    level: "Cấp độ",
+    referrals: "Giới thiệu",
+    active: "Hoạt động",
+    dailyBonus: "Thưởng hàng ngày",
+    yourReferralCode: "Mã giới thiệu",
+    copy: "Sao chép",
+    miningInProgress: "Đang khai thác",
+    target: "Mục tiêu",
+    earnedToday: "Kiếm hôm nay",
+    settings: "Cài đặt",
+    language: "Ngôn ngữ",
+    notifications: "Thông báo",
+    pushNotifications: "Thông báo đẩy",
+    getNotified: "Nhận thông báo cập nhật quan trọng",
+    about: "Về",
+    version: "Phiên bản",
+    allRightsReserved: "Bảo lưu mọi quyền",
+    congratulations: "Chúc mừng!",
+    referralRewardEarned: "Nhận thưởng giới thiệu!",
+    referralRewardsEarned: "Nhận thưởng giới thiệu!",
+    youRewardAdded: "Thưởng đã thêm vào tài khoản.",
+    done: "XONG",
+    youReachedLevel: "Đạt cấp độ",
+    dailyBonusAdded: "Thưởng hàng ngày đã thêm.",
+    days: "Ngày",
+    home: "Trang chủ",
+    tasks: "Nhiệm vụ",
+    leaderboard: "Bảng xếp hạng",
+    announcements: "Thông báo",
+    events: "Sự kiện",
+    verification: "Xác minh",
+    comingSoon: "Sắp ra mắt",
+    viewRoadmap: "Lộ trình",
+    whitepaper: "Tài liệu",
+    logout: "Đăng xuất",
+    copied: "Đã sao chép!",
+    notificationsEnabled: "Đã bật thông báo",
+    notificationsDisabled: "Đã tắt thông báo",
+    timeRemaining: "Thời gian còn lại",
+    maxLevel: "CẤP TỐI ĐA",
+    applicationLanguage: "Ngôn ngữ ứng dụng",
+    profile: "Hồ sơ",
+    upgradesBoosts: "Nâng cấp",
+    myReferrals: "Giới thiệu của tôi",
+    totalReferrals: "Tổng giới thiệu",
+    activeReferrals: "Giới thiệu hoạt động",
+    totalEarned: "Tổng thu nhập",
+    noReferralsYet: "Chưa có giới thiệu",
+    shareCode: "Chia sẻ mã nhận thưởng",
+    referralCodeCopied: "Đã sao chép mã",
+    failedToCopy: "Sao chép thất bại",
+    login: "Đăng nhập",
+    register: "Đăng ký",
+    email: "Email",
+    password: "Mật khẩu",
+    confirmPassword: "Xác nhận mật khẩu",
+    fullName: "Họ và tên",
+    country: "Quốc gia",
+    birthDate: "Ngày sinh",
+    referralCodeOptional: "Mã giới thiệu (Tùy chọn)",
+    alreadyHaveAccount: "Đã có tài khoản?",
+    dontHaveAccount: "Chưa có tài khoản?",
+    loginButton: "Đăng nhập",
+    registerButton: "Đăng ký",
+    enterEmail: "Nhập email",
+    enterPassword: "Nhập mật khẩu",
+    confirmYourPassword: "Xác nhận mật khẩu",
+    enterFullName: "Nhập họ và tên",
+    selectCountry: "Chọn hoặc nhập quốc gia",
+    enterBirthDate: "Nhập ngày sinh",
+    enterReferralCode: "Nhập mã giới thiệu",
+    confirmLogout: "Xác nhận đăng xuất",
+    areYouSure: "Bạn có chắc muốn đăng xuất?",
+    cancel: "Hủy",
+    noDataYet: "Chưa có dữ liệu",
+    loading: "Đang tải",
+    rank: "Hạng",
+    username: "Tên người dùng",
+    balance: "Số dư",
+    back: "Quay lại",
+    close: "Đóng",
+    save: "Lưu",
+    delete: "Xóa",
+    // Toast messages - detailed
+    waitingServer: "Đang chờ phản hồi từ máy chủ...",
+    pleaseEnterEmailPassword: "Vui lòng nhập email và mật khẩu",
+    loginSuccessful: "Đăng nhập thành công!",
+    invalidEmailPassword: "Email hoặc mật khẩu không hợp lệ",
+    usernameMustBe: "Tên người dùng phải có 3-12 ký tự",
+    usernameOnlyEnglish: "Tên người dùng: chỉ chữ cái và số tiếng Anh",
+    pleaseFillAllFields: "Vui lòng điền tất cả các trường",
+    passwordsDoNotMatch: "Mật khẩu không khớp",
+    passwordMinLength: "Mật khẩu phải có ít nhất 6 ký tự",
+    accountCreated: "Tạo tài khoản thành công!",
+    registrationFailed: "Đăng ký thất bại",
+    loginFailed: "Đăng nhập thất bại",
+    claimedLevelReward: "Đã nhận thưởng cấp độ!",
+    failedClaimLevel: "Không thể nhận thưởng cấp độ",
+    claimedDailyReward: "Đã nhận +5 Coin thưởng hàng ngày!",
+    failedClaimDaily: "Không thể nhận thưởng hàng ngày",
+    dayStreakBonus: "chuỗi ngày thưởng",
+    noActiveSession: "Không có phiên hoạt động! Vui lòng bắt đầu khai thác trước.",
+    loadingAd: "Đang tải quảng cáo...",
+    adCouldntLoad: "Không thể tải quảng cáo. Vui lòng tắt VPN/chặn quảng cáo hoặc thử lại sau 5 giây.",
+    useMobileApp: "Vui lòng sử dụng ứng dụng di động cho quảng cáo.",
+    adServiceNotAvailable: "Dịch vụ quảng cáo không khả dụng. Vui lòng cập nhật ứng dụng.",
+    adBlockerDisable: "Không thể tải quảng cáo. VPN hoặc trình chặn quảng cáo phải được tắt..",
+    failedEarnReward: "Không thể kiếm thưởng",
+    adNotWatchedCompletely: "Quảng cáo chưa xem hoàn toàn",
+    watchFullAd: "Xem toàn bộ quảng cáo để nhận thưởng",
+    boostEarned: "tăng tốc đã nhận!",
+    failedApplyBoost: "Không thể áp dụng tăng tốc",
+    // Forgot Password
+    forgotPassword: "Quên mật khẩu?",
+    resetPassword: "Đặt lại mật khẩu",
+    enterEmailForReset: "Nhập địa chỉ email của bạn và chúng tôi sẽ gửi liên kết đặt lại mật khẩu.",
+    sendResetLink: "Gửi liên kết đặt lại",
+    resetLinkSent: "Đã gửi liên kết đặt lại. Kiểm tra email của bạn.",
+    failedSendResetLink: "Không thể gửi liên kết đặt lại",
+    invalidEmailFormat: "Định dạng email không hợp lệ",
+    waitingServerResponse: "Đang chờ phản hồi từ máy chủ..",
+    emailNotFound: "Không tìm thấy email"
+  },
+  hi: {
+    welcome: "स्वागत है",
+    total: "कुल",
+    startSession: "शुरू करें",
+    rate: "दर",
+    level: "स्तर",
+    referrals: "रेफरल",
+    active: "सक्रिय",
+    dailyBonus: "दैनिक बोनस",
+    yourReferralCode: "आपका रेफरल कोड",
+    copy: "कॉपी करें",
+    miningInProgress: "माइनिंग जारी है",
+    target: "लक्ष्य",
+    earnedToday: "आज कमाया",
+    settings: "सेटिंग्स",
+    language: "भाषा",
+    notifications: "सूचनाएं",
+    pushNotifications: "पुश सूचनाएं",
+    getNotified: "महत्वपूर्ण अपडेट की सूचना पाएं",
+    about: "के बारे में",
+    version: "संस्करण",
+    allRightsReserved: "सर्वाधिकार सुरक्षित",
+    congratulations: "बधाई हो!",
+    referralRewardEarned: "रेफरल इनाम मिला!",
+    referralRewardsEarned: "रेफरल इनाम मिले!",
+    youRewardAdded: "आपका इनाम खाते में जोड़ दिया गया।",
+    done: "पूर्ण",
+    youReachedLevel: "स्तर प्राप्त किया",
+    dailyBonusAdded: "दैनिक बोनस जोड़ा गया।",
+    days: "दिन",
+    home: "होम",
+    tasks: "कार्य",
+    leaderboard: "लीडरबोर्ड",
+    announcements: "घोषणाएं",
+    events: "इवेंट",
+    verification: "सत्यापन",
+    comingSoon: "जल्द आ रहा है",
+    viewRoadmap: "रोडमैप देखें",
+    whitepaper: "व्हाइटपेपर",
+    logout: "लॉगआउट",
+    copied: "कॉपी हो गया!",
+    notificationsEnabled: "सूचनाएं चालू",
+    notificationsDisabled: "सूचनाएं बंद",
+    timeRemaining: "शेष समय",
+    maxLevel: "अधिकतम स्तर",
+    applicationLanguage: "ऐप की भाषा",
+    profile: "प्रोफ़ाइल",
+    upgradesBoosts: "अपग्रेड",
+    myReferrals: "मेरे रेफरल",
+    totalReferrals: "कुल रेफरल",
+    activeReferrals: "सक्रिय रेफरल",
+    totalEarned: "कुल कमाई",
+    noReferralsYet: "अभी तक कोई रेफरल नहीं",
+    shareCode: "इनाम पाने के लिए कोड शेयर करें",
+    referralCodeCopied: "रेफरल कोड कॉपी हो गया",
+    failedToCopy: "कॉपी विफल",
+    login: "लॉगिन",
+    register: "रजिस्टर",
+    email: "ईमेल",
+    password: "पासवर्ड",
+    confirmPassword: "पासवर्ड की पुष्टि करें",
+    fullName: "पूरा नाम",
+    country: "देश",
+    birthDate: "जन्म तिथि",
+    referralCodeOptional: "रेफरल कोड (वैकल्पिक)",
+    alreadyHaveAccount: "पहले से खाता है?",
+    dontHaveAccount: "खाता नहीं है?",
+    loginButton: "लॉगिन करें",
+    registerButton: "रजिस्टर करें",
+    enterEmail: "अपना ईमेल दर्ज करें",
+    enterPassword: "पासवर्ड दर्ज करें",
+    confirmYourPassword: "पासवर्ड की पुष्टि करें",
+    enterFullName: "पूरा नाम दर्ज करें",
+    selectCountry: "देश चुनें या टाइप करें",
+    enterBirthDate: "जन्म तिथि दर्ज करें",
+    enterReferralCode: "रेफरल कोड दर्ज करें",
+    confirmLogout: "लॉगआउट की पुष्टि करें",
+    areYouSure: "क्या आप निश्चित हैं?",
+    cancel: "रद्द करें",
+    noDataYet: "अभी तक कोई डेटा नहीं",
+    loading: "लोड हो रहा है",
+    rank: "रैंक",
+    username: "यूज़रनेम",
+    balance: "बैलेंस",
+    back: "वापस",
+    close: "बंद करें",
+    save: "सेव करें",
+    delete: "डिलीट करें",
+    // Toast messages - detailed
+    waitingServer: "सर्वर प्रतिक्रिया की प्रतीक्षा में...",
+    pleaseEnterEmailPassword: "कृपया ईमेल और पासवर्ड दर्ज करें",
+    loginSuccessful: "लॉगिन सफल!",
+    invalidEmailPassword: "अमान्य ईमेल या पासवर्ड",
+    usernameMustBe: "यूज़रनेम 3-12 अक्षर का होना चाहिए",
+    usernameOnlyEnglish: "यूज़रनेम: केवल अंग्रेजी अक्षर और संख्या",
+    pleaseFillAllFields: "कृपया सभी फ़ील्ड भरें",
+    passwordsDoNotMatch: "पासवर्ड मेल नहीं खाते",
+    passwordMinLength: "पासवर्ड कम से कम 6 अक्षर का होना चाहिए",
+    accountCreated: "खाता सफलतापूर्वक बनाया गया!",
+    registrationFailed: "रजिस्ट्रेशन विफल",
+    loginFailed: "लॉगिन विफल",
+    claimedLevelReward: "स्तर इनाम मिला!",
+    failedClaimLevel: "स्तर इनाम नहीं मिल सका",
+    claimedDailyReward: "+5 Coin दैनिक इनाम मिला!",
+    failedClaimDaily: "दैनिक इनाम नहीं मिल सका",
+    dayStreakBonus: "दिन की लकीर बोनस",
+    noActiveSession: "कोई सक्रिय सत्र नहीं! कृपया पहले माइनिंग शुरू करें।",
+    loadingAd: "विज्ञापन लोड हो रहा है...",
+    adCouldntLoad: "विज्ञापन लोड नहीं हो सका। कृपया VPN/विज्ञापन ब्लॉकर बंद करें या 5 सेकंड में पुनः प्रयास करें।",
+    useMobileApp: "विज्ञापन के लिए कृपया मोबाइल ऐप का उपयोग करें।",
+    adServiceNotAvailable: "विज्ञापन सेवा उपलब्ध नहीं है। कृपया ऐप अपडेट करें।",
+    adBlockerDisable: "विज्ञापन लोड नहीं हो सका। VPN या विज्ञापन ब्लॉकर बंद होना चाहिए..",
+    failedEarnReward: "इनाम नहीं मिल सका",
+    adNotWatchedCompletely: "विज्ञापन पूरी तरह नहीं देखा गया",
+    watchFullAd: "इनाम पाने के लिए पूरा विज्ञापन देखें",
+    boostEarned: "बूस्ट मिला!",
+    failedApplyBoost: "बूस्ट लागू नहीं हो सका",
+    // Forgot Password
+    forgotPassword: "पासवर्ड भूल गए?",
+    resetPassword: "पासवर्ड रीसेट करें",
+    enterEmailForReset: "अपना ईमेल पता दर्ज करें और हम आपको पासवर्ड रीसेट लिंक भेजेंगे।",
+    sendResetLink: "रीसेट लिंक भेजें",
+    resetLinkSent: "रीसेट लिंक भेजा गया। अपना ईमेल जांचें।",
+    failedSendResetLink: "रीसेट लिंक नहीं भेजा जा सका",
+    invalidEmailFormat: "अमान्य ईमेल प्रारूप",
+    waitingServerResponse: "सर्वर प्रतिक्रिया की प्रतीक्षा में..",
+    emailNotFound: "ईमेल नहीं मिला"
+  },
+  id: {
+    welcome: "Selamat datang",
+    total: "Total",
+    startSession: "Mulai Sesi",
+    rate: "Tingkat",
+    level: "Level",
+    referrals: "Referral",
+    active: "Aktif",
+    dailyBonus: "Bonus Harian",
+    yourReferralCode: "Kode Referral Anda",
+    copy: "Salin",
+    miningInProgress: "Penambangan Berlangsung",
+    target: "Target",
+    earnedToday: "Diperoleh Hari Ini",
+    settings: "Pengaturan",
+    language: "Bahasa",
+    notifications: "Notifikasi",
+    pushNotifications: "Notifikasi Push",
+    getNotified: "Dapatkan notifikasi tentang pembaruan penting",
+    about: "Tentang",
+    version: "Versi",
+    allRightsReserved: "Hak cipta dilindungi",
+    congratulations: "Selamat!",
+    referralRewardEarned: "Hadiah referral diterima!",
+    referralRewardsEarned: "Hadiah referral diterima!",
+    youRewardAdded: "Hadiah Anda telah ditambahkan ke akun.",
+    done: "SELESAI",
+    youReachedLevel: "Mencapai Level",
+    dailyBonusAdded: "Bonus harian telah ditambahkan ke akun.",
+    days: "Hari",
+    home: "Beranda",
+    tasks: "Tugas",
+    leaderboard: "Papan Peringkat",
+    announcements: "Pengumuman",
+    events: "Acara",
+    verification: "Verifikasi",
+    comingSoon: "Segera Hadir",
+    viewRoadmap: "Lihat Roadmap",
+    whitepaper: "Whitepaper",
+    logout: "Keluar",
+    copied: "Tersalin!",
+    notificationsEnabled: "Notifikasi diaktifkan",
+    notificationsDisabled: "Notifikasi dinonaktifkan",
+    timeRemaining: "Waktu Tersisa",
+    maxLevel: "LEVEL MAKSIMAL",
+    applicationLanguage: "Bahasa aplikasi",
+    profile: "Profil",
+    upgradesBoosts: "Peningkatan",
+    myReferrals: "Referral Saya",
+    totalReferrals: "Total Referral",
+    activeReferrals: "Referral Aktif",
+    totalEarned: "Total Diperoleh",
+    noReferralsYet: "Belum ada referral",
+    shareCode: "Bagikan kode untuk mendapatkan hadiah",
+    referralCodeCopied: "Kode referral tersalin",
+    failedToCopy: "Gagal menyalin",
+    login: "Masuk",
+    register: "Daftar",
+    email: "Email",
+    password: "Kata Sandi",
+    confirmPassword: "Konfirmasi Kata Sandi",
+    fullName: "Nama Lengkap",
+    country: "Negara",
+    birthDate: "Tanggal Lahir",
+    referralCodeOptional: "Kode Referral (Opsional)",
+    alreadyHaveAccount: "Sudah punya akun?",
+    dontHaveAccount: "Belum punya akun?",
+    loginButton: "Masuk",
+    registerButton: "Daftar",
+    enterEmail: "Masukkan email Anda",
+    enterPassword: "Masukkan kata sandi",
+    confirmYourPassword: "Konfirmasi kata sandi",
+    enterFullName: "Masukkan nama lengkap",
+    selectCountry: "Pilih atau ketik negara",
+    enterBirthDate: "Masukkan tanggal lahir",
+    enterReferralCode: "Masukkan kode referral",
+    confirmLogout: "Konfirmasi Keluar",
+    areYouSure: "Apakah Anda yakin ingin keluar?",
+    cancel: "Batal",
+    noDataYet: "Belum ada data",
+    loading: "Memuat",
+    rank: "Peringkat",
+    username: "Nama Pengguna",
+    balance: "Saldo",
+    back: "Kembali",
+    close: "Tutup",
+    save: "Simpan",
+    delete: "Hapus",
+    waitingServer: "Menunggu respons server...",
+    pleaseEnterEmailPassword: "Silakan masukkan email dan kata sandi",
+    loginSuccessful: "Masuk berhasil!",
+    invalidEmailPassword: "Email atau kata sandi tidak valid",
+    usernameMustBe: "Nama pengguna harus 3-12 karakter",
+    usernameOnlyEnglish: "Nama pengguna: hanya huruf dan angka bahasa Inggris",
+    pleaseFillAllFields: "Silakan isi semua kolom",
+    passwordsDoNotMatch: "Kata sandi tidak cocok",
+    passwordMinLength: "Kata sandi minimal 6 karakter",
+    accountCreated: "Akun berhasil dibuat!",
+    registrationFailed: "Pendaftaran gagal",
+    loginFailed: "Masuk gagal",
+    claimedLevelReward: "Hadiah level diklaim!",
+    failedClaimLevel: "Gagal mengklaim hadiah level",
+    claimedDailyReward: "Hadiah harian +5 Coin diklaim!",
+    failedClaimDaily: "Gagal mengklaim hadiah harian",
+    dayStreakBonus: "bonus beruntun hari",
+    noActiveSession: "Tidak ada sesi aktif! Silakan mulai penambangan terlebih dahulu.",
+    loadingAd: "Memuat iklan...",
+    adCouldntLoad: "Iklan tidak dapat dimuat. Silakan nonaktifkan VPN/pemblokir iklan atau coba lagi dalam 5 detik.",
+    useMobileApp: "Silakan gunakan aplikasi seluler untuk iklan.",
+    adServiceNotAvailable: "Layanan iklan tidak tersedia. Silakan perbarui aplikasi.",
+    adBlockerDisable: "Iklan tidak dapat dimuat. VPN atau pemblokir iklan harus dinonaktifkan..",
+    failedEarnReward: "Gagal mendapatkan hadiah",
+    adNotWatchedCompletely: "Iklan tidak ditonton sepenuhnya",
+    watchFullAd: "Tonton iklan lengkap untuk mendapatkan hadiah",
+    boostEarned: "peningkatan diperoleh!",
+    failedApplyBoost: "Gagal menerapkan peningkatan",
+    forgotPassword: "Lupa Kata Sandi?",
+    resetPassword: "Atur Ulang Kata Sandi",
+    enterEmailForReset: "Masukkan alamat email Anda dan kami akan mengirimkan tautan pengaturan ulang kata sandi.",
+    sendResetLink: "Kirim Tautan Reset",
+    resetLinkSent: "Tautan reset dikirim. Periksa email Anda.",
+    failedSendResetLink: "Gagal mengirim tautan reset",
+    invalidEmailFormat: "Format email tidak valid",
+    waitingServerResponse: "Menunggu respons server..",
+    emailNotFound: "Email tidak ditemukan"
+  },
+  pt: {
+    welcome: "Bem-vindo",
+    total: "Total",
+    startSession: "Iniciar Sessão",
+    rate: "Taxa",
+    level: "Nível",
+    referrals: "Indicações",
+    active: "Ativo",
+    dailyBonus: "Bônus Diário",
+    yourReferralCode: "Seu Código de Indicação",
+    copy: "Copiar",
+    miningInProgress: "Mineração em Andamento",
+    target: "Meta",
+    earnedToday: "Ganho Hoje",
+    settings: "Configurações",
+    language: "Idioma",
+    notifications: "Notificações",
+    pushNotifications: "Notificações Push",
+    getNotified: "Receba notificações sobre atualizações importantes",
+    about: "Sobre",
+    version: "Versão",
+    allRightsReserved: "Todos os direitos reservados",
+    congratulations: "Parabéns!",
+    referralRewardEarned: "Recompensa de indicação recebida!",
+    referralRewardsEarned: "Recompensas de indicação recebidas!",
+    youRewardAdded: "Sua recompensa foi adicionada à conta.",
+    done: "CONCLUÍDO",
+    youReachedLevel: "Alcançou o Nível",
+    dailyBonusAdded: "Bônus diário adicionado à conta.",
+    days: "Dias",
+    home: "Início",
+    tasks: "Tarefas",
+    leaderboard: "Classificação",
+    announcements: "Anúncios",
+    events: "Eventos",
+    verification: "Verificação",
+    comingSoon: "Em Breve",
+    viewRoadmap: "Ver Roadmap",
+    whitepaper: "Whitepaper",
+    logout: "Sair",
+    copied: "Copiado!",
+    notificationsEnabled: "Notificações ativadas",
+    notificationsDisabled: "Notificações desativadas",
+    timeRemaining: "Tempo Restante",
+    maxLevel: "NÍVEL MÁXIMO",
+    applicationLanguage: "Idioma do aplicativo",
+    profile: "Perfil",
+    upgradesBoosts: "Melhorias",
+    myReferrals: "Minhas Indicações",
+    totalReferrals: "Total de Indicações",
+    activeReferrals: "Indicações Ativas",
+    totalEarned: "Total Ganho",
+    noReferralsYet: "Ainda sem indicações",
+    shareCode: "Compartilhe o código para ganhar recompensas",
+    referralCodeCopied: "Código de indicação copiado",
+    failedToCopy: "Falha ao copiar",
+    login: "Entrar",
+    register: "Cadastrar",
+    email: "Email",
+    password: "Senha",
+    confirmPassword: "Confirmar Senha",
+    fullName: "Nome Completo",
+    country: "País",
+    birthDate: "Data de Nascimento",
+    referralCodeOptional: "Código de Indicação (Opcional)",
+    alreadyHaveAccount: "Já tem uma conta?",
+    dontHaveAccount: "Não tem uma conta?",
+    loginButton: "Entrar",
+    registerButton: "Cadastrar",
+    enterEmail: "Digite seu email",
+    enterPassword: "Digite sua senha",
+    confirmYourPassword: "Confirme sua senha",
+    enterFullName: "Digite seu nome completo",
+    selectCountry: "Selecione ou digite o país",
+    enterBirthDate: "Digite sua data de nascimento",
+    enterReferralCode: "Digite o código de indicação",
+    confirmLogout: "Confirmar Saída",
+    areYouSure: "Tem certeza que deseja sair?",
+    cancel: "Cancelar",
+    noDataYet: "Ainda sem dados",
+    loading: "Carregando",
+    rank: "Classificação",
+    username: "Nome de Usuário",
+    balance: "Saldo",
+    back: "Voltar",
+    close: "Fechar",
+    save: "Salvar",
+    delete: "Excluir",
+    waitingServer: "Aguardando resposta do servidor...",
+    pleaseEnterEmailPassword: "Por favor, digite email e senha",
+    loginSuccessful: "Login bem-sucedido!",
+    invalidEmailPassword: "Email ou senha inválidos",
+    usernameMustBe: "Nome de usuário deve ter 3-12 caracteres",
+    usernameOnlyEnglish: "Nome de usuário: apenas letras e números em inglês",
+    pleaseFillAllFields: "Por favor, preencha todos os campos",
+    passwordsDoNotMatch: "As senhas não coincidem",
+    passwordMinLength: "A senha deve ter pelo menos 6 caracteres",
+    accountCreated: "Conta criada com sucesso!",
+    registrationFailed: "Cadastro falhou",
+    loginFailed: "Login falhou",
+    claimedLevelReward: "Recompensa de nível reivindicada!",
+    failedClaimLevel: "Falha ao reivindicar recompensa de nível",
+    claimedDailyReward: "Recompensa diária de +5 Coins reivindicada!",
+    failedClaimDaily: "Falha ao reivindicar recompensa diária",
+    dayStreakBonus: "bônus de sequência de dias",
+    noActiveSession: "Nenhuma sessão ativa! Por favor, inicie a mineração primeiro.",
+    loadingAd: "Carregando anúncio...",
+    adCouldntLoad: "Não foi possível carregar o anúncio. Desative VPN/bloqueador de anúncios ou tente novamente em 5 segundos.",
+    useMobileApp: "Por favor, use o aplicativo móvel para anúncios.",
+    adServiceNotAvailable: "Serviço de anúncios não disponível. Por favor, atualize o aplicativo.",
+    adBlockerDisable: "Não foi possível carregar o anúncio. VPN ou bloqueador de anúncios deve ser desativado..",
+    failedEarnReward: "Falha ao ganhar recompensa",
+    adNotWatchedCompletely: "Anúncio não assistido completamente",
+    watchFullAd: "Assista o anúncio completo para ganhar recompensa",
+    boostEarned: "impulso ganho!",
+    failedApplyBoost: "Falha ao aplicar impulso",
+    forgotPassword: "Esqueceu a Senha?",
+    resetPassword: "Redefinir Senha",
+    enterEmailForReset: "Digite seu endereço de email e enviaremos um link de redefinição de senha.",
+    sendResetLink: "Enviar Link de Redefinição",
+    resetLinkSent: "Link de redefinição enviado. Verifique seu email.",
+    failedSendResetLink: "Falha ao enviar link de redefinição",
+    invalidEmailFormat: "Formato de email inválido",
+    waitingServerResponse: "Aguardando resposta do servidor..",
+    emailNotFound: "Email não encontrado"
+  },
+  es: {
+    welcome: "Bienvenido",
+    total: "Total",
+    startSession: "Iniciar Sesión",
+    rate: "Tasa",
+    level: "Nivel",
+    referrals: "Referencias",
+    active: "Activo",
+    dailyBonus: "Bono Diario",
+    yourReferralCode: "Tu Código de Referencia",
+    copy: "Copiar",
+    miningInProgress: "Minería en Progreso",
+    target: "Objetivo",
+    earnedToday: "Ganado Hoy",
+    settings: "Configuración",
+    language: "Idioma",
+    notifications: "Notificaciones",
+    pushNotifications: "Notificaciones Push",
+    getNotified: "Recibe notificaciones sobre actualizaciones importantes",
+    about: "Acerca de",
+    version: "Versión",
+    allRightsReserved: "Todos los derechos reservados",
+    congratulations: "¡Felicitaciones!",
+    referralRewardEarned: "¡Recompensa de referencia recibida!",
+    referralRewardsEarned: "¡Recompensas de referencia recibidas!",
+    youRewardAdded: "Tu recompensa ha sido añadida a la cuenta.",
+    done: "HECHO",
+    youReachedLevel: "Alcanzaste el Nivel",
+    dailyBonusAdded: "Bono diario añadido a la cuenta.",
+    days: "Días",
+    home: "Inicio",
+    tasks: "Tareas",
+    leaderboard: "Clasificación",
+    announcements: "Anuncios",
+    events: "Eventos",
+    verification: "Verificación",
+    comingSoon: "Próximamente",
+    viewRoadmap: "Ver Hoja de Ruta",
+    whitepaper: "Whitepaper",
+    logout: "Cerrar Sesión",
+    copied: "¡Copiado!",
+    notificationsEnabled: "Notificaciones activadas",
+    notificationsDisabled: "Notificaciones desactivadas",
+    timeRemaining: "Tiempo Restante",
+    maxLevel: "NIVEL MÁXIMO",
+    applicationLanguage: "Idioma de la aplicación",
+    profile: "Perfil",
+    upgradesBoosts: "Mejoras",
+    myReferrals: "Mis Referencias",
+    totalReferrals: "Total de Referencias",
+    activeReferrals: "Referencias Activas",
+    totalEarned: "Total Ganado",
+    noReferralsYet: "Aún sin referencias",
+    shareCode: "Comparte el código para ganar recompensas",
+    referralCodeCopied: "Código de referencia copiado",
+    failedToCopy: "Error al copiar",
+    login: "Iniciar Sesión",
+    register: "Registrarse",
+    email: "Email",
+    password: "Contraseña",
+    confirmPassword: "Confirmar Contraseña",
+    fullName: "Nombre Completo",
+    country: "País",
+    birthDate: "Fecha de Nacimiento",
+    referralCodeOptional: "Código de Referencia (Opcional)",
+    alreadyHaveAccount: "¿Ya tienes una cuenta?",
+    dontHaveAccount: "¿No tienes una cuenta?",
+    loginButton: "Iniciar Sesión",
+    registerButton: "Registrarse",
+    enterEmail: "Ingresa tu email",
+    enterPassword: "Ingresa tu contraseña",
+    confirmYourPassword: "Confirma tu contraseña",
+    enterFullName: "Ingresa tu nombre completo",
+    selectCountry: "Selecciona o escribe el país",
+    enterBirthDate: "Ingresa tu fecha de nacimiento",
+    enterReferralCode: "Ingresa el código de referencia",
+    confirmLogout: "Confirmar Cierre de Sesión",
+    areYouSure: "¿Estás seguro de que deseas cerrar sesión?",
+    cancel: "Cancelar",
+    noDataYet: "Aún sin datos",
+    loading: "Cargando",
+    rank: "Clasificación",
+    username: "Nombre de Usuario",
+    balance: "Saldo",
+    back: "Volver",
+    close: "Cerrar",
+    save: "Guardar",
+    delete: "Eliminar",
+    waitingServer: "Esperando respuesta del servidor...",
+    pleaseEnterEmailPassword: "Por favor ingresa email y contraseña",
+    loginSuccessful: "¡Inicio de sesión exitoso!",
+    invalidEmailPassword: "Email o contraseña inválidos",
+    usernameMustBe: "El nombre de usuario debe tener 3-12 caracteres",
+    usernameOnlyEnglish: "Nombre de usuario: solo letras y números en inglés",
+    pleaseFillAllFields: "Por favor completa todos los campos",
+    passwordsDoNotMatch: "Las contraseñas no coinciden",
+    passwordMinLength: "La contraseña debe tener al menos 6 caracteres",
+    accountCreated: "¡Cuenta creada exitosamente!",
+    registrationFailed: "Registro fallido",
+    loginFailed: "Inicio de sesión fallido",
+    claimedLevelReward: "¡Recompensa de nivel reclamada!",
+    failedClaimLevel: "Error al reclamar recompensa de nivel",
+    claimedDailyReward: "¡Recompensa diaria de +5 Monedas reclamada!",
+    failedClaimDaily: "Error al reclamar recompensa diaria",
+    dayStreakBonus: "bono de racha de días",
+    noActiveSession: "¡No hay sesión activa! Por favor inicia la minería primero.",
+    loadingAd: "Cargando anuncio...",
+    adCouldntLoad: "No se pudo cargar el anuncio. Desactiva VPN/bloqueador de anuncios o intenta nuevamente en 5 segundos.",
+    useMobileApp: "Por favor usa la aplicación móvil para anuncios.",
+    adServiceNotAvailable: "Servicio de anuncios no disponible. Por favor actualiza la aplicación.",
+    adBlockerDisable: "No se pudo cargar el anuncio. VPN o bloqueador de anuncios debe estar desactivado..",
+    failedEarnReward: "Error al ganar recompensa",
+    adNotWatchedCompletely: "Anuncio no visto completamente",
+    watchFullAd: "Mira el anuncio completo para ganar recompensa",
+    boostEarned: "¡impulso ganado!",
+    failedApplyBoost: "Error al aplicar impulso",
+    forgotPassword: "¿Olvidaste la Contraseña?",
+    resetPassword: "Restablecer Contraseña",
+    enterEmailForReset: "Ingresa tu dirección de email y te enviaremos un enlace para restablecer la contraseña.",
+    sendResetLink: "Enviar Enlace de Restablecimiento",
+    resetLinkSent: "Enlace de restablecimiento enviado. Revisa tu email.",
+    failedSendResetLink: "Error al enviar enlace de restablecimiento",
+    invalidEmailFormat: "Formato de email inválido",
+    waitingServerResponse: "Esperando respuesta del servidor..",
+    emailNotFound: "Email no encontrado"
+  },
+  ar: {
+    welcome: "مرحباً",
+    total: "الإجمالي",
+    startSession: "بدء الجلسة",
+    rate: "المعدل",
+    level: "المستوى",
+    referrals: "الإحالات",
+    active: "نشط",
+    dailyBonus: "المكافأة اليومية",
+    yourReferralCode: "رمز الإحالة الخاص بك",
+    copy: "نسخ",
+    miningInProgress: "التعدين قيد التقدم",
+    target: "الهدف",
+    earnedToday: "المكتسب اليوم",
+    settings: "الإعدادات",
+    language: "اللغة",
+    notifications: "الإشعارات",
+    pushNotifications: "الإشعارات الفورية",
+    getNotified: "احصل على إشعارات حول التحديثات المهمة",
+    about: "حول",
+    version: "الإصدار",
+    allRightsReserved: "جميع الحقوق محفوظة",
+    congratulations: "تهانينا!",
+    referralRewardEarned: "تم الحصول على مكافأة الإحالة!",
+    referralRewardsEarned: "تم الحصول على مكافآت الإحالة!",
+    youRewardAdded: "تمت إضافة مكافأتك إلى الحساب.",
+    done: "تم",
+    youReachedLevel: "وصلت إلى المستوى",
+    dailyBonusAdded: "تمت إضافة المكافأة اليومية إلى الحساب.",
+    days: "أيام",
+    home: "الرئيسية",
+    tasks: "المهام",
+    leaderboard: "لوحة المتصدرين",
+    announcements: "الإعلانات",
+    events: "الفعاليات",
+    verification: "التحقق",
+    comingSoon: "قريباً",
+    viewRoadmap: "عرض خارطة الطريق",
+    whitepaper: "الورقة البيضاء",
+    logout: "تسجيل الخروج",
+    copied: "تم النسخ!",
+    notificationsEnabled: "تم تفعيل الإشعارات",
+    notificationsDisabled: "تم تعطيل الإشعارات",
+    timeRemaining: "الوقت المتبقي",
+    maxLevel: "المستوى الأقصى",
+    applicationLanguage: "لغة التطبيق",
+    profile: "الملف الشخصي",
+    upgradesBoosts: "الترقيات",
+    myReferrals: "إحالاتي",
+    totalReferrals: "إجمالي الإحالات",
+    activeReferrals: "الإحالات النشطة",
+    totalEarned: "إجمالي المكتسب",
+    noReferralsYet: "لا توجد إحالات بعد",
+    shareCode: "شارك الرمز للحصول على المكافآت",
+    referralCodeCopied: "تم نسخ رمز الإحالة",
+    failedToCopy: "فشل النسخ",
+    login: "تسجيل الدخول",
+    register: "التسجيل",
+    email: "البريد الإلكتروني",
+    password: "كلمة المرور",
+    confirmPassword: "تأكيد كلمة المرور",
+    fullName: "الاسم الكامل",
+    country: "الدولة",
+    birthDate: "تاريخ الميلاد",
+    referralCodeOptional: "رمز الإحالة (اختياري)",
+    alreadyHaveAccount: "هل لديك حساب؟",
+    dontHaveAccount: "ليس لديك حساب؟",
+    loginButton: "تسجيل الدخول",
+    registerButton: "التسجيل",
+    enterEmail: "أدخل بريدك الإلكتروني",
+    enterPassword: "أدخل كلمة المرور",
+    confirmYourPassword: "أكد كلمة المرور",
+    enterFullName: "أدخل الاسم الكامل",
+    selectCountry: "اختر أو اكتب الدولة",
+    enterBirthDate: "أدخل تاريخ الميلاد",
+    enterReferralCode: "أدخل رمز الإحالة",
+    confirmLogout: "تأكيد تسجيل الخروج",
+    areYouSure: "هل أنت متأكد أنك تريد تسجيل الخروج؟",
+    cancel: "إلغاء",
+    noDataYet: "لا توجد بيانات بعد",
+    loading: "جاري التحميل",
+    rank: "الترتيب",
+    username: "اسم المستخدم",
+    balance: "الرصيد",
+    back: "رجوع",
+    close: "إغلاق",
+    save: "حفظ",
+    delete: "حذف",
+    waitingServer: "في انتظار استجابة الخادم...",
+    pleaseEnterEmailPassword: "الرجاء إدخال البريد الإلكتروني وكلمة المرور",
+    loginSuccessful: "تم تسجيل الدخول بنجاح!",
+    invalidEmailPassword: "البريد الإلكتروني أو كلمة المرور غير صحيحة",
+    usernameMustBe: "يجب أن يكون اسم المستخدم 3-12 حرفاً",
+    usernameOnlyEnglish: "اسم المستخدم: أحرف وأرقام إنجليزية فقط",
+    pleaseFillAllFields: "الرجاء ملء جميع الحقول",
+    passwordsDoNotMatch: "كلمات المرور غير متطابقة",
+    passwordMinLength: "يجب أن تكون كلمة المرور 6 أحرف على الأقل",
+    accountCreated: "تم إنشاء الحساب بنجاح!",
+    registrationFailed: "فشل التسجيل",
+    loginFailed: "فشل تسجيل الدخول",
+    claimedLevelReward: "تم المطالبة بمكافأة المستوى!",
+    failedClaimLevel: "فشل المطالبة بمكافأة المستوى",
+    claimedDailyReward: "تم المطالبة بالمكافأة اليومية +5 عملات!",
+    failedClaimDaily: "فشل المطالبة بالمكافأة اليومية",
+    dayStreakBonus: "مكافأة السلسلة اليومية",
+    noActiveSession: "لا توجد جلسة نشطة! الرجاء بدء التعدين أولاً.",
+    loadingAd: "جاري تحميل الإعلان...",
+    adCouldntLoad: "تعذر تحميل الإعلان. الرجاء تعطيل VPN/مانع الإعلانات أو المحاولة مرة أخرى خلال 5 ثوانٍ.",
+    useMobileApp: "الرجاء استخدام تطبيق الهاتف المحمول للإعلانات.",
+    adServiceNotAvailable: "خدمة الإعلانات غير متوفرة. الرجاء تحديث التطبيق.",
+    adBlockerDisable: "تعذر تحميل الإعلان. يجب تعطيل VPN أو مانع الإعلانات..",
+    failedEarnReward: "فشل الحصول على المكافأة",
+    adNotWatchedCompletely: "لم يتم مشاهدة الإعلان بالكامل",
+    watchFullAd: "شاهد الإعلان كاملاً للحصول على المكافأة",
+    boostEarned: "تم الحصول على التعزيز!",
+    failedApplyBoost: "فشل تطبيق التعزيز",
+    forgotPassword: "هل نسيت كلمة المرور؟",
+    resetPassword: "إعادة تعيين كلمة المرور",
+    enterEmailForReset: "أدخل عنوان بريدك الإلكتروني وسنرسل لك رابط إعادة تعيين كلمة المرور.",
+    sendResetLink: "إرسال رابط إعادة التعيين",
+    resetLinkSent: "تم إرسال رابط إعادة التعيين. تحقق من بريدك الإلكتروني.",
+    failedSendResetLink: "فشل إرسال رابط إعادة التعيين",
+    invalidEmailFormat: "تنسيق البريد الإلكتروني غير صالح",
+    waitingServerResponse: "في انتظار استجابة الخادم..",
+    emailNotFound: "البريد الإلكتروني غير موجود"
+  }
+};
+
+let currentLang = localStorage.getItem('language') || 'en';
+const t = (key) => translations[currentLang]?.[key] || translations.en[key] || key;
+
+function changeLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem('language', lang);
+  
+  // Update menu items
+  document.querySelectorAll('.menu-translate').forEach(el => {
+    const key = el.getAttribute('data-key');
+    if (key) el.textContent = t(key);
+  });
+  
+  render();
+  const toastMsg = lang === 'tr' ? '🇹🇷 Türkçe' : lang === 'vi' ? '🇻🇳 Tiếng Việt' : lang === 'hi' ? '🇮🇳 हिन्दी' : lang === 'id' ? '🇮🇩 Bahasa Indonesia' : lang === 'pt' ? '🇧🇷 Português' : lang === 'es' ? '🇪🇸 Español' : lang === 'ar' ? '🇸🇦 العربية' : '🇬🇧 English';
+  showToast(toastMsg);
+}
+
+
 console.log('Initializing Firebase...');
 
 firebase.initializeApp(firebaseConfig);
@@ -2748,7 +3807,7 @@ function hideLoginLoading() {
                 </div>
                 <button class="btn btn-primary" onclick="login()">Login</button>
                 <div style="text-align: center; margin-top: 12px;">
-                    <a onclick="showForgotPassword()" style="color: #00ffff; font-size: 13px; cursor: pointer; text-decoration: underline;">Forgot Password?</a>
+                    <a onclick="showForgotPassword()" style="color: #00ffff; font-size: 13px; cursor: pointer; text-decoration: underline;"><span class="menu-translate" data-key="forgotPassword">Forgot Password?</span></a>
                 </div>
                 <div class="divider">OR</div>
 <button class="btn btn-primary" onclick="showSignup()">Sign Up</button>
@@ -2812,10 +3871,10 @@ function hideLoginLoading() {
             <div class="menu-title" id="menuUsername">Menu</div>
         </div>
         <div class="menu-items">
-            <div class="menu-item" onclick="openPage('profile')">Profile</div>
+            <div class="menu-item" onclick="openPage('profile')"><span class="menu-translate" data-key="profile">Profile</span></div>
             <div class="menu-item" onclick="openPage('upgrades')">
                 <span style="display: flex; align-items: center; gap: 8px;">
-                    <span>Upgrades</span>
+                    <span class="menu-translate" data-key="upgradesBoosts">Upgrades</span>
                     <svg width="18" height="18" viewBox="0 0 24 24" style="transform: rotate(45deg);" xmlns="http://www.w3.org/2000/svg">
                         <!-- Flame (filled) -->
                         <ellipse cx="12" cy="20" rx="2" ry="3" fill="#ff6b00" opacity="0.7"/>
@@ -2842,20 +3901,20 @@ function hideLoginLoading() {
                     </svg>
                 </span>
             </div>
-            <div class="menu-item" onclick="openPage('tasks')">Tasks</div>
-            <div class="menu-item" onclick="openPage('leaderboard')">Leaderboard</div>
-            <div class="menu-item" id="announcementsMenuItem" onclick="openPage('announcements')">Announcements</div>
-            <div class="menu-item" id="airdropMenuItem" onclick="openPage('airdrop')">Events</div>
+            <div class="menu-item" onclick="openPage('tasks')"><span class="menu-translate" data-key="tasks">Tasks</span></div>
+            <div class="menu-item" onclick="openPage('leaderboard')"><span class="menu-translate" data-key="leaderboard">Leaderboard</span></div>
+            <div class="menu-item" id="announcementsMenuItem" onclick="openPage('announcements')"><span class="menu-translate" data-key="announcements">Announcements</span></div>
+            <div class="menu-item" id="airdropMenuItem" onclick="openPage('airdrop')"><span class="menu-translate" data-key="events">Events</span></div>
             <div class="menu-item menu-item-disabled">
-                <span>Verification</span>
-                <span style="font-size: 11px; color: #666; margin-left: 8px;">Coming Soon</span>
+                <span class="menu-translate" data-key="verification">Verification</span>
+                <span style="font-size: 11px; color: #666; margin-left: 8px;" class="menu-translate" data-key="comingSoon">Coming Soon</span>
             </div>
-            <div class="menu-item" onclick="viewRoadmap()">View Roadmap</div>
-            <div class="menu-item" onclick="viewWhitepaper()">Whitepaper</div>
-            <div class="menu-item" onclick="openPage('settings')">Settings</div>
+            <div class="menu-item" onclick="viewRoadmap()"><span class="menu-translate" data-key="viewRoadmap">View Roadmap</span></div>
+            <div class="menu-item" onclick="viewWhitepaper()"><span class="menu-translate" data-key="whitepaper">Whitepaper</span></div>
+            <div class="menu-item" onclick="openPage('settings')"><span class="menu-translate" data-key="settings">Settings</span></div>
         </div>
         <div style="padding: 10px;">
-            <button class="profile-action-btn profile-logout-btn" onclick="logout()" style="width: 100%;">🚪 Logout</button>
+            <button class="profile-action-btn profile-logout-btn" onclick="logout()" style="width: 100%;">🚪 <span class="menu-translate" data-key="logout">Logout</span></button>
         </div>
     </div>
     
@@ -3192,7 +4251,7 @@ function hideLoginLoading() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         
         // Show loading message immediately
-        showToast('⏳ Waiting for server response...');
+        showToast(`⏳ ${t('waitingServer')}`);
         
     const emailEl = document.getElementById('loginEmail');
     const passEl = document.getElementById('loginPassword');
@@ -3200,7 +4259,7 @@ function hideLoginLoading() {
     const password = (passEl && typeof passEl.value === 'string') ? passEl.value.trim() : '';
 
     if (!email || !password) {
-        showError('Please enter email and password');
+        showError(t('pleaseEnterEmailPassword'));
         return;
     }
 
@@ -3238,7 +4297,7 @@ window.__resetEmail = email;
                 console.error('❌ [LOGIN] FCM token request failed:', err);
             }
             
-            showSuccess('Login successful! ');
+            showSuccess(`${t('loginSuccessful')} `);
             
             setTimeout(() => {
                 // After login: show app instead of blank background
@@ -3250,7 +4309,7 @@ window.__resetEmail = email;
         }
     } catch (error) {
         console.error('Login error:', error);
-        showError('Invalid email or password');
+        showError(t('invalidEmailPassword'));
         
         // CRITICAL: Hide loading on error
         if (typeof hideLoginLoading === 'function') hideLoginLoading();
@@ -3313,17 +4372,17 @@ window.__resetEmail = email;
         return;
     }
     if (!email || !password || !confirmPassword) {
-        showError('Please fill in all fields');
+        showError(t('pleaseFillAllFields'));
         return;
     }
 
     if (password !== confirmPassword) {
-        showError('Passwords do not match');
+        showError(t('passwordsDoNotMatch'));
         return;
     }
 
     if (password.length < 6) {
-        showError('Password must be at least 6 characters');
+        showError(t('passwordMinLength'));
         return;
     }
 
@@ -3351,7 +4410,7 @@ window.__resetEmail = email;
             localStorage.setItem('userEmail', user.email);
             localStorage.setItem('isLoggedIn', 'true');
             localStorage.setItem('currentUser', JSON.stringify(data.user));
-            showSuccess('Account created successfully! ');
+            showSuccess(`${t('accountCreated')} `);
             window.scrollTo({ top: 0, behavior: 'smooth' });
             setTimeout(() => {
     const modal = document.getElementById('signupModal');
@@ -3407,7 +4466,7 @@ window.__resetEmail = email;
         
         localStorage.setItem('userId', user.uid);
         localStorage.setItem('userEmail', user.email);
-        showSuccess('Login successful!');
+        showSuccess(t('loginSuccessful'));
         window.location.href = '#mine';
     } catch (error) {
         console.error('Google login error:', error);
@@ -3534,9 +4593,9 @@ window.__resetEmail = email;
             
             try {
                 document.execCommand('copy');
-                showSuccess('Referral code copied: ' + code);
+                showSuccess(t('referralCodeCopied') + ': ' + code);
             } catch (err) {
-                showError('Failed to copy code');
+                showError(t('failedToCopy'));
             }
             
             document.body.removeChild(textarea);
@@ -4626,6 +5685,12 @@ window.__resetEmail = email;
         }
 
         function render() {
+            // Update menu translations
+            document.querySelectorAll('.menu-translate').forEach(el => {
+                const key = el.getAttribute('data-key');
+                if (key) el.textContent = t(key);
+            });
+            
             // Update menu username
             const menuUsername = document.getElementById('menuUsername');
             if (menuUsername) {
@@ -4645,7 +5710,7 @@ window.__resetEmail = email;
             document.getElementById('app').innerHTML = `
                 <div class="header">
                     <div class="welcome-card">
-                        <span class="welcome-text">Welcome, </span><span class="username-text">${getCountryFlag(currentUser.country || 'Turkey')} ${currentUser.username}!</span>
+                        <span class="welcome-text">${t('welcome')}, </span><span class="username-text">${getCountryFlag(currentUser.country || 'Turkey')} ${currentUser.username}!</span>
                     </div>
                     <button class="menu-btn" id="menuButton" onclick="toggleMenu()">
                         <span></span>
@@ -4656,7 +5721,7 @@ window.__resetEmail = email;
                 </div>
 
                 <div class="card balance-card">
-                    <p class="balance-label">Total</p>
+                    <p class="balance-label">${t('total')}</p>
                     <div class="balance-container">
                         <div class="balance-value">
                             ${balanceVisible ? d.balance.toFixed(2) : '••••••'}
@@ -4684,7 +5749,7 @@ window.__resetEmail = email;
                             <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
                                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
                             </svg>
-                            <span id="startMineText">Start Session</span>
+                            <span id="startMineText">${t('startSession')}</span>
                         </button>
                     ` : `
                         <div class="timer-wrap">
@@ -4706,9 +5771,9 @@ window.__resetEmail = email;
                             </div>
                             <p class="mining-active">Active</p>
                             <p id="timerTimeText" class="timer-time">${fmt(d.timeLeft)}</p>
-                            <p class="timer-label">Time Remaining</p>
+                            <p class="timer-label">${t('timeRemaining')}</p>
                             <div class="earning-box">
-                                <p class="earning-text">Target: <span class="earning-amount">${(() => {
+                                <p class="earning-text">${t('target')}: <span class="earning-amount">${(() => {
                                     const miningDuration = localStorage.getItem('miningDuration_' + currentUser.email) || 86400000; // Default 24 saat
                                     const hours = parseInt(miningDuration) / (1000 * 60 * 60);
                                     return (d.rate * hours).toFixed(2);
@@ -4727,7 +5792,7 @@ window.__resetEmail = email;
                             <div class="stat-icon icon-blue">
                                 <svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
                             </div>
-                            <span class="stat-label">Rate</span>
+                            <span class="stat-label">${t('rate')}</span>
                         </div>
                         <div class="stat-value">${d.rate.toFixed(2)}</div>
                         <div class="stat-unit">ARCASTRA/hour</div>
@@ -4737,13 +5802,13 @@ window.__resetEmail = email;
                         ${d.levelUpNotification ? `
                             <div style="display: flex; flex-direction: column; text-align: center; padding: 0 8px; min-height: 140px; justify-content: space-between;">
                                 <div style="margin-top: 12px;">
-                                    <p style="font-size: 12px; font-weight: 700; line-height: 1.3; color: white; margin-bottom: 0;">Congratulations!<br>You reached Level <span style="color: white;">${d.levelUpNotification.level}!</span></p>
-                                    <p style="font-size: 9px; font-weight: 600; line-height: 1.3; color: rgba(255, 255, 255, 0.6); margin: 0;">You Reward added your account.</p>
+                                    <p style="font-size: 12px; font-weight: 700; line-height: 1.3; color: white; margin-bottom: 0;">${t('congratulations!')}<br>${t('youReachedLevel')} <span style="color: white;">${d.levelUpNotification.level}!</span></p>
+                                    <p style="font-size: 9px; font-weight: 600; line-height: 1.3; color: rgba(255, 255, 255, 0.6); margin: 0;">${t('youRewardAdded')}</p>
                                     <p style="font-size: 11px; font-weight: 600; line-height: 1.3; color: rgba(255, 255, 255, 0.6); margin: 0;"><span style="color: #fbbf24;">+${d.levelUpNotification.coins} ARCASTRA</span></p>
-                                    <p style="font-size: 11px; font-weight: 600; line-height: 1.3; color: rgba(255, 255, 255, 0.6); margin-top: 4px; margin-bottom: 0;"><span style="color: #00ffff;">+${d.levelUpNotification.rate.toFixed(2)} Rate</span></p>
+                                    <p style="font-size: 11px; font-weight: 600; line-height: 1.3; color: rgba(255, 255, 255, 0.6); margin-top: 4px; margin-bottom: 0;"><span style="color: #00ffff;">+${d.levelUpNotification.rate.toFixed(2)} ${t('rate')}</span></p>
                                 </div>
                                 <button class="reward-claim-btn" onclick="dismissLevelReward()" style="margin-top: 8px; background: linear-gradient(135deg, #10b981, #059669); cursor: pointer;">
-                                    <span>✓ DONE</span>
+                                    <span>✓ ${t('done')}</span>
                                 </button>
                             </div>
                         ` : `
@@ -4751,27 +5816,27 @@ window.__resetEmail = email;
                                 <div class="stat-icon icon-purple">
                                     <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
                                 </div>
-                                <span class="stat-label">Level</span>
+                                <span class="stat-label">${t('level')}</span>
                             </div>
                             <div class="stat-value">${d.level}</div>
                             <div class="stat-unit">Level</div>
                             ${d.level < 20 ? `
                                 <div class="level-progress-bar">
                                     <div class="level-progress-fill" style="width: ${getLevelProgress().progress}%"></div>
-                                    <div class="level-progress-text">${getLevelProgress().current}/${getLevelProgress().required} Days</div>
+                                    <div class="level-progress-text">${getLevelProgress().current}/${getLevelProgress().required} ${t('days')}</div>
                                 </div>
-                            ` : '<div class="stat-unit" style="margin-top: 8px; color: #fbbf24;">MAX LEVEL</div>'}
+                            ` : `<div class="stat-unit" style="margin-top: 8px; color: #fbbf24;">${t('maxLevel')}</div>`}
                         `}
                     </div>
 
                     ${d.referralNotification ? `
                         <div class="stat reward-available">
                             <div style="text-align: center; padding: 16px 8px 12px; position: relative; min-height: 140px;">
-                                <div style="color: white; font-size: 12px; font-weight: 700; margin-bottom: 0; line-height: 1.3;">Congratulations! ${d.referralNotification.count > 1 ? `${d.referralNotification.count} Referral rewards earned!` : 'Referral reward earned!'}</div>
-                                <div style="color: rgba(255, 255, 255, 0.7); font-size: 10px; font-weight: 600; margin: 0; line-height: 1.3;">You Reward added your account.</div>
+                                <div style="color: white; font-size: 12px; font-weight: 700; margin-bottom: 0; line-height: 1.3;">${t('congratulations')} ${d.referralNotification.count > 1 ? `${d.referralNotification.count} ${t('referralRewardsEarned')}` : t('referralRewardEarned')}</div>
+                                <div style="color: rgba(255, 255, 255, 0.7); font-size: 10px; font-weight: 600; margin: 0; line-height: 1.3;">${t('youRewardAdded')}</div>
                                 <div style="color: #fbbf24; font-size: 10px; font-weight: 700; margin-bottom: 6px; white-space: nowrap; overflow: visible;">+${d.referralNotification.totalAmount} ARCASTRA</div>
                                 <button onclick="dismissReferralReward()" style="position: absolute; bottom: 5px; left: 8px; right: 8px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 8px; padding: 8px; color: white; font-size: 13px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);">
-                                    ✓ DONE
+                                    ✓ ${t('done')}
                                 </button>
                             </div>
                         </div>
@@ -4781,10 +5846,10 @@ window.__resetEmail = email;
                                 <div class="stat-icon icon-green">
                                     <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                                 </div>
-                                <span class="stat-label">Referrals</span>
+                                <span class="stat-label">${t('referrals')}</span>
                             </div>
                             <div class="stat-value">${d.activeRefs}/${d.refs}</div>
-                            <div class="stat-unit">Active</div>
+                            <div class="stat-unit">${t('active')}</div>
                         </div>
                     `}
 
@@ -4793,7 +5858,7 @@ window.__resetEmail = email;
                             <div class="stat-icon icon-orange">
                                 <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                             </div>
-                            <span class="stat-label">Daily Bonus</span>
+                            <span class="stat-label">${t('dailyBonus')}</span>
                         </div>
                         <div class="reward-card" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 90px; padding: 15px 10px 10px 10px;">
                             <div style="display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: -21px; margin-bottom: 10px;">
@@ -4823,11 +5888,11 @@ window.__resetEmail = email;
                                         <circle cx="50" cy="35" r="5" stroke="#00d4d4" stroke-width="3" fill="none"/>
                                     </svg>
                                 </div>
-                                ${dailyRewardAvailable ? '<div style="color: rgba(255, 255, 255, 0.7); font-size: 10px; font-weight: 600; text-align: center; line-height: 1.3; margin-top: 2px;">Daily bonus added to<br>your account.<br><span style="color: #fbbf24; font-size: 9px; font-weight: 700;">+5 ARCASTRA</span></div>' : ''}
+                                ${dailyRewardAvailable ? `<div style="color: rgba(255, 255, 255, 0.7); font-size: 10px; font-weight: 600; text-align: center; line-height: 1.3; margin-top: 2px;">${t('dailyBonusAdded')}<br><span style="color: #fbbf24; font-size: 9px; font-weight: 700;">+5 ARCASTRA</span></div>` : ''}
                             </div>
                             ${dailyRewardAvailable ? `
                                 <button class="reward-claim-btn" onclick="dismissDailyReward()" style="background: linear-gradient(135deg, #10b981, #059669); cursor: pointer;">
-                                    <span>✓ DONE</span>
+                                    <span>✓ ${t('done')}</span>
                                 </button>
                             ` : ''}
                         </div>
@@ -4837,7 +5902,7 @@ window.__resetEmail = email;
                 <div class="card">
                     <div class="section-title">
                         <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                        Your Referral Code
+                        ${t('yourReferralCode')}
                     </div>
                     <div class="ref-compact">
                         <div class="ref-code-text">${currentUser.username}</div>
@@ -4846,7 +5911,7 @@ window.__resetEmail = email;
                                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
                                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
                             </svg>
-                            Copy
+                            ${t('copy')}
                         </button>
                     </div>
                 </div>
@@ -6404,11 +7469,11 @@ window.__resetEmail = email;
             
             switch(page) {
                 case 'profile':
-                    pageTitle.textContent = 'Profile';
+                    pageTitle.textContent = t('profile');
                     pageContent.innerHTML = getProfilePageContent();
                     break;
                 case 'upgrades':
-                    pageTitle.textContent = 'Upgrades / Boosts';
+                    pageTitle.textContent = t('upgradesBoosts');
                     pageContent.innerHTML = getUpgradesPageContent();
                     // Render buttons and start timer
                     setTimeout(() => {
@@ -6417,11 +7482,11 @@ window.__resetEmail = email;
                     }, 0);
                     break;
                 case 'tasks':
-                    pageTitle.textContent = 'Tasks';
+                    pageTitle.textContent = t('tasks');
                     pageContent.innerHTML = getTasksPageContent();
                     break;
                 case 'announcements':
-                    pageTitle.textContent = 'Announcements';
+                    pageTitle.textContent = t('announcements');
                     pageContent.innerHTML = '<div style="text-align: center; padding: 60px 20px; color: #00d4ff;">Loading...</div>';
                     getAnnouncementsPageContent().then(html => { pageContent.innerHTML = html; });
                     
@@ -6441,7 +7506,7 @@ window.__resetEmail = email;
                     checkNotifications(); // Recheck to update hamburger
                     break;
                 case 'airdrop':
-                    pageTitle.textContent = 'Events';
+                    pageTitle.textContent = t('events');
                     pageContent.innerHTML = '<div style="text-align: center; padding: 60px 20px; color: #00d4ff;">Loading...</div>';
                     getAirdropPageContent().then(html => { pageContent.innerHTML = html; });
                     
@@ -6458,7 +7523,7 @@ window.__resetEmail = email;
                     checkNotifications(); // Recheck to update hamburger
                     break;
                 case 'leaderboard':
-                    pageTitle.textContent = 'Leaderboard';
+                    pageTitle.textContent = t('leaderboard');
                     // Show loading skeleton immediately
                     pageContent.innerHTML = `
                         <div style="display: flex; align-items: center; justify-content: center; min-height: 400px; padding: 20px;">
@@ -6566,7 +7631,7 @@ window.__resetEmail = email;
                     getLeaderboardPageContent().then(html => pageContent.innerHTML = html);
                     break;
                 case 'referrals':
-                    pageTitle.textContent = 'My Referrals';
+                    pageTitle.textContent = t('myReferrals');
                     // Show loading skeleton immediately
                     pageContent.innerHTML = `
                         <div style="display: flex; align-items: center; justify-content: center; min-height: 400px; padding: 20px;">
@@ -6685,7 +7750,7 @@ window.__resetEmail = email;
                     pageContent.innerHTML = '<div class="card"><h2 style="color: white; text-align: center;">Menü 4 İçeriği</h2><p style="color: #c4b5fd; text-align: center; margin-top: 10px;">Bu sayfa için içerik yakında eklenecek.</p></div>';
                     break;
                 case 'settings':
-                    pageTitle.textContent = 'Settings';
+                    pageTitle.textContent = t('settings');
                     pageContent.innerHTML = getSettingsPageContent();
                     break;
                 case 'menu5':
@@ -6758,12 +7823,19 @@ window.__resetEmail = email;
                         <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 14px; margin-bottom: 10px;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div>
-                                    <div style="color: white; font-weight: 700; font-size: 15px; margin-bottom: 4px;">Language</div>
-                                    <div style="color: #8b5cf6; font-size: 13px;">Application language</div>
+                                    <div style="color: white; font-weight: 700; font-size: 15px; margin-bottom: 4px;">${t('language')}</div>
+                                    <div style="color: #8b5cf6; font-size: 13px;">${t('applicationLanguage')}</div>
                                 </div>
-                                <div style="background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(0, 255, 255, 0.3); border-radius: 8px; padding: 8px 12px; color: white; font-weight: 600;">
-                                    English
-                                </div>
+                                <select onchange="changeLanguage(this.value)" style="background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(0, 255, 255, 0.3); border-radius: 8px; padding: 8px 12px; color: white; font-weight: 600; cursor: pointer;">
+                                    <option value="en" ${currentLang === 'en' ? 'selected' : ''}>🇬🇧 English</option>
+                                    <option value="tr" ${currentLang === 'tr' ? 'selected' : ''}>🇹🇷 Türkçe</option>
+                                    <option value="vi" ${currentLang === 'vi' ? 'selected' : ''}>🇻🇳 Tiếng Việt</option>
+                                    <option value="hi" ${currentLang === 'hi' ? 'selected' : ''}>🇮🇳 हिन्दी</option>
+                                    <option value="id" ${currentLang === 'id' ? 'selected' : ''}>🇮🇩 Bahasa Indonesia</option>
+                                    <option value="pt" ${currentLang === 'pt' ? 'selected' : ''}>🇧🇷 Português</option>
+                                    <option value="es" ${currentLang === 'es' ? 'selected' : ''}>🇪🇸 Español</option>
+                                    <option value="ar" ${currentLang === 'ar' ? 'selected' : ''}>🇸🇦 العربية</option>
+                                </select>
                             </div>
                         </div>
                         
@@ -6771,13 +7843,13 @@ window.__resetEmail = email;
                     
                     <!-- Notifications -->
                     <div>
-                        <div style="font-size: 14px; color: #8b5cf6; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">Notifications</div>
+                        <div style="font-size: 14px; color: #8b5cf6; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">${t('notifications')}</div>
                         
                         <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 14px; margin-bottom: 10px;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div>
-                                    <div style="color: white; font-weight: 700; font-size: 15px; margin-bottom: 4px;">Push Notifications</div>
-                                    <div style="color: #8b5cf6; font-size: 13px;">Get notified about important updates</div>
+                                    <div style="color: white; font-weight: 700; font-size: 15px; margin-bottom: 4px;">${t('pushNotifications')}</div>
+                                    <div style="color: #8b5cf6; font-size: 13px;">${t('getNotified')}</div>
                                 </div>
                                 <label class="toggle-switch">
                                     <input type="checkbox" id="notificationsToggle" ${notificationsEnabled ? 'checked' : ''} onchange="toggleNotifications(this.checked)">
@@ -6790,12 +7862,12 @@ window.__resetEmail = email;
                     
                     <!-- About -->
                     <div>
-                        <div style="font-size: 14px; color: #8b5cf6; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">About</div>
+                        <div style="font-size: 14px; color: #8b5cf6; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">${t('about')}</div>
                         
                         <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 14px; text-align: center;">
                             <div style="color: white; font-weight: 800; font-size: 18px; margin-bottom: 8px;">Arc Astra</div>
-                            <div style="color: #8b5cf6; font-size: 13px; margin-bottom: 4px;">Version 1.0.0</div>
-                            <div style="color: #666; font-size: 12px;">© 2024 Arc Astra. All rights reserved.</div>
+                            <div style="color: #8b5cf6; font-size: 13px; margin-bottom: 4px;">${t('version')} 1.0.0</div>
+                            <div style="color: #666; font-size: 12px;">© 2024 Arc Astra. ${t('allRightsReserved')}</div>
                         </div>
                     </div>
                     
@@ -6807,7 +7879,7 @@ window.__resetEmail = email;
         
         function toggleNotifications(enabled) {
             localStorage.setItem('notificationsEnabled', enabled);
-            showToast(enabled ? '🔔 Notifications enabled' : '🔕 Notifications disabled');
+            showToast(enabled ? `🔔 ${t('notificationsEnabled')}` : `🔕 ${t('notificationsDisabled')}`);
         }
         
         async function getAnnouncementsPageContent() {
@@ -8807,18 +9879,18 @@ async function sendPasswordReset() {
             const email = document.getElementById('forgotEmail').value.trim().toLowerCase();
             
             if (!email) {
-                showForgotError('Please enter your email');
+                showForgotError(t('pleaseEnterEmailPassword'));
                 return;
             }
             
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
-                showForgotError('Invalid email format');
+                showForgotError(t('invalidEmailFormat'));
                 return;
             }
             
             try {
-                showForgotInfo("Waiting for server response..");
+                showForgotInfo(t('waitingServerResponse'));
 
                 const response = await fetch(API_ENDPOINTS.sendPasswordReset, {
                     method: 'POST',
@@ -8836,7 +9908,7 @@ async function sendPasswordReset() {
                 });
                 
                 if (response.ok) {
-                    showForgotSuccess(data.message || "Reset link sent. Check your email.");
+                    showForgotSuccess(data.message || t('resetLinkSent'));
                     // Keep success message visible briefly, then proceed
                     setTimeout(() => {
                         closeForgotPassword();
@@ -8846,11 +9918,11 @@ async function sendPasswordReset() {
                     }, 1000);
                 } else {
                     console.error('❌ Password reset failed:', data);
-                    showForgotError(data.error || 'Email not found');
+                    showForgotError(data.error || t('emailNotFound'));
                 }
             } catch (error) {
                 console.error('❌ Password reset error:', error);
-                showForgotError('Failed to send reset link');
+                showForgotError(t('failedSendResetLink'));
             }
         }
 
@@ -8869,14 +9941,14 @@ async function sendPasswordReset() {
 <!-- Forgot Password Modal -->
 <div id="forgotPasswordModal" class="modal-overlay">
     <div class="modal-content" style="max-width: 400px;">
-        <h2 style="color: white; font-size: 22px; font-weight: 900; margin-bottom: 20px; text-align: center;">Reset Password</h2>
-        <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-bottom: 20px; text-align: center;">Enter your email address and we'll send you a password reset link.</p>
+        <h2 style="color: white; font-size: 22px; font-weight: 900; margin-bottom: 20px; text-align: center;"><span class="menu-translate" data-key="resetPassword">Reset Password</span></h2>
+        <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-bottom: 20px; text-align: center;"><span class="menu-translate" data-key="enterEmailForReset">Enter your email address and we'll send you a password reset link.</span></p>
         <div class="form-group">
             <div id="forgotError" class="error-msg" style="display:none;"></div>
         <input type="email" class="form-input" id="forgotEmail" placeholder="Enter your email" style="margin-bottom: 20px;">
         </div>
-        <button class="btn btn-primary" onclick="sendPasswordReset()" style="width: 100%; margin-bottom: 12px;">Send Reset Link</button>
-        <button class="btn" onclick="closeForgotPassword()" style="width: 100%; background: rgba(100, 100, 100, 0.2); border: 1px solid rgba(150, 150, 150, 0.3);">Cancel</button>
+        <button class="btn btn-primary" onclick="sendPasswordReset()" style="width: 100%; margin-bottom: 12px;"><span class="menu-translate" data-key="sendResetLink">Send Reset Link</span></button>
+        <button class="btn" onclick="closeForgotPassword()" style="width: 100%; background: rgba(100, 100, 100, 0.2); border: 1px solid rgba(150, 150, 150, 0.3);"><span class="menu-translate" data-key="cancel">Cancel</span></button>
     </div>
 </div>
 
