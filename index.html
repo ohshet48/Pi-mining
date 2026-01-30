@@ -4693,7 +4693,7 @@ window.__resetEmail = email;
                                     <circle class="timer-bg" cx="75" cy="75" r="70"/>
                                     <circle id="timerProgressCircle" class="timer-progress" cx="75" cy="75" r="70" stroke-dasharray="440" 
                                         stroke-dashoffset="${(() => {
-                                            const miningDuration = localStorage.getItem('miningDuration_' + currentUser.email) || 60000;
+                                            const miningDuration = localStorage.getItem('miningDuration_' + currentUser.email) || 86400000;
                                             const totalSeconds = parseInt(miningDuration) / 1000;
                                             return 440 - ((totalSeconds - d.timeLeft) / totalSeconds) * 440;
                                         })()}"/>
@@ -4709,7 +4709,7 @@ window.__resetEmail = email;
                             <p class="timer-label">Time Remaining</p>
                             <div class="earning-box">
                                 <p class="earning-text">Target: <span class="earning-amount">${(() => {
-                                    const miningDuration = localStorage.getItem('miningDuration_' + currentUser.email) || 60000; // Default 1 dakika
+                                    const miningDuration = localStorage.getItem('miningDuration_' + currentUser.email) || 86400000; // Default 24 saat
                                     const hours = parseInt(miningDuration) / (1000 * 60 * 60);
                                     return (d.rate * hours).toFixed(2);
                                 })()} <span style="font-size: 14px;">ARCASTRA</span></span></p>
@@ -5001,12 +5001,12 @@ window.__resetEmail = email;
         // Mining UI'ını başlat (sadece görsel)
         function startMineUI() {
             const now = Date.now();
-            const miningDuration = 1 * 60 * 1000; // 1 dakika (TEST)
+            const miningDuration = 24 * 60 * 60 * 1000; // 24 saat
             const end = now + miningDuration;
             
             // OPTIMISTIC UI: Update UI IMMEDIATELY (0ms delay)
             d.mining = true;
-            d.timeLeft = 60; // 1 dakika = 60 saniye
+            d.timeLeft = 86400; // 24 saat = 86400 saniye
             
             const today = new Date().toDateString();
             if (d.lastDate) {
@@ -5709,7 +5709,7 @@ window.__resetEmail = email;
             }
             
             if (progressCircle) {
-                const miningDuration = localStorage.getItem('miningDuration_' + currentUser.email) || 60000;
+                const miningDuration = localStorage.getItem('miningDuration_' + currentUser.email) || 86400000;
                 const totalSeconds = parseInt(miningDuration) / 1000;
                 const offset = 440 - ((totalSeconds - d.timeLeft) / totalSeconds) * 440;
                 progressCircle.setAttribute('stroke-dashoffset', offset);
@@ -7149,9 +7149,9 @@ window.__resetEmail = email;
                 // Try localStorage cache first (24 hour validity)
                 const cachedData = localStorage.getItem('leaderboard_cache');
                 const cacheTime = localStorage.getItem('leaderboard_cache_time');
-                const twentyFourHours = 24 * 60 * 60 * 1000;
+                const oneHour = 60 * 60 * 1000; // 1 hour
                 
-                if (cachedData && cacheTime && (Date.now() - parseInt(cacheTime)) < twentyFourHours) {
+                if (cachedData && cacheTime && (Date.now() - parseInt(cacheTime)) < oneHour) {
                     console.log('✅ Using localStorage cached leaderboard');
                     leaderboardData = JSON.parse(cachedData);
                 } else {
