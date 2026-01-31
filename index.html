@@ -11,6 +11,10 @@
      crossorigin="anonymous"></script>
     
     <style>
+        :root {
+            color-scheme: dark;
+        }
+        
         * { 
             margin: 0; 
             padding: 0; 
@@ -40,10 +44,12 @@
             overflow-y: auto;
             position: relative;
             touch-action: pan-y;
+            color-scheme: dark;
         }
         
         html {
             font-size: 16px;
+            color-scheme: dark;
         }
         
         /* Simplified Tech Background - Single Layer */
@@ -1968,6 +1974,7 @@ select[onchange*="changeLanguage"] {
   background-repeat: no-repeat;
   background-position: right 12px center;
   padding-right: 36px !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
 }
 
 select[onchange*="changeLanguage"]:hover {
@@ -1981,8 +1988,10 @@ select[onchange*="changeLanguage"]:focus {
   box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.2);
 }
 
+/* Desktop option styling */
 select[onchange*="changeLanguage"] option {
   background: rgba(10, 25, 41, 0.98) !important;
+  background-color: rgba(10, 25, 41, 0.98) !important;
   color: #ffffff !important;
   padding: 14px 16px !important;
   border-bottom: 2px solid rgba(0, 255, 255, 0.4) !important;
@@ -1996,14 +2005,23 @@ select[onchange*="changeLanguage"] option:last-child {
 
 select[onchange*="changeLanguage"] option:hover {
   background: rgba(0, 255, 255, 0.1) !important;
+  background-color: rgba(0, 255, 255, 0.1) !important;
   color: #ffffff !important;
 }
 
 select[onchange*="changeLanguage"] option:checked,
 select[onchange*="changeLanguage"] option:focus {
   background: rgba(0, 255, 255, 0.15) !important;
+  background-color: rgba(0, 255, 255, 0.15) !important;
   font-weight: 700 !important;
   color: #ffffff !important;
+}
+
+/* Mobile specific - Force dark background */
+@media (max-width: 768px) {
+  select[onchange*="changeLanguage"] {
+    color-scheme: dark !important;
+  }
 }
 
 </style>
@@ -8609,6 +8627,19 @@ window.__resetEmail = email;
             const language = localStorage.getItem('language') || 'en';
             const theme = localStorage.getItem('theme') || 'dark';
             
+            const languages = [
+                { code: 'en', flag: '🇬🇧', name: 'English' },
+                { code: 'tr', flag: '🇹🇷', name: 'Türkçe' },
+                { code: 'vi', flag: '🇻🇳', name: 'Tiếng Việt' },
+                { code: 'hi', flag: '🇮🇳', name: 'हिन्दी' },
+                { code: 'id', flag: '🇮🇩', name: 'Bahasa Indonesia' },
+                { code: 'pt', flag: '🇧🇷', name: 'Português' },
+                { code: 'es', flag: '🇪🇸', name: 'Español' },
+                { code: 'ar', flag: '🇸🇦', name: 'العربية' }
+            ];
+            
+            const currentLanguage = languages.find(l => l.code === currentLang) || languages[0];
+            
             return `
                 <div style="display: flex; flex-direction: column; gap: 20px;">
                     
@@ -8622,26 +8653,63 @@ window.__resetEmail = email;
                                     <div style="color: white; font-weight: 700; font-size: 15px; margin-bottom: 4px;">${t('language')}</div>
                                     <div style="color: #8b5cf6; font-size: 13px;">${t('applicationLanguage')}</div>
                                 </div>
-                                <select onchange="changeLanguage(this.value)" style="
-                                    background: rgba(0, 0, 0, 0.5); 
-                                    border: 2px solid rgba(0, 255, 255, 0.4); 
-                                    border-radius: 12px; 
-                                    padding: 10px 14px; 
-                                    color: #ffffff; 
-                                    font-weight: 700; 
-                                    cursor: pointer;
-                                    font-size: 14px;
-                                    box-shadow: 0 4px 12px rgba(0, 255, 255, 0.15);
-                                ">
-                                    <option value="en" ${currentLang === 'en' ? 'selected' : ''} style="background: rgba(10, 25, 41, 0.98); color: #ffffff; padding: 14px; border-bottom: 2px solid rgba(0, 255, 255, 0.4);">🇬🇧 English</option>
-                                    <option value="tr" ${currentLang === 'tr' ? 'selected' : ''} style="background: rgba(10, 25, 41, 0.98); color: #ffffff; padding: 14px; border-bottom: 2px solid rgba(0, 255, 255, 0.4);">🇹🇷 Türkçe</option>
-                                    <option value="vi" ${currentLang === 'vi' ? 'selected' : ''} style="background: rgba(10, 25, 41, 0.98); color: #ffffff; padding: 14px; border-bottom: 2px solid rgba(0, 255, 255, 0.4);">🇻🇳 Tiếng Việt</option>
-                                    <option value="hi" ${currentLang === 'hi' ? 'selected' : ''} style="background: rgba(10, 25, 41, 0.98); color: #ffffff; padding: 14px; border-bottom: 2px solid rgba(0, 255, 255, 0.4);">🇮🇳 हिन्दी</option>
-                                    <option value="id" ${currentLang === 'id' ? 'selected' : ''} style="background: rgba(10, 25, 41, 0.98); color: #ffffff; padding: 14px; border-bottom: 2px solid rgba(0, 255, 255, 0.4);">🇮🇩 Bahasa Indonesia</option>
-                                    <option value="pt" ${currentLang === 'pt' ? 'selected' : ''} style="background: rgba(10, 25, 41, 0.98); color: #ffffff; padding: 14px; border-bottom: 2px solid rgba(0, 255, 255, 0.4);">🇧🇷 Português</option>
-                                    <option value="es" ${currentLang === 'es' ? 'selected' : ''} style="background: rgba(10, 25, 41, 0.98); color: #ffffff; padding: 14px; border-bottom: 2px solid rgba(0, 255, 255, 0.4);">🇪🇸 Español</option>
-                                    <option value="ar" ${currentLang === 'ar' ? 'selected' : ''} style="background: rgba(10, 25, 41, 0.98); color: #ffffff; padding: 14px;">🇸🇦 العربية</option>
-                                </select>
+                                
+                                <!-- Custom Dropdown -->
+                                <div style="position: relative;">
+                                    <div id="languageSelector" onclick="toggleLanguageDropdown()" style="
+                                        background: rgba(0, 0, 0, 0.5); 
+                                        border: 2px solid rgba(0, 255, 255, 0.4); 
+                                        border-radius: 12px; 
+                                        padding: 10px 14px; 
+                                        color: #ffffff; 
+                                        font-weight: 700; 
+                                        cursor: pointer;
+                                        font-size: 14px;
+                                        box-shadow: 0 4px 12px rgba(0, 255, 255, 0.15);
+                                        display: flex;
+                                        align-items: center;
+                                        gap: 8px;
+                                        min-width: 160px;
+                                        user-select: none;
+                                    ">
+                                        <span>${currentLanguage.flag} ${currentLanguage.name}</span>
+                                        <svg width="12" height="8" viewBox="0 0 12 8" fill="none" style="margin-left: auto;">
+                                            <path d="M1 1L6 6L11 1" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+                                        </svg>
+                                    </div>
+                                    
+                                    <!-- Dropdown Menu -->
+                                    <div id="languageDropdown" style="
+                                        display: none;
+                                        position: absolute;
+                                        top: calc(100% + 8px);
+                                        right: 0;
+                                        background: rgba(10, 25, 41, 0.98);
+                                        border: 2px solid rgba(0, 255, 255, 0.4);
+                                        border-radius: 12px;
+                                        padding: 8px;
+                                        min-width: 200px;
+                                        z-index: 1000;
+                                        box-shadow: 0 8px 32px rgba(0, 255, 255, 0.3);
+                                    ">
+                                        ${languages.map(lang => `
+                                            <div onclick="selectLanguage('${lang.code}')" style="
+                                                padding: 12px 16px;
+                                                color: #ffffff;
+                                                font-weight: 600;
+                                                cursor: pointer;
+                                                border-radius: 8px;
+                                                border-bottom: ${lang.code !== 'ar' ? '1px solid rgba(0, 255, 255, 0.2)' : 'none'};
+                                                margin-bottom: ${lang.code !== 'ar' ? '4px' : '0'};
+                                                background: ${lang.code === currentLang ? 'rgba(0, 255, 255, 0.15)' : 'transparent'};
+                                                transition: all 0.2s;
+                                            " onmouseover="this.style.background='rgba(0, 255, 255, 0.1)'" onmouseout="this.style.background='${lang.code === currentLang ? 'rgba(0, 255, 255, 0.15)' : 'transparent'}'">
+                                                ${lang.flag} ${lang.name}
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                
                             </div>
                         </div>
                         
@@ -8687,6 +8755,35 @@ window.__resetEmail = email;
             localStorage.setItem('notificationsEnabled', enabled);
             showToast(enabled ? `🔔 ${t('notificationsEnabled')}` : `🔕 ${t('notificationsDisabled')}`);
         }
+        
+        function toggleLanguageDropdown() {
+            const dropdown = document.getElementById('languageDropdown');
+            if (dropdown) {
+                const isVisible = dropdown.style.display === 'block';
+                dropdown.style.display = isVisible ? 'none' : 'block';
+            }
+        }
+        
+        function selectLanguage(langCode) {
+            // Close dropdown
+            const dropdown = document.getElementById('languageDropdown');
+            if (dropdown) {
+                dropdown.style.display = 'none';
+            }
+            
+            // Change language
+            changeLanguage(langCode);
+        }
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const selector = document.getElementById('languageSelector');
+            const dropdown = document.getElementById('languageDropdown');
+            
+            if (selector && dropdown && !selector.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
         
         async function getAnnouncementsPageContent() {
             try {
