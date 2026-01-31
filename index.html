@@ -59,18 +59,7 @@
         }
         
         .grid-lines {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-            pointer-events: none;
-            background-image: 
-                linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
-            background-size: 50px 50px;
-            opacity: 0.4;
+            display: none; /* Grid pattern disabled for cleaner look */
         }
         
         .particle {
@@ -1970,6 +1959,53 @@
   display: inline-block;
 }
 
+/* === LANGUAGE SELECT STYLING === */
+select[onchange*="changeLanguage"] {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%23ffffff' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px !important;
+}
+
+select[onchange*="changeLanguage"]:hover {
+  border-color: rgba(0, 255, 255, 0.6);
+  box-shadow: 0 4px 16px rgba(0, 255, 255, 0.25);
+}
+
+select[onchange*="changeLanguage"]:focus {
+  outline: none;
+  border-color: rgba(0, 255, 255, 0.8);
+  box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.2);
+}
+
+select[onchange*="changeLanguage"] option {
+  background: rgba(10, 25, 41, 0.98) !important;
+  color: #ffffff !important;
+  padding: 14px 16px !important;
+  border-bottom: 2px solid rgba(0, 255, 255, 0.4) !important;
+  font-weight: 600 !important;
+  min-height: 48px !important;
+}
+
+select[onchange*="changeLanguage"] option:last-child {
+  border-bottom: none !important;
+}
+
+select[onchange*="changeLanguage"] option:hover {
+  background: rgba(0, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+}
+
+select[onchange*="changeLanguage"] option:checked,
+select[onchange*="changeLanguage"] option:focus {
+  background: rgba(0, 255, 255, 0.15) !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+}
+
 </style>
         
 	<!-- 
@@ -2161,7 +2197,89 @@ const translations = {
     referralStats: "Referral Statistics",
     noActiveReferrals: "No active referrals yet",
     noInactiveReferrals: "No inactive referrals yet",
-    inactive: "Inactive"
+    inactive: "Inactive",
+    // Upgrades Page
+    boostYourProgress: "Boost Your Progress",
+    temporaryEnhance: "Temporarily enhance your in-app progress speed for 24 hours",
+    speedBoost: "Speed Boost +5.00",
+    provides24Hour: "Provides a 24-hour in-app speed enhancement",
+    feature24Hour: "24-hour temporary speed enhancement",
+    featureWorksAddition: "Works in addition to your current progress speed",
+    featureLimitedTime: "Limited-time price offer!",
+    priceLabel: "Price:",
+    // Toast Messages - Upgrades
+    toastPleaseStartMining: "Please start mining first!",
+    toastInitiatingPurchase: "Please wait Initiating purchase...",
+    toastPurchaseCancelled: "Purchase cancelled",
+    toastVerifyingPurchase: "Please Wait Verifying purchase...",
+    toastSpeedBoostActivated: "Speed Boost activated! Total:",
+    toastPurchaseFailed: "Purchase failed",
+    toastPurchaseFailedRetry: "Purchase failed. Please try again.",
+    // Toast Messages - Profile
+    toastProfileSaved: "Personal information saved successfully!",
+    toastImageTooLarge: "Image too large",
+    toastFillAllFields: "Fill all fields",
+    toastWrongPassword: "Wrong password",
+    toastEmailExists: "Email exists",
+    toastEmailChanged: "Email changed successfully!",
+    toastPasswordsDontMatch: "Passwords don't match",
+    toastPasswordMin6: "Password min 6 chars",
+    toastPasswordChanged: "Password changed!",
+    toastFailed: "Failed",
+    toastFailedChangePassword: "Failed to change password",
+    toastProfileInfoCopied: "Profile info copied to clipboard!",
+    toastShare: "Share:",
+    toastProfileLinkCopied: "Profile link copied!",
+    toastFailedDeleteAccount: "Failed to delete account",
+    toastFullNameEnglishOnly: "Full Name: Only English letters allowed",
+    toastFullNameMin3: "Full Name must be at least 3 characters",
+    toastInvalidEmail: "Invalid email",
+    toastFormatDDMMYYYY: "Format: DD/MM/YYYY",
+    toastInvalidDate: "Invalid date",
+    toastEmailUpdateFailed: "Email update failed",
+    toastProfileUpdated: "Profile updated",
+    toastFailedToUpdate: "Failed to update",
+    // Toast Messages - Reset Password
+    toastResetEmailMissing: "Reset email missing",
+    toastPasswordResetSuccessful: "Password reset successful",
+    toastResetFailed: "Reset failed",
+    // Toast Messages - Airdrop
+    toastNoAirdrops: "No airdrops to claim",
+    toastClaimedAirdrop: "Claimed",
+    toastFailedClaimAirdrops: "Failed to claim airdrops. Please try again.",
+    toastNetworkError: "Network error. Please try again.",
+    // Toast Messages - General
+    toastClaimedLevelReward: "Claimed Level",
+    toastReward: "reward!",
+    toastCoins: "coins",
+    toastFailedClaimLevel: "Failed to claim level reward",
+    toastClaimedDailyReward: "Claimed +5 Coins daily reward!",
+    toastFailedClaimDaily: "Failed to claim daily reward",
+    toastNoActiveSession: "No active session! Please start mining first.",
+    toastLoadingAd: "Loading ad...",
+    toastAdCouldntLoadVPN: "Ad couldn't load. Please Disable VPN/ad blocker or try again in 5 seconds.",
+    toastUseMobileApp: "Please use the mobile app for ads.",
+    toastAdServiceNotAvailable: "Ad service not available. Please update the app.",
+    toastAdBlockerDisable: "Ad couldn't load. VPN or ad blocker must be disabled..",
+    toastFailedEarnReward: "Failed to earn reward",
+    toastFailedShowAd: "Failed to show ad. Try again later.",
+    toastAdNotWatchedCompletely: "Ad not watched completely",
+    toastWatchFullAd: "Watch the full ad to earn reward",
+    toastAirdropNotFound: "Airdrop not found",
+    toastNotificationSent: "Notification sent to inactive friends!",
+    toastTaskCompleted: "Task completed!",
+    // Tasks Page
+    completeTasks: "Complete Tasks",
+    completeTasksDesc: "Complete tasks to gain +5 progress!",
+    completedTask: "Completed +5",
+    rtProgressTask: "RT • Progress +5",
+    followProgressTask: "Follow us • Progress +5",
+    claimed: "Claimed",
+    claim: "Claim",
+    goButton: "GO",
+    followButton: "Follow",
+    opening: "Opening...",
+    completed: "Completed"
   },
   tr: {
     welcome: "Hoş Geldiniz",
@@ -2213,7 +2331,7 @@ const translations = {
     applicationLanguage: "Uygulama dili",
     // Pages
     profile: "Profil",
-    upgradesBoosts: "Yükseltmeler / Güçlendirmeler",
+    upgradesBoosts: "Yükseltmeler",
     myReferrals: "Referanslarım",
     // Referrals page
     totalReferrals: "Toplam Referans",
@@ -2311,7 +2429,89 @@ const translations = {
     referralStats: "Referans İstatistikleri",
     noActiveReferrals: "Henüz aktif referans yok",
     noInactiveReferrals: "Henüz pasif referans yok",
-    inactive: "Pasif"
+    inactive: "Pasif",
+    // Upgrades Page
+    boostYourProgress: "İlerlemenizi Hızlandırın",
+    temporaryEnhance: "Uygulama içi ilerleme hızınızı 24 saat boyunca geçici olarak artırın",
+    speedBoost: "Hız Artırıcı +5.00",
+    provides24Hour: "24 saatlik uygulama içi hız artışı sağlar",
+    feature24Hour: "24 saatlik geçici hız artışı",
+    featureWorksAddition: "Mevcut ilerleme hızınıza ek olarak çalışır",
+    featureLimitedTime: "Sınırlı süreli fiyat teklifi!",
+    priceLabel: "Fiyat:",
+    // Toast Messages - Upgrades
+    toastPleaseStartMining: "Lütfen önce madenciliği başlatın!",
+    toastInitiatingPurchase: "Lütfen bekleyin Satın alma başlatılıyor...",
+    toastPurchaseCancelled: "Satın alma iptal edildi",
+    toastVerifyingPurchase: "Lütfen Bekleyin Satın alma doğrulanıyor...",
+    toastSpeedBoostActivated: "Hız Artırıcı etkinleştirildi! Toplam:",
+    toastPurchaseFailed: "Satın alma başarısız",
+    toastPurchaseFailedRetry: "Satın alma başarısız. Lütfen tekrar deneyin.",
+    // Toast Messages - Profile
+    toastProfileSaved: "Kişisel bilgiler başarıyla kaydedildi!",
+    toastImageTooLarge: "Görsel çok büyük",
+    toastFillAllFields: "Tüm alanları doldurun",
+    toastWrongPassword: "Yanlış şifre",
+    toastEmailExists: "E-posta mevcut",
+    toastEmailChanged: "E-posta başarıyla değiştirildi!",
+    toastPasswordsDontMatch: "Şifreler eşleşmiyor",
+    toastPasswordMin6: "Şifre en az 6 karakter",
+    toastPasswordChanged: "Şifre değiştirildi!",
+    toastFailed: "Başarısız",
+    toastFailedChangePassword: "Şifre değiştirilemedi",
+    toastProfileInfoCopied: "Profil bilgisi panoya kopyalandı!",
+    toastShare: "Paylaş:",
+    toastProfileLinkCopied: "Profil linki kopyalandı!",
+    toastFailedDeleteAccount: "Hesap silinemedi",
+    toastFullNameEnglishOnly: "Ad Soyad: Sadece İngilizce harflere izin verilir",
+    toastFullNameMin3: "Ad Soyad en az 3 karakter olmalı",
+    toastInvalidEmail: "Geçersiz e-posta",
+    toastFormatDDMMYYYY: "Format: GG/AA/YYYY",
+    toastInvalidDate: "Geçersiz tarih",
+    toastEmailUpdateFailed: "E-posta güncellemesi başarısız",
+    toastProfileUpdated: "Profil güncellendi",
+    toastFailedToUpdate: "Güncelleme başarısız",
+    // Toast Messages - Reset Password
+    toastResetEmailMissing: "Sıfırlama e-postası eksik",
+    toastPasswordResetSuccessful: "Şifre sıfırlama başarılı",
+    toastResetFailed: "Sıfırlama başarısız",
+    // Toast Messages - Airdrop
+    toastNoAirdrops: "Talep edilecek airdrop yok",
+    toastClaimedAirdrop: "Talep edildi",
+    toastFailedClaimAirdrops: "Airdrop talep edilemedi. Lütfen tekrar deneyin.",
+    toastNetworkError: "Ağ hatası. Lütfen tekrar deneyin.",
+    // Toast Messages - General
+    toastClaimedLevelReward: "Seviye talep edildi",
+    toastReward: "ödülü!",
+    toastCoins: "coin",
+    toastFailedClaimLevel: "Seviye ödülü talep edilemedi",
+    toastClaimedDailyReward: "+5 Coin günlük ödül talep edildi!",
+    toastFailedClaimDaily: "Günlük ödül talep edilemedi",
+    toastNoActiveSession: "Aktif oturum yok! Lütfen önce madenciliği başlatın.",
+    toastLoadingAd: "Reklam yükleniyor...",
+    toastAdCouldntLoadVPN: "Reklam yüklenemedi. Lütfen VPN/reklam engelleyiciyi kapatın veya 5 saniye sonra tekrar deneyin.",
+    toastUseMobileApp: "Reklamlar için lütfen mobil uygulamayı kullanın.",
+    toastAdServiceNotAvailable: "Reklam servisi mevcut değil. Lütfen uygulamayı güncelleyin.",
+    toastAdBlockerDisable: "Reklam yüklenemedi. VPN veya reklam engelleyici kapatılmalı..",
+    toastFailedEarnReward: "Ödül kazanılamadı",
+    toastFailedShowAd: "Reklam gösterilemedi. Daha sonra tekrar deneyin.",
+    toastAdNotWatchedCompletely: "Reklam tamamen izlenmedi",
+    toastWatchFullAd: "Ödül kazanmak için reklamı tamamen izleyin",
+    toastAirdropNotFound: "Airdrop bulunamadı",
+    toastNotificationSent: "Pasif arkadaşlara bildirim gönderildi!",
+    toastTaskCompleted: "Görev tamamlandı!",
+    // Tasks Page
+    completeTasks: "Görevleri Tamamla",
+    completeTasksDesc: "+5 ilerleme kazanmak için görevleri tamamlayın!",
+    completedTask: "Tamamlandı +5",
+    rtProgressTask: "RT • İlerleme +5",
+    followProgressTask: "Bizi takip et • İlerleme +5",
+    claimed: "Talep Edildi",
+    claim: "Talep Et",
+    goButton: "GİT",
+    followButton: "Takip Et",
+    opening: "Açılıyor...",
+    completed: "Tamamlandı"
   },
   vi: {
     welcome: "Chào mừng",
@@ -2452,7 +2652,89 @@ const translations = {
     referralStats: "Thống kê giới thiệu",
     noActiveReferrals: "Chưa có giới thiệu hoạt động",
     noInactiveReferrals: "Chưa có giới thiệu không hoạt động",
-    inactive: "Không hoạt động"
+    inactive: "Không hoạt động",
+    // Upgrades Page
+    boostYourProgress: "Tăng Tốc Tiến Trình",
+    temporaryEnhance: "Tạm thời tăng tốc độ tiến trình trong ứng dụng trong 24 giờ",
+    speedBoost: "Tăng Tốc +5.00",
+    provides24Hour: "Cung cấp tăng tốc trong ứng dụng 24 giờ",
+    feature24Hour: "Tăng tốc tạm thời 24 giờ",
+    featureWorksAddition: "Hoạt động cộng thêm vào tốc độ hiện tại của bạn",
+    featureLimitedTime: "Ưu đãi giá có thời hạn!",
+    priceLabel: "Giá:",
+    // Toast Messages - Upgrades
+    toastPleaseStartMining: "Vui lòng bắt đầu khai thác trước!",
+    toastInitiatingPurchase: "Vui lòng đợi Đang bắt đầu mua hàng...",
+    toastPurchaseCancelled: "Mua hàng đã hủy",
+    toastVerifyingPurchase: "Vui lòng Đợi Đang xác minh giao dịch...",
+    toastSpeedBoostActivated: "Tăng Tốc đã kích hoạt! Tổng:",
+    toastPurchaseFailed: "Mua hàng thất bại",
+    toastPurchaseFailedRetry: "Mua hàng thất bại. Vui lòng thử lại.",
+    // Toast Messages - Profile
+    toastProfileSaved: "Thông tin cá nhân đã lưu thành công!",
+    toastImageTooLarge: "Hình ảnh quá lớn",
+    toastFillAllFields: "Điền tất cả các trường",
+    toastWrongPassword: "Mật khẩu sai",
+    toastEmailExists: "Email đã tồn tại",
+    toastEmailChanged: "Email đã thay đổi thành công!",
+    toastPasswordsDontMatch: "Mật khẩu không khớp",
+    toastPasswordMin6: "Mật khẩu tối thiểu 6 ký tự",
+    toastPasswordChanged: "Mật khẩu đã đổi!",
+    toastFailed: "Thất bại",
+    toastFailedChangePassword: "Không thể đổi mật khẩu",
+    toastProfileInfoCopied: "Thông tin hồ sơ đã sao chép!",
+    toastShare: "Chia sẻ:",
+    toastProfileLinkCopied: "Liên kết hồ sơ đã sao chép!",
+    toastFailedDeleteAccount: "Không thể xóa tài khoản",
+    toastFullNameEnglishOnly: "Họ và tên: Chỉ cho phép chữ cái tiếng Anh",
+    toastFullNameMin3: "Họ và tên phải có ít nhất 3 ký tự",
+    toastInvalidEmail: "Email không hợp lệ",
+    toastFormatDDMMYYYY: "Định dạng: DD/MM/YYYY",
+    toastInvalidDate: "Ngày không hợp lệ",
+    toastEmailUpdateFailed: "Cập nhật email thất bại",
+    toastProfileUpdated: "Hồ sơ đã cập nhật",
+    toastFailedToUpdate: "Cập nhật thất bại",
+    // Toast Messages - Reset Password
+    toastResetEmailMissing: "Thiếu email đặt lại",
+    toastPasswordResetSuccessful: "Đặt lại mật khẩu thành công",
+    toastResetFailed: "Đặt lại thất bại",
+    // Toast Messages - Airdrop
+    toastNoAirdrops: "Không có airdrop để nhận",
+    toastClaimedAirdrop: "Đã nhận",
+    toastFailedClaimAirdrops: "Không thể nhận airdrop. Vui lòng thử lại.",
+    toastNetworkError: "Lỗi mạng. Vui lòng thử lại.",
+    // Toast Messages - General
+    toastClaimedLevelReward: "Đã nhận thưởng Cấp",
+    toastReward: "thưởng!",
+    toastCoins: "coins",
+    toastFailedClaimLevel: "Không thể nhận thưởng cấp độ",
+    toastClaimedDailyReward: "Đã nhận thưởng +5 Coins hàng ngày!",
+    toastFailedClaimDaily: "Không thể nhận thưởng hàng ngày",
+    toastNoActiveSession: "Không có phiên hoạt động! Vui lòng bắt đầu khai thác trước.",
+    toastLoadingAd: "Đang tải quảng cáo...",
+    toastAdCouldntLoadVPN: "Không thể tải quảng cáo. Vui lòng tắt VPN/trình chặn quảng cáo hoặc thử lại sau 5 giây.",
+    toastUseMobileApp: "Vui lòng sử dụng ứng dụng di động cho quảng cáo.",
+    toastAdServiceNotAvailable: "Dịch vụ quảng cáo không khả dụng. Vui lòng cập nhật ứng dụng.",
+    toastAdBlockerDisable: "Không thể tải quảng cáo. VPN hoặc trình chặn quảng cáo phải được tắt..",
+    toastFailedEarnReward: "Không thể nhận thưởng",
+    toastFailedShowAd: "Không thể hiển thị quảng cáo. Thử lại sau.",
+    toastAdNotWatchedCompletely: "Quảng cáo chưa xem hoàn toàn",
+    toastWatchFullAd: "Xem toàn bộ quảng cáo để nhận thưởng",
+    toastAirdropNotFound: "Không tìm thấy airdrop",
+    toastNotificationSent: "Đã gửi thông báo đến bạn bè không hoạt động!",
+    toastTaskCompleted: "Nhiệm vụ hoàn thành!",
+    // Tasks Page
+    completeTasks: "Hoàn Thành Nhiệm Vụ",
+    completeTasksDesc: "Hoàn thành nhiệm vụ để nhận +5 tiến độ!",
+    completedTask: "Đã hoàn thành +5",
+    rtProgressTask: "RT • Tiến độ +5",
+    followProgressTask: "Theo dõi chúng tôi • Tiến độ +5",
+    claimed: "Đã nhận",
+    claim: "Nhận",
+    goButton: "ĐI",
+    followButton: "Theo dõi",
+    opening: "Đang mở...",
+    completed: "Hoàn thành"
   },
   hi: {
     welcome: "स्वागत है",
@@ -2593,7 +2875,89 @@ const translations = {
     referralStats: "रेफरल आंकड़े",
     noActiveReferrals: "अभी तक कोई सक्रिय रेफरल नहीं",
     noInactiveReferrals: "अभी तक कोई निष्क्रिय रेफरल नहीं",
-    inactive: "निष्क्रिय"
+    inactive: "निष्क्रिय",
+    // Upgrades Page
+    boostYourProgress: "अपनी प्रगति बढ़ाएं",
+    temporaryEnhance: "24 घंटे के लिए अपनी इन-ऐप प्रगति की गति को अस्थायी रूप से बढ़ाएं",
+    speedBoost: "गति बूस्ट +5.00",
+    provides24Hour: "24 घंटे की इन-ऐप गति वृद्धि प्रदान करता है",
+    feature24Hour: "24 घंटे की अस्थायी गति वृद्धि",
+    featureWorksAddition: "आपकी वर्तमान प्रगति गति के अतिरिक्त काम करता है",
+    featureLimitedTime: "सीमित समय की कीमत की पेशकश!",
+    priceLabel: "कीमत:",
+    // Toast Messages - Upgrades
+    toastPleaseStartMining: "कृपया पहले माइनिंग शुरू करें!",
+    toastInitiatingPurchase: "कृपया प्रतीक्षा करें खरीदारी शुरू हो रही है...",
+    toastPurchaseCancelled: "खरीदारी रद्द हो गई",
+    toastVerifyingPurchase: "कृपया प्रतीक्षा करें खरीदारी सत्यापित हो रही है...",
+    toastSpeedBoostActivated: "गति बूस्ट सक्रिय हो गया! कुल:",
+    toastPurchaseFailed: "खरीदारी विफल",
+    toastPurchaseFailedRetry: "खरीदारी विफल। कृपया पुनः प्रयास करें।",
+    // Toast Messages - Profile
+    toastProfileSaved: "व्यक्तिगत जानकारी सफलतापूर्वक सहेजी गई!",
+    toastImageTooLarge: "छवि बहुत बड़ी है",
+    toastFillAllFields: "सभी फ़ील्ड भरें",
+    toastWrongPassword: "गलत पासवर्ड",
+    toastEmailExists: "ईमेल मौजूद है",
+    toastEmailChanged: "ईमेल सफलतापूर्वक बदला गया!",
+    toastPasswordsDontMatch: "पासवर्ड मेल नहीं खाते",
+    toastPasswordMin6: "पासवर्ड न्यूनतम 6 वर्ण",
+    toastPasswordChanged: "पासवर्ड बदल गया!",
+    toastFailed: "विफल",
+    toastFailedChangePassword: "पासवर्ड बदलने में विफल",
+    toastProfileInfoCopied: "प्रोफ़ाइल जानकारी क्लिपबोर्ड पर कॉपी की गई!",
+    toastShare: "साझा करें:",
+    toastProfileLinkCopied: "प्रोफ़ाइल लिंक कॉपी किया गया!",
+    toastFailedDeleteAccount: "खाता हटाने में विफल",
+    toastFullNameEnglishOnly: "पूरा नाम: केवल अंग्रेजी अक्षरों की अनुमति है",
+    toastFullNameMin3: "पूरा नाम कम से कम 3 वर्णों का होना चाहिए",
+    toastInvalidEmail: "अमान्य ईमेल",
+    toastFormatDDMMYYYY: "प्रारूप: DD/MM/YYYY",
+    toastInvalidDate: "अमान्य तिथि",
+    toastEmailUpdateFailed: "ईमेल अपडेट विफल",
+    toastProfileUpdated: "प्रोफ़ाइल अपडेट हुआ",
+    toastFailedToUpdate: "अपडेट करने में विफल",
+    // Toast Messages - Reset Password
+    toastResetEmailMissing: "रीसेट ईमेल गायब है",
+    toastPasswordResetSuccessful: "पासवर्ड रीसेट सफल",
+    toastResetFailed: "रीसेट विफल",
+    // Toast Messages - Airdrop
+    toastNoAirdrops: "दावा करने के लिए कोई एयरड्रॉप नहीं",
+    toastClaimedAirdrop: "दावा किया",
+    toastFailedClaimAirdrops: "एयरड्रॉप दावा करने में विफल। कृपया पुनः प्रयास करें।",
+    toastNetworkError: "नेटवर्क त्रुटि। कृपया पुनः प्रयास करें।",
+    // Toast Messages - General
+    toastClaimedLevelReward: "स्तर दावा किया",
+    toastReward: "पुरस्कार!",
+    toastCoins: "सिक्के",
+    toastFailedClaimLevel: "स्तर पुरस्कार दावा करने में विफल",
+    toastClaimedDailyReward: "+5 सिक्के दैनिक पुरस्कार दावा किया!",
+    toastFailedClaimDaily: "दैनिक पुरस्कार दावा करने में विफल",
+    toastNoActiveSession: "कोई सक्रिय सत्र नहीं! कृपया पहले माइनिंग शुरू करें।",
+    toastLoadingAd: "विज्ञापन लोड हो रहा है...",
+    toastAdCouldntLoadVPN: "विज्ञापन लोड नहीं हो सका। कृपया VPN/विज्ञापन अवरोधक अक्षम करें या 5 सेकंड में पुनः प्रयास करें।",
+    toastUseMobileApp: "कृपया विज्ञापनों के लिए मोबाइल ऐप का उपयोग करें।",
+    toastAdServiceNotAvailable: "विज्ञापन सेवा उपलब्ध नहीं है। कृपया ऐप अपडेट करें।",
+    toastAdBlockerDisable: "विज्ञापन लोड नहीं हो सका। VPN या विज्ञापन अवरोधक अक्षम होना चाहिए..",
+    toastFailedEarnReward: "पुरस्कार अर्जित करने में विफल",
+    toastFailedShowAd: "विज्ञापन दिखाने में विफल। बाद में पुनः प्रयास करें।",
+    toastAdNotWatchedCompletely: "विज्ञापन पूरी तरह से नहीं देखा गया",
+    toastWatchFullAd: "पुरस्कार अर्जित करने के लिए पूरा विज्ञापन देखें",
+    toastAirdropNotFound: "एयरड्रॉप नहीं मिला",
+    toastNotificationSent: "निष्क्रिय मित्रों को सूचना भेजी गई!",
+    toastTaskCompleted: "कार्य पूर्ण हुआ!",
+    // Tasks Page
+    completeTasks: "कार्य पूर्ण करें",
+    completeTasksDesc: "+5 प्रगति प्राप्त करने के लिए कार्य पूर्ण करें!",
+    completedTask: "पूर्ण हुआ +5",
+    rtProgressTask: "RT • प्रगति +5",
+    followProgressTask: "हमें फॉलो करें • प्रगति +5",
+    claimed: "दावा किया",
+    claim: "दावा करें",
+    goButton: "जाएं",
+    followButton: "फॉलो करें",
+    opening: "खोला जा रहा है...",
+    completed: "पूर्ण हुआ"
   },
   id: {
     welcome: "Selamat datang",
@@ -2732,7 +3096,89 @@ const translations = {
     referralStats: "Statistik Referral",
     noActiveReferrals: "Belum ada referral aktif",
     noInactiveReferrals: "Belum ada referral tidak aktif",
-    inactive: "Tidak Aktif"
+    inactive: "Tidak Aktif",
+    // Upgrades Page
+    boostYourProgress: "Tingkatkan Kemajuan Anda",
+    temporaryEnhance: "Tingkatkan kecepatan kemajuan dalam aplikasi Anda untuk 24 jam",
+    speedBoost: "Peningkatan Kecepatan +5.00",
+    provides24Hour: "Memberikan peningkatan kecepatan dalam aplikasi 24 jam",
+    feature24Hour: "Peningkatan kecepatan sementara 24 jam",
+    featureWorksAddition: "Bekerja sebagai tambahan dari kecepatan kemajuan Anda saat ini",
+    featureLimitedTime: "Penawaran harga waktu terbatas!",
+    priceLabel: "Harga:",
+    // Toast Messages - Upgrades
+    toastPleaseStartMining: "Silakan mulai menambang terlebih dahulu!",
+    toastInitiatingPurchase: "Mohon tunggu Memulai pembelian...",
+    toastPurchaseCancelled: "Pembelian dibatalkan",
+    toastVerifyingPurchase: "Mohon Tunggu Memverifikasi pembelian...",
+    toastSpeedBoostActivated: "Peningkatan Kecepatan diaktifkan! Total:",
+    toastPurchaseFailed: "Pembelian gagal",
+    toastPurchaseFailedRetry: "Pembelian gagal. Silakan coba lagi.",
+    // Toast Messages - Profile
+    toastProfileSaved: "Informasi pribadi berhasil disimpan!",
+    toastImageTooLarge: "Gambar terlalu besar",
+    toastFillAllFields: "Isi semua bidang",
+    toastWrongPassword: "Kata sandi salah",
+    toastEmailExists: "Email sudah ada",
+    toastEmailChanged: "Email berhasil diubah!",
+    toastPasswordsDontMatch: "Kata sandi tidak cocok",
+    toastPasswordMin6: "Kata sandi min 6 karakter",
+    toastPasswordChanged: "Kata sandi diubah!",
+    toastFailed: "Gagal",
+    toastFailedChangePassword: "Gagal mengubah kata sandi",
+    toastProfileInfoCopied: "Info profil disalin ke clipboard!",
+    toastShare: "Bagikan:",
+    toastProfileLinkCopied: "Link profil disalin!",
+    toastFailedDeleteAccount: "Gagal menghapus akun",
+    toastFullNameEnglishOnly: "Nama Lengkap: Hanya huruf Inggris yang diperbolehkan",
+    toastFullNameMin3: "Nama Lengkap harus minimal 3 karakter",
+    toastInvalidEmail: "Email tidak valid",
+    toastFormatDDMMYYYY: "Format: DD/MM/YYYY",
+    toastInvalidDate: "Tanggal tidak valid",
+    toastEmailUpdateFailed: "Pembaruan email gagal",
+    toastProfileUpdated: "Profil diperbarui",
+    toastFailedToUpdate: "Gagal memperbarui",
+    // Toast Messages - Reset Password
+    toastResetEmailMissing: "Email reset hilang",
+    toastPasswordResetSuccessful: "Reset kata sandi berhasil",
+    toastResetFailed: "Reset gagal",
+    // Toast Messages - Airdrop
+    toastNoAirdrops: "Tidak ada airdrop untuk diklaim",
+    toastClaimedAirdrop: "Diklaim",
+    toastFailedClaimAirdrops: "Gagal mengklaim airdrop. Silakan coba lagi.",
+    toastNetworkError: "Kesalahan jaringan. Silakan coba lagi.",
+    // Toast Messages - General
+    toastClaimedLevelReward: "Diklaim Level",
+    toastReward: "hadiah!",
+    toastCoins: "koin",
+    toastFailedClaimLevel: "Gagal mengklaim hadiah level",
+    toastClaimedDailyReward: "Diklaim +5 Koin hadiah harian!",
+    toastFailedClaimDaily: "Gagal mengklaim hadiah harian",
+    toastNoActiveSession: "Tidak ada sesi aktif! Silakan mulai menambang terlebih dahulu.",
+    toastLoadingAd: "Memuat iklan...",
+    toastAdCouldntLoadVPN: "Iklan tidak dapat dimuat. Silakan nonaktifkan VPN/pemblokir iklan atau coba lagi dalam 5 detik.",
+    toastUseMobileApp: "Silakan gunakan aplikasi seluler untuk iklan.",
+    toastAdServiceNotAvailable: "Layanan iklan tidak tersedia. Silakan perbarui aplikasi.",
+    toastAdBlockerDisable: "Iklan tidak dapat dimuat. VPN atau pemblokir iklan harus dinonaktifkan..",
+    toastFailedEarnReward: "Gagal mendapatkan hadiah",
+    toastFailedShowAd: "Gagal menampilkan iklan. Coba lagi nanti.",
+    toastAdNotWatchedCompletely: "Iklan tidak ditonton sepenuhnya",
+    toastWatchFullAd: "Tonton iklan lengkap untuk mendapatkan hadiah",
+    toastAirdropNotFound: "Airdrop tidak ditemukan",
+    toastNotificationSent: "Notifikasi dikirim ke teman yang tidak aktif!",
+    toastTaskCompleted: "Tugas selesai!",
+    // Tasks Page
+    completeTasks: "Selesaikan Tugas",
+    completeTasksDesc: "Selesaikan tugas untuk mendapatkan +5 kemajuan!",
+    completedTask: "Selesai +5",
+    rtProgressTask: "RT • Kemajuan +5",
+    followProgressTask: "Ikuti kami • Kemajuan +5",
+    claimed: "Diklaim",
+    claim: "Klaim",
+    goButton: "PERGI",
+    followButton: "Ikuti",
+    opening: "Membuka...",
+    completed: "Selesai"
   },
   pt: {
     welcome: "Bem-vindo",
@@ -2871,7 +3317,89 @@ const translations = {
     referralStats: "Estatísticas de Indicações",
     noActiveReferrals: "Ainda sem indicações ativas",
     noInactiveReferrals: "Ainda sem indicações inativas",
-    inactive: "Inativo"
+    inactive: "Inativo",
+    // Upgrades Page
+    boostYourProgress: "Impulsione Seu Progresso",
+    temporaryEnhance: "Aumente temporariamente a velocidade do seu progresso no aplicativo por 24 horas",
+    speedBoost: "Impulso de Velocidade +5.00",
+    provides24Hour: "Fornece um aumento de velocidade no aplicativo por 24 horas",
+    feature24Hour: "Aumento de velocidade temporário de 24 horas",
+    featureWorksAddition: "Funciona além da sua velocidade de progresso atual",
+    featureLimitedTime: "Oferta de preço por tempo limitado!",
+    priceLabel: "Preço:",
+    // Toast Messages - Upgrades
+    toastPleaseStartMining: "Por favor, comece a minerar primeiro!",
+    toastInitiatingPurchase: "Aguarde Iniciando compra...",
+    toastPurchaseCancelled: "Compra cancelada",
+    toastVerifyingPurchase: "Aguarde Verificando compra...",
+    toastSpeedBoostActivated: "Impulso de Velocidade ativado! Total:",
+    toastPurchaseFailed: "Compra falhou",
+    toastPurchaseFailedRetry: "Compra falhou. Por favor, tente novamente.",
+    // Toast Messages - Profile
+    toastProfileSaved: "Informações pessoais salvas com sucesso!",
+    toastImageTooLarge: "Imagem muito grande",
+    toastFillAllFields: "Preencha todos os campos",
+    toastWrongPassword: "Senha incorreta",
+    toastEmailExists: "Email já existe",
+    toastEmailChanged: "Email alterado com sucesso!",
+    toastPasswordsDontMatch: "Senhas não coincidem",
+    toastPasswordMin6: "Senha mín 6 caracteres",
+    toastPasswordChanged: "Senha alterada!",
+    toastFailed: "Falhou",
+    toastFailedChangePassword: "Falha ao alterar senha",
+    toastProfileInfoCopied: "Informações do perfil copiadas!",
+    toastShare: "Compartilhar:",
+    toastProfileLinkCopied: "Link do perfil copiado!",
+    toastFailedDeleteAccount: "Falha ao excluir conta",
+    toastFullNameEnglishOnly: "Nome Completo: Apenas letras em inglês permitidas",
+    toastFullNameMin3: "Nome Completo deve ter pelo menos 3 caracteres",
+    toastInvalidEmail: "Email inválido",
+    toastFormatDDMMYYYY: "Formato: DD/MM/AAAA",
+    toastInvalidDate: "Data inválida",
+    toastEmailUpdateFailed: "Atualização de email falhou",
+    toastProfileUpdated: "Perfil atualizado",
+    toastFailedToUpdate: "Falha ao atualizar",
+    // Toast Messages - Reset Password
+    toastResetEmailMissing: "Email de redefinição ausente",
+    toastPasswordResetSuccessful: "Redefinição de senha bem-sucedida",
+    toastResetFailed: "Redefinição falhou",
+    // Toast Messages - Airdrop
+    toastNoAirdrops: "Nenhum airdrop para reivindicar",
+    toastClaimedAirdrop: "Reivindicado",
+    toastFailedClaimAirdrops: "Falha ao reivindicar airdrops. Por favor, tente novamente.",
+    toastNetworkError: "Erro de rede. Por favor, tente novamente.",
+    // Toast Messages - General
+    toastClaimedLevelReward: "Reivindicado Nível",
+    toastReward: "recompensa!",
+    toastCoins: "moedas",
+    toastFailedClaimLevel: "Falha ao reivindicar recompensa de nível",
+    toastClaimedDailyReward: "Reivindicado +5 Moedas recompensa diária!",
+    toastFailedClaimDaily: "Falha ao reivindicar recompensa diária",
+    toastNoActiveSession: "Nenhuma sessão ativa! Por favor, comece a minerar primeiro.",
+    toastLoadingAd: "Carregando anúncio...",
+    toastAdCouldntLoadVPN: "Anúncio não pôde carregar. Desative VPN/bloqueador de anúncios ou tente novamente em 5 segundos.",
+    toastUseMobileApp: "Use o aplicativo móvel para anúncios.",
+    toastAdServiceNotAvailable: "Serviço de anúncio não disponível. Atualize o aplicativo.",
+    toastAdBlockerDisable: "Anúncio não pôde carregar. VPN ou bloqueador de anúncios deve ser desativado..",
+    toastFailedEarnReward: "Falha ao ganhar recompensa",
+    toastFailedShowAd: "Falha ao exibir anúncio. Tente novamente mais tarde.",
+    toastAdNotWatchedCompletely: "Anúncio não assistido completamente",
+    toastWatchFullAd: "Assista o anúncio completo para ganhar recompensa",
+    toastAirdropNotFound: "Airdrop não encontrado",
+    toastNotificationSent: "Notificação enviada para amigos inativos!",
+    toastTaskCompleted: "Tarefa concluída!",
+    // Tasks Page
+    completeTasks: "Completar Tarefas",
+    completeTasksDesc: "Complete tarefas para ganhar +5 de progresso!",
+    completedTask: "Concluído +5",
+    rtProgressTask: "RT • Progresso +5",
+    followProgressTask: "Siga-nos • Progresso +5",
+    claimed: "Reivindicado",
+    claim: "Reivindicar",
+    goButton: "IR",
+    followButton: "Seguir",
+    opening: "Abrindo...",
+    completed: "Concluído"
   },
   es: {
     welcome: "Bienvenido",
@@ -3010,7 +3538,89 @@ const translations = {
     referralStats: "Estadísticas de Referencias",
     noActiveReferrals: "Aún sin referencias activas",
     noInactiveReferrals: "Aún sin referencias inactivas",
-    inactive: "Inactivo"
+    inactive: "Inactivo",
+    // Upgrades Page
+    boostYourProgress: "Impulsa Tu Progreso",
+    temporaryEnhance: "Mejora temporalmente la velocidad de tu progreso en la aplicación durante 24 horas",
+    speedBoost: "Impulso de Velocidad +5.00",
+    provides24Hour: "Proporciona una mejora de velocidad en la aplicación de 24 horas",
+    feature24Hour: "Mejora de velocidad temporal de 24 horas",
+    featureWorksAddition: "Funciona además de tu velocidad de progreso actual",
+    featureLimitedTime: "¡Oferta de precio por tiempo limitado!",
+    priceLabel: "Precio:",
+    // Toast Messages - Upgrades
+    toastPleaseStartMining: "¡Por favor comience a minar primero!",
+    toastInitiatingPurchase: "Por favor espere Iniciando compra...",
+    toastPurchaseCancelled: "Compra cancelada",
+    toastVerifyingPurchase: "Por favor Espere Verificando compra...",
+    toastSpeedBoostActivated: "¡Impulso de Velocidad activado! Total:",
+    toastPurchaseFailed: "Compra fallida",
+    toastPurchaseFailedRetry: "Compra fallida. Por favor, intente de nuevo.",
+    // Toast Messages - Profile
+    toastProfileSaved: "¡Información personal guardada exitosamente!",
+    toastImageTooLarge: "Imagen demasiado grande",
+    toastFillAllFields: "Rellene todos los campos",
+    toastWrongPassword: "Contraseña incorrecta",
+    toastEmailExists: "El email ya existe",
+    toastEmailChanged: "¡Email cambiado exitosamente!",
+    toastPasswordsDontMatch: "Las contraseñas no coinciden",
+    toastPasswordMin6: "Contraseña mín 6 caracteres",
+    toastPasswordChanged: "¡Contraseña cambiada!",
+    toastFailed: "Falló",
+    toastFailedChangePassword: "Error al cambiar contraseña",
+    toastProfileInfoCopied: "¡Información del perfil copiada!",
+    toastShare: "Compartir:",
+    toastProfileLinkCopied: "¡Enlace del perfil copiado!",
+    toastFailedDeleteAccount: "Error al eliminar cuenta",
+    toastFullNameEnglishOnly: "Nombre Completo: Solo se permiten letras en inglés",
+    toastFullNameMin3: "El Nombre Completo debe tener al menos 3 caracteres",
+    toastInvalidEmail: "Email inválido",
+    toastFormatDDMMYYYY: "Formato: DD/MM/AAAA",
+    toastInvalidDate: "Fecha inválida",
+    toastEmailUpdateFailed: "Actualización de email falló",
+    toastProfileUpdated: "Perfil actualizado",
+    toastFailedToUpdate: "Error al actualizar",
+    // Toast Messages - Reset Password
+    toastResetEmailMissing: "Email de restablecimiento faltante",
+    toastPasswordResetSuccessful: "Restablecimiento de contraseña exitoso",
+    toastResetFailed: "Restablecimiento falló",
+    // Toast Messages - Airdrop
+    toastNoAirdrops: "No hay airdrops para reclamar",
+    toastClaimedAirdrop: "Reclamado",
+    toastFailedClaimAirdrops: "Error al reclamar airdrops. Por favor, intente de nuevo.",
+    toastNetworkError: "Error de red. Por favor, intente de nuevo.",
+    // Toast Messages - General
+    toastClaimedLevelReward: "Reclamado Nivel",
+    toastReward: "¡recompensa!",
+    toastCoins: "monedas",
+    toastFailedClaimLevel: "Error al reclamar recompensa de nivel",
+    toastClaimedDailyReward: "¡Reclamado +5 Monedas recompensa diaria!",
+    toastFailedClaimDaily: "Error al reclamar recompensa diaria",
+    toastNoActiveSession: "¡No hay sesión activa! Por favor comience a minar primero.",
+    toastLoadingAd: "Cargando anuncio...",
+    toastAdCouldntLoadVPN: "No se pudo cargar el anuncio. Desactive VPN/bloqueador de anuncios o intente de nuevo en 5 segundos.",
+    toastUseMobileApp: "Use la aplicación móvil para anuncios.",
+    toastAdServiceNotAvailable: "Servicio de anuncios no disponible. Actualice la aplicación.",
+    toastAdBlockerDisable: "No se pudo cargar el anuncio. VPN o bloqueador de anuncios debe estar desactivado..",
+    toastFailedEarnReward: "Error al ganar recompensa",
+    toastFailedShowAd: "Error al mostrar anuncio. Intente más tarde.",
+    toastAdNotWatchedCompletely: "Anuncio no visto completamente",
+    toastWatchFullAd: "Mire el anuncio completo para ganar recompensa",
+    toastAirdropNotFound: "Airdrop no encontrado",
+    toastNotificationSent: "¡Notificación enviada a amigos inactivos!",
+    toastTaskCompleted: "¡Tarea completada!",
+    // Tasks Page
+    completeTasks: "Completar Tareas",
+    completeTasksDesc: "¡Completa tareas para ganar +5 de progreso!",
+    completedTask: "Completado +5",
+    rtProgressTask: "RT • Progreso +5",
+    followProgressTask: "Síguenos • Progreso +5",
+    claimed: "Reclamado",
+    claim: "Reclamar",
+    goButton: "IR",
+    followButton: "Seguir",
+    opening: "Abriendo...",
+    completed: "Completado"
   },
   ar: {
     welcome: "مرحباً",
@@ -3149,7 +3759,89 @@ const translations = {
     referralStats: "إحصائيات الإحالة",
     noActiveReferrals: "لا توجد إحالات نشطة بعد",
     noInactiveReferrals: "لا توجد إحالات غير نشطة بعد",
-    inactive: "غير نشط"
+    inactive: "غير نشط",
+    // Upgrades Page
+    boostYourProgress: "عزز تقدمك",
+    temporaryEnhance: "عزز سرعة تقدمك في التطبيق مؤقتاً لمدة 24 ساعة",
+    speedBoost: "تعزيز السرعة +5.00",
+    provides24Hour: "يوفر تعزيزاً للسرعة في التطبيق لمدة 24 ساعة",
+    feature24Hour: "تعزيز سرعة مؤقت لمدة 24 ساعة",
+    featureWorksAddition: "يعمل بالإضافة إلى سرعة تقدمك الحالية",
+    featureLimitedTime: "عرض سعر لفترة محدودة!",
+    priceLabel: "السعر:",
+    // Toast Messages - Upgrades
+    toastPleaseStartMining: "يرجى بدء التعدين أولاً!",
+    toastInitiatingPurchase: "يرجى الانتظار جارٍ بدء الشراء...",
+    toastPurchaseCancelled: "تم إلغاء الشراء",
+    toastVerifyingPurchase: "يرجى الانتظار جارٍ التحقق من الشراء...",
+    toastSpeedBoostActivated: "تم تفعيل تعزيز السرعة! الإجمالي:",
+    toastPurchaseFailed: "فشل الشراء",
+    toastPurchaseFailedRetry: "فشل الشراء. يرجى المحاولة مرة أخرى.",
+    // Toast Messages - Profile
+    toastProfileSaved: "تم حفظ المعلومات الشخصية بنجاح!",
+    toastImageTooLarge: "الصورة كبيرة جداً",
+    toastFillAllFields: "املأ جميع الحقول",
+    toastWrongPassword: "كلمة مرور خاطئة",
+    toastEmailExists: "البريد الإلكتروني موجود",
+    toastEmailChanged: "تم تغيير البريد الإلكتروني بنجاح!",
+    toastPasswordsDontMatch: "كلمات المرور غير متطابقة",
+    toastPasswordMin6: "كلمة المرور 6 أحرف كحد أدنى",
+    toastPasswordChanged: "تم تغيير كلمة المرور!",
+    toastFailed: "فشل",
+    toastFailedChangePassword: "فشل تغيير كلمة المرور",
+    toastProfileInfoCopied: "تم نسخ معلومات الملف الشخصي!",
+    toastShare: "مشاركة:",
+    toastProfileLinkCopied: "تم نسخ رابط الملف الشخصي!",
+    toastFailedDeleteAccount: "فشل حذف الحساب",
+    toastFullNameEnglishOnly: "الاسم الكامل: يُسمح بالأحرف الإنجليزية فقط",
+    toastFullNameMin3: "يجب أن يكون الاسم الكامل 3 أحرف على الأقل",
+    toastInvalidEmail: "بريد إلكتروني غير صالح",
+    toastFormatDDMMYYYY: "التنسيق: DD/MM/YYYY",
+    toastInvalidDate: "تاريخ غير صالح",
+    toastEmailUpdateFailed: "فشل تحديث البريد الإلكتروني",
+    toastProfileUpdated: "تم تحديث الملف الشخصي",
+    toastFailedToUpdate: "فشل التحديث",
+    // Toast Messages - Reset Password
+    toastResetEmailMissing: "بريد إعادة التعيين مفقود",
+    toastPasswordResetSuccessful: "نجحت إعادة تعيين كلمة المرور",
+    toastResetFailed: "فشلت إعادة التعيين",
+    // Toast Messages - Airdrop
+    toastNoAirdrops: "لا توجد إسقاطات جوية للمطالبة بها",
+    toastClaimedAirdrop: "تم المطالبة",
+    toastFailedClaimAirdrops: "فشل المطالبة بالإسقاطات الجوية. يرجى المحاولة مرة أخرى.",
+    toastNetworkError: "خطأ في الشبكة. يرجى المحاولة مرة أخرى.",
+    // Toast Messages - General
+    toastClaimedLevelReward: "تم المطالبة بمستوى",
+    toastReward: "مكافأة!",
+    toastCoins: "عملات",
+    toastFailedClaimLevel: "فشل المطالبة بمكافأة المستوى",
+    toastClaimedDailyReward: "تم المطالبة بـ +5 عملات مكافأة يومية!",
+    toastFailedClaimDaily: "فشل المطالبة بالمكافأة اليومية",
+    toastNoActiveSession: "لا توجد جلسة نشطة! يرجى بدء التعدين أولاً.",
+    toastLoadingAd: "جارٍ تحميل الإعلان...",
+    toastAdCouldntLoadVPN: "تعذر تحميل الإعلان. يرجى تعطيل VPN/مانع الإعلانات أو المحاولة مرة أخرى بعد 5 ثوانٍ.",
+    toastUseMobileApp: "يرجى استخدام تطبيق الجوال للإعلانات.",
+    toastAdServiceNotAvailable: "خدمة الإعلانات غير متاحة. يرجى تحديث التطبيق.",
+    toastAdBlockerDisable: "تعذر تحميل الإعلان. يجب تعطيل VPN أو مانع الإعلانات..",
+    toastFailedEarnReward: "فشل كسب المكافأة",
+    toastFailedShowAd: "فشل عرض الإعلان. حاول لاحقاً.",
+    toastAdNotWatchedCompletely: "لم تتم مشاهدة الإعلان بالكامل",
+    toastWatchFullAd: "شاهد الإعلان كاملاً لكسب المكافأة",
+    toastAirdropNotFound: "لم يتم العثور على الإسقاط الجوي",
+    toastNotificationSent: "تم إرسال إشعار إلى الأصدقاء غير النشطين!",
+    toastTaskCompleted: "اكتملت المهمة!",
+    // Tasks Page
+    completeTasks: "أكمل المهام",
+    completeTasksDesc: "أكمل المهام للحصول على +5 تقدم!",
+    completedTask: "مكتمل +5",
+    rtProgressTask: "RT • التقدم +5",
+    followProgressTask: "تابعنا • التقدم +5",
+    claimed: "تم المطالبة",
+    claim: "المطالبة",
+    goButton: "اذهب",
+    followButton: "تابع",
+    opening: "جارٍ الفتح...",
+    completed: "مكتمل"
   }
 };
 
@@ -4455,7 +5147,7 @@ window.__resetEmail = email;
         window.scrollTo({ top: 0, behavior: 'smooth' });
         
         // Show loading message indefinitely (duration = 999999)
-        showToast('⏳ Waiting for server response...', false, 999999);
+        showToast(`⏳ ${t('waitingServerResponse')}`, false, 999999);
 	
     const email = document.getElementById('signupEmail').value;
     const password = document.getElementById('signupPassword').value;
@@ -5553,7 +6245,7 @@ window.__resetEmail = email;
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             
             render();
-            showToast(`✓ Claimed Level ${claimedLevel} reward! +${levelReward.coins} coins`);
+            showToast(`✓ ${t('toastClaimedLevelReward')} ${claimedLevel} ${t('toastReward')} +${levelReward.coins} ${t('toastCoins')}`);
         }
         
         // Backend isteği (arka planda)
@@ -5635,7 +6327,7 @@ window.__resetEmail = email;
             
             // Update UI instantly
             render();
-            showToast(`✓ Claimed Level ${claimedLevel} reward! +${levelReward.coins} coins`);
+            showToast(`✓ ${t('toastClaimedLevelReward')} ${claimedLevel} ${t('toastReward')} +${levelReward.coins} ${t('toastCoins')}`);
             
             // Backend call in background
             (async () => {
@@ -5687,7 +6379,7 @@ window.__resetEmail = email;
                     currentUser.level = oldLevel;
                     localStorage.setItem('currentUser', JSON.stringify(currentUser));
                     render();
-                    showToast('Failed to claim level reward', true);
+                    showToast(t('toastFailedClaimLevel'), true);
                 } finally {
                     isClaimingLevel = false;
                 }
@@ -6378,7 +7070,7 @@ window.__resetEmail = email;
             
             // Balance backend'den gelmiş olabilir, render et
             render();
-            showToast('✓ Claimed +5 Coins daily reward!');
+            showToast(`✓ ${t('toastClaimedDailyReward')}`);
             
             console.log('✅ 3 saniye bitti - UI güncellendi, buton kapandı');
         }
@@ -6443,7 +7135,7 @@ window.__resetEmail = email;
             render();
             
             // Show success message immediately
-            showToast('✓ Claimed +5 Coins daily reward!');
+            showToast(`✓ ${t('toastClaimedDailyReward')}`);
 
             // ⚡ PARALLEL backend calls (all at once!)
             (async () => {
@@ -6490,7 +7182,7 @@ window.__resetEmail = email;
                     d.balance = oldBalance;
                     dailyRewardAvailable = true;
                     render();
-                    showToast('❌ Failed to claim daily reward', true);
+                    showToast(`❌ ${t('toastFailedClaimDaily')}`, true);
                 } finally {
                     isClaimingDaily = false;
                 }
@@ -6594,7 +7286,7 @@ window.__resetEmail = email;
             const sessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
             
             if (!sessionId) {
-                showToast('❌ No active session! Please start mining first.', true);
+                showToast(`❌ ${t('toastNoActiveSession')}`, true);
                 return;
             }
             
@@ -6607,7 +7299,7 @@ window.__resetEmail = email;
             localStorage.setItem('adStartTime_' + currentUser.email, adStartTime.toString());
             
             // Show loading message
-            showToast('📺 Loading ad...', false, 3000);
+            showToast(`📺 ${t('toastLoadingAd')}`, false, 3000);
             
             try {
                 // CHECK 1: Android Native AdMob (Priority)
@@ -6621,7 +7313,7 @@ window.__resetEmail = email;
                         // Android will call window.onAdRewardEarned when done
                     } else {
                         console.warn('⚠️ Android ad not ready yet');
-                        showToast('❌ Ad couldn’t load. Please Disable VPN/ad blocker or try again in 5 seconds.', true);
+                        showToast(`❌ ${t('toastAdCouldntLoadVPN')}`, true);
                         isWatchingAd = false;
                     }
                     return;
@@ -6630,19 +7322,19 @@ window.__resetEmail = email;
                 // CHECK 2: Web AdSense (Fallback for web version)
                 if (typeof adsbygoogle !== 'undefined' && window.adsbygoogle) {
                     console.log('⚠️ Web AdSense detected (not recommended for production)');
-                    showToast('❌ Please use the mobile app for ads.', true);
+                    showToast(`❌ ${t('toastUseMobileApp')}`, true);
                     isWatchingAd = false;
                     return;
                 }
                 
                 // CHECK 3: No ad system available
                 console.error('❌ No ad system available');
-                showToast('❌ Ad service not available. Please update the app.', true);
+                showToast(`❌ ${t('toastAdServiceNotAvailable')}`, true);
                 isWatchingAd = false;
                 
             } catch (error) {
                 console.error('❌ Ad load error:', error);
-                showToast('❌ Ad couldn’t load. VPN or ad blocker must be disabled..', true);
+                showToast(`❌ ${t('toastAdBlockerDisable')}`, true);
                 isWatchingAd = false;
             }
         }
@@ -6669,7 +7361,7 @@ window.__resetEmail = email;
                 // Apply reward
                 await applyAdReward(sessionId, watchDuration, 'admob');
             } else {
-                showToast('❌ Failed to earn reward', true);
+                showToast(`❌ ${t('toastFailedEarnReward')}`, true);
                 isWatchingAd = false;
             }
         };
@@ -6677,21 +7369,21 @@ window.__resetEmail = email;
         // Android callback: Called when ad is not ready
         window.onAdNotReady = function() {
             console.warn('⚠️ onAdNotReady called');
-            showToast('❌ Ad couldn’t load. Please Disable VPN/ad blocker or try again in 5 seconds.', true);
+            showToast(`❌ ${t('toastAdCouldntLoadVPN')}`, true);
             isWatchingAd = false;
         };
         
         // Android callback: Called when ad load fails
         window.onAdLoadFailed = function(error) {
             console.error('❌ onAdLoadFailed:', error);
-            showToast('❌ Ad couldn’t load. VPN or ad blocker must be disabled..', true);
+            showToast(`❌ ${t('toastAdBlockerDisable')}`, true);
             isWatchingAd = false;
         };
         
         // Android callback: Called when ad show fails
         window.onAdShowFailed = function(error) {
             console.error('❌ onAdShowFailed:', error);
-            showToast('❌ Failed to show ad. Try again later.', true);
+            showToast(`❌ ${t('toastFailedShowAd')}`, true);
             isWatchingAd = false;
         };
         
@@ -6700,7 +7392,7 @@ window.__resetEmail = email;
             console.log('🔴 onAdDismissed called:', data);
             
             if (!adRewardEarned) {
-                showToast('❌ Ad not watched completely', true);
+                showToast(`❌ ${t('toastAdNotWatchedCompletely')}`, true);
             }
             
             isWatchingAd = false;
@@ -6712,7 +7404,7 @@ window.__resetEmail = email;
             if (container) container.remove();
             
             if (!adRewardEarned) {
-                showToast('❌ Watch the full ad to earn reward', true);
+                showToast(`❌ ${t('toastWatchFullAd')}`, true);
                 isWatchingAd = false;
             }
         }
@@ -6774,11 +7466,11 @@ window.__resetEmail = email;
                     // Refresh data
                     await initApp();
                 } else {
-                    showToast(`❌ ${data.error || 'Failed to apply boost'}`, true);
+                    showToast(`❌ ${data.error || t('toastFailed')}`, true);
                 }
             } catch (error) {
                 console.error('❌ Backend error:', error);
-                showToast('❌ Failed to apply boost', true);
+                showToast(`❌ ${t('toastFailed')}`, true);
             }
             
             // Unlock button after 45s
@@ -7069,7 +7761,7 @@ window.__resetEmail = email;
             document.getElementById('saveInfoBtn').style.display = 'none';
             document.getElementById('editInfoBtn').style.display = 'block';
             
-            showToast('✓ Personal information saved successfully!');
+            showToast(`✓ ${t('toastProfileSaved')}`);
             renderProfile();
         }
         
@@ -7120,7 +7812,7 @@ window.__resetEmail = email;
                         // Check final size
                         const finalSize = resizedImage.length * 0.75; // Approximate bytes
                         if (finalSize > targetSize) {
-                            showToast('⚠️ Image too large', true);
+                            showToast(`⚠️ ${t('toastImageTooLarge')}`, true);
                             return;
                         }
                         
@@ -7328,18 +8020,18 @@ window.__resetEmail = email;
             const password = document.getElementById('emailPassword').value;
             
             if (!newEmail || !password) {
-                showToast('❌ Fill all fields', true);
+                showToast(`❌ ${t('toastFillAllFields')}`, true);
                 return;
             }
             
             const users = JSON.parse(localStorage.getItem('users') || '{}');
             if (users[currentUser.email].password !== password) {
-                showToast('❌ Wrong password', true);
+                showToast(`❌ ${t('toastWrongPassword')}`, true);
                 return;
             }
             
             if (users[newEmail]) {
-                showToast('❌ Email exists', true);
+                showToast(`❌ ${t('toastEmailExists')}`, true);
                 return;
             }
             
@@ -7352,7 +8044,7 @@ window.__resetEmail = email;
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             
             closeChangeEmail();
-            showToast('✓ Email changed successfully!');
+            showToast(`✓ ${t('toastEmailChanged')}`);
         }
         
         function showChangePassword() {
@@ -7390,17 +8082,17 @@ window.__resetEmail = email;
             const confirmPwd = document.getElementById('confirmPassword').value;
             
             if (!currentPwd || !newPwd || !confirmPwd) {
-                showToast('❌ Fill all fields', true);
+                showToast(`❌ ${t('toastFillAllFields')}`, true);
                 return;
             }
             
             if (newPwd !== confirmPwd) {
-                showToast('❌ Passwords don\'t match', true);
+                showToast(`❌ ${t('toastPasswordsDontMatch')}`, true);
                 return;
             }
             
             if (newPwd.length < 6) {
-                showToast('❌ Password min 6 chars', true);
+                showToast(`❌ ${t('toastPasswordMin6')}`, true);
                 return;
             }
             
@@ -7418,13 +8110,13 @@ window.__resetEmail = email;
                 
                 if (response.ok) {
                     closeChangePassword();
-                    showToast('✓ Password changed!');
+                    showToast(`✓ ${t('toastPasswordChanged')}`);
                 } else {
-                    showToast(`❌ ${data.error || 'Failed'}`, true);
+                    showToast(`❌ ${data.error || t('toastFailed')}`, true);
                 }
             } catch (error) {
                 console.error('Change password error:', error);
-                showToast('❌ Failed to change password', true);
+                showToast(`❌ ${t('toastFailedChangePassword')}`, true);
             }
         }
 
@@ -7446,16 +8138,16 @@ window.__resetEmail = email;
         
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
-                showToast('✓ Profile info copied to clipboard!');
+                showToast(`✓ ${t('toastProfileInfoCopied')}`);
             }).catch(() => {
-                showToast('✓ Share: ' + text);
+                showToast(`✓ ${t('toastShare')} ` + text);
             });
         }
         
         function copyProfileLink() {
             const url = window.location.href;
             navigator.clipboard.writeText(url).then(() => {
-                showToast('✓ Profile link copied!');
+                showToast(`✓ ${t('toastProfileLinkCopied')}`);
             });
         }
         
@@ -7535,11 +8227,11 @@ window.__resetEmail = email;
                     // Show goodbye modal
                     document.getElementById('goodbyeModal').classList.add('show');
                 } else {
-                    showToast(`❌ ${data.error || 'Failed to delete account'}`, true);
+                    showToast(`❌ ${data.error || t('toastFailedDeleteAccount')}`, true);
                 }
             } catch (error) {
                 console.error('Delete account error:', error);
-                showToast('❌ Failed to delete account', true);
+                showToast(`❌ ${t('toastFailedDeleteAccount')}`, true);
             }
         }
 
@@ -7930,15 +8622,25 @@ window.__resetEmail = email;
                                     <div style="color: white; font-weight: 700; font-size: 15px; margin-bottom: 4px;">${t('language')}</div>
                                     <div style="color: #8b5cf6; font-size: 13px;">${t('applicationLanguage')}</div>
                                 </div>
-                                <select onchange="changeLanguage(this.value)" style="background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(0, 255, 255, 0.3); border-radius: 8px; padding: 8px 12px; color: white; font-weight: 600; cursor: pointer;">
-                                    <option value="en" ${currentLang === 'en' ? 'selected' : ''}>🇬🇧 English</option>
-                                    <option value="tr" ${currentLang === 'tr' ? 'selected' : ''}>🇹🇷 Türkçe</option>
-                                    <option value="vi" ${currentLang === 'vi' ? 'selected' : ''}>🇻🇳 Tiếng Việt</option>
-                                    <option value="hi" ${currentLang === 'hi' ? 'selected' : ''}>🇮🇳 हिन्दी</option>
-                                    <option value="id" ${currentLang === 'id' ? 'selected' : ''}>🇮🇩 Bahasa Indonesia</option>
-                                    <option value="pt" ${currentLang === 'pt' ? 'selected' : ''}>🇧🇷 Português</option>
-                                    <option value="es" ${currentLang === 'es' ? 'selected' : ''}>🇪🇸 Español</option>
-                                    <option value="ar" ${currentLang === 'ar' ? 'selected' : ''}>🇸🇦 العربية</option>
+                                <select onchange="changeLanguage(this.value)" style="
+                                    background: rgba(0, 0, 0, 0.5); 
+                                    border: 2px solid rgba(0, 255, 255, 0.4); 
+                                    border-radius: 12px; 
+                                    padding: 10px 14px; 
+                                    color: #ffffff; 
+                                    font-weight: 700; 
+                                    cursor: pointer;
+                                    font-size: 14px;
+                                    box-shadow: 0 4px 12px rgba(0, 255, 255, 0.15);
+                                ">
+                                    <option value="en" ${currentLang === 'en' ? 'selected' : ''} style="background: rgba(10, 25, 41, 0.98); color: #ffffff; padding: 14px; border-bottom: 2px solid rgba(0, 255, 255, 0.4);">🇬🇧 English</option>
+                                    <option value="tr" ${currentLang === 'tr' ? 'selected' : ''} style="background: rgba(10, 25, 41, 0.98); color: #ffffff; padding: 14px; border-bottom: 2px solid rgba(0, 255, 255, 0.4);">🇹🇷 Türkçe</option>
+                                    <option value="vi" ${currentLang === 'vi' ? 'selected' : ''} style="background: rgba(10, 25, 41, 0.98); color: #ffffff; padding: 14px; border-bottom: 2px solid rgba(0, 255, 255, 0.4);">🇻🇳 Tiếng Việt</option>
+                                    <option value="hi" ${currentLang === 'hi' ? 'selected' : ''} style="background: rgba(10, 25, 41, 0.98); color: #ffffff; padding: 14px; border-bottom: 2px solid rgba(0, 255, 255, 0.4);">🇮🇳 हिन्दी</option>
+                                    <option value="id" ${currentLang === 'id' ? 'selected' : ''} style="background: rgba(10, 25, 41, 0.98); color: #ffffff; padding: 14px; border-bottom: 2px solid rgba(0, 255, 255, 0.4);">🇮🇩 Bahasa Indonesia</option>
+                                    <option value="pt" ${currentLang === 'pt' ? 'selected' : ''} style="background: rgba(10, 25, 41, 0.98); color: #ffffff; padding: 14px; border-bottom: 2px solid rgba(0, 255, 255, 0.4);">🇧🇷 Português</option>
+                                    <option value="es" ${currentLang === 'es' ? 'selected' : ''} style="background: rgba(10, 25, 41, 0.98); color: #ffffff; padding: 14px; border-bottom: 2px solid rgba(0, 255, 255, 0.4);">🇪🇸 Español</option>
+                                    <option value="ar" ${currentLang === 'ar' ? 'selected' : ''} style="background: rgba(10, 25, 41, 0.98); color: #ffffff; padding: 14px;">🇸🇦 العربية</option>
                                 </select>
                             </div>
                         </div>
@@ -8256,7 +8958,7 @@ window.__resetEmail = email;
             let users = JSON.parse(localStorage.getItem('users')) || {};
             
             if (!users[userEmail] || !users[userEmail].pendingAirdrops || !users[userEmail].pendingAirdrops[index]) {
-                showToast('❌ Airdrop not found', true);
+                showToast(`❌ ${t('toastAirdropNotFound')}`, true);
                 return;
             }
             
@@ -8289,7 +8991,7 @@ window.__resetEmail = email;
                 hasPendingAirdrops = (currentUser.pendingAirdrops && currentUser.pendingAirdrops.length > 0) || false;
                 
                 // Show success message
-                showToast(`✓ Claimed ${airdrop.amount} Coins!`);
+                showToast(`✓ ${t('toastClaimedAirdrop')} ${airdrop.amount} ${t('toastCoins')}!`);
                 
                 // Refresh page content
                 openPage('airdrop');
@@ -8862,7 +9564,7 @@ window.__resetEmail = email;
             // Set cooldown
             localStorage.setItem('lastReferralNotif_' + currentEmail, now.toString());
             
-            showToast('✓ Notification sent to inactive friends!');
+            showToast(`✓ ${t('toastNotificationSent')}`);
             
             // Reload page to update button state
             openPage('referrals');
@@ -9078,9 +9780,9 @@ window.__resetEmail = email;
                 <div style="padding: 20px 0;">
                     <!-- Header Info -->
                     <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.15)); border: 2px solid rgba(139, 92, 246, 0.3); border-radius: 16px; padding: 20px; margin-bottom: 24px; text-align: center;">
-                        <h3 style="color: #fff; font-size: 18px; font-weight: 800; margin-bottom: 8px;">🎯 Complete Tasks</h3>
+                        <h3 style="color: #fff; font-size: 18px; font-weight: 800; margin-bottom: 8px;">🎯 ${t('completeTasks')}</h3>
                         <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin: 0; line-height: 1.5;">
-                            Complete tasks to gain +5 progress!
+                            ${t('completeTasksDesc')}
                         </p>
                     </div>
                     
@@ -9122,7 +9824,7 @@ window.__resetEmail = email;
                                         <div>
                                             <div style="color: #fff; font-size: 16px; font-weight: 700; margin-bottom: 4px;">${task.name}</div>
                                             <div style="color: ${isCompleted ? '#00ff00' : '#00ffff'}; font-size: 13px; font-weight: 600;">
-                                                ${isCompleted ? '✅ Completed +5' : (task.id === 'twitter_rt' ? 'RT • Progress +5' : 'Follow us • Progress +5')}
+                                                ${isCompleted ? '✅ ' + t('completedTask') : (task.id === 'twitter_rt' ? t('rtProgressTask') : t('followProgressTask'))}
                                             </div>
                                         </div>
                                     </div>
@@ -9140,7 +9842,7 @@ window.__resetEmail = email;
                                                 font-weight: 700;
                                                 cursor: not-allowed;
                                                 white-space: nowrap;
-                                            ">Claimed</button>
+                                            ">${t('claimed')}</button>
                                         ` : showClaim ? `
                                             <button onclick="claimTask('${task.id}')" style="
                                                 padding: 12px 24px;
@@ -9153,7 +9855,7 @@ window.__resetEmail = email;
                                                 cursor: pointer;
                                                 white-space: nowrap;
                                                 box-shadow: 0 4px 20px rgba(0, 255, 0, 0.4);
-                                            ">Claim</button>
+                                            ">${t('claim')}</button>
                                         ` : `
                                             <button onclick="openTask('${task.id}', '${task.url}')" style="
                                                 padding: 12px 24px;
@@ -9166,7 +9868,7 @@ window.__resetEmail = email;
                                                 cursor: pointer;
                                                 white-space: nowrap;
                                                 box-shadow: 0 4px 20px rgba(0, 255, 255, 0.4);
-                                            ">${task.id === 'twitter_rt' ? 'GO' : 'Follow'}</button>
+                                            ">${task.id === 'twitter_rt' ? t('goButton') : t('followButton')}</button>
                                         `}
                                     </div>
                                 </div>
@@ -9199,7 +9901,7 @@ window.__resetEmail = email;
                         font-weight: 700;
                         cursor: not-allowed;
                         white-space: nowrap;
-                    ">Opening...</button>
+                    ">${t('opening')}</button>
                 `;
             }
             
@@ -9227,7 +9929,7 @@ window.__resetEmail = email;
                             cursor: pointer;
                             white-space: nowrap;
                             box-shadow: 0 4px 20px rgba(0, 255, 0, 0.4);
-                        ">Claim</button>
+                        ">${t('claim')}</button>
                     `;
                 }
                 isProcessingTask = false;
@@ -9255,7 +9957,7 @@ window.__resetEmail = email;
                         font-weight: 700;
                         cursor: not-allowed;
                         white-space: nowrap;
-                    ">Completed</button>
+                    ">${t('completed')}</button>
                 `;
             }
             
@@ -9268,7 +9970,7 @@ window.__resetEmail = email;
             d.balance = currentUser.balance;
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             
-            showToast(`✅ Task completed! +${reward} ARCASTRA`, false);
+            showToast(`✅ ${t('toastTaskCompleted')} +${reward} ARCASTRA`, false);
             render();
             
             // Send to backend in background (don't await)
@@ -9295,9 +9997,9 @@ window.__resetEmail = email;
                 <div style="padding: 20px 0;">
                     <!-- Header Info -->
                     <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.15)); border: 2px solid rgba(139, 92, 246, 0.3); border-radius: 16px; padding: 20px; margin-bottom: 24px; text-align: center;">
-                        <h3 style="color: #fff; font-size: 18px; font-weight: 800; margin-bottom: 8px;">🚀 Boost Your Progress</h3>
+                        <h3 style="color: #fff; font-size: 18px; font-weight: 800; margin-bottom: 8px;">🚀 ${t('boostYourProgress')}</h3>
                         <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin: 0; line-height: 1.5;">
-                            Temporarily enhance your in-app progress speed for 24 hours
+                            ${t('temporaryEnhance')}
                         </p>
                     </div>
                     
@@ -9371,9 +10073,9 @@ window.__resetEmail = email;
                             
                             <!-- Booster Info -->
                             <div style="text-align: center; margin-bottom: 20px;">
-                                <h2 style="color: #fff; font-size: 24px; font-weight: 900; margin-bottom: 8px;">Speed Boost +5.00</h2>
+                                <h2 style="color: #fff; font-size: 24px; font-weight: 900; margin-bottom: 8px;">${t('speedBoost')}</h2>
                                 <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin: 0;">
-                                    Provides a 24-hour in-app speed enhancement
+                                    ${t('provides24Hour')}
                                 </p>
                             </div>
                             
@@ -9381,22 +10083,22 @@ window.__resetEmail = email;
                             <div style="background: rgba(0, 255, 255, 0.05); border: 1px solid rgba(0, 255, 255, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
                                 <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
                                     <span style="color: #00ffff; font-size: 20px;">✓</span>
-                                    <span style="color: rgba(255, 255, 255, 0.9); font-size: 14px;">24-hour temporary speed enhancement</span>
+                                    <span style="color: rgba(255, 255, 255, 0.9); font-size: 14px;">${t('feature24Hour')}</span>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
                                     <span style="color: #00ffff; font-size: 20px;">✓</span>
-                                    <span style="color: rgba(255, 255, 255, 0.9); font-size: 14px;">Works in addition to your current progress speed</span>
+                                    <span style="color: rgba(255, 255, 255, 0.9); font-size: 14px;">${t('featureWorksAddition')}</span>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 12px;">
                                     <span style="color: #00ffff; font-size: 20px;">✓</span>
-                                    <span style="color: rgba(255, 255, 255, 0.9); font-size: 14px;">Limited-time price offer!</span>
+                                    <span style="color: rgba(255, 255, 255, 0.9); font-size: 14px;">${t('featureLimitedTime')}</span>
                                 </div>
                             </div>
                             
                             <!-- Price & Button -->
                             <div style="text-align: center;">
                                 <div style="color: #8b5cf6; font-size: 16px; font-weight: 600; margin-bottom: 12px;">
-                                    Price: <span style="color: #00ffff; font-size: 20px; font-weight: 900;">$0.49</span>
+                                    ${t('priceLabel')} <span style="color: #00ffff; font-size: 20px; font-weight: 900;">$0.49</span>
                                 </div>
                                 <div id="speedBoostButtonContainer"></div>
                             </div>
@@ -9477,14 +10179,14 @@ window.__resetEmail = email;
             // Check if mining is active
             const sessionId = localStorage.getItem('currentSessionId_' + currentUser.email);
             if (!sessionId) {
-                showToast('❌ Please start mining first!', true);
+                showToast(`❌ ${t('toastPleaseStartMining')}`, true);
                 return;
             }
             
             isPurchasingSpeedBoost = true;
             
             try {
-                showToast('🔄 Please wait Initiating purchase...', false, 999999);
+                showToast(`🔄 ${t('toastInitiatingPurchase')}`, false, 999999);
                 
                 // Google Play In-App Purchase integration
                 let purchaseToken = null;
@@ -9518,7 +10220,7 @@ window.__resetEmail = email;
                         
                     } catch (purchaseError) {
                         console.error('Purchase initiation failed:', purchaseError);
-                        showToast('❌ ' + (purchaseError.message || 'Purchase cancelled'), true);
+                        showToast(`❌ ${purchaseError.message || t('toastPurchaseCancelled')}`, true);
                         isPurchasingSpeedBoost = false;
                         renderSpeedBoostButton();
                         return;
@@ -9529,7 +10231,7 @@ window.__resetEmail = email;
                     purchaseToken = 'test_speed_boost_' + Date.now() + '_' + Math.random().toString(36).substring(7);
                 }
                 
-                showToast('🔄 Please Wait Verifying purchase...', false, 999999);
+                showToast(`🔄 ${t('toastVerifyingPurchase')}`, false, 999999);
                 
                 const response = await fetch(API_ENDPOINTS.purchaseSpeedBoost, {
                     method: 'POST',
@@ -9543,7 +10245,7 @@ window.__resetEmail = email;
                 const data = await response.json();
                 
                 if (response.ok) {
-                    showToast(`🚀 Speed Boost activated! Total: +${data.totalBoostAmount.toFixed(2)} (${data.boostCount}x purchases)`, false);
+                    showToast(`🚀 ${t('toastSpeedBoostActivated')} +${data.totalBoostAmount.toFixed(2)} (${data.boostCount}x purchases)`, false);
                     
                     // Set 10 second cooldown
                     speedBoostCooldownEnd = Date.now() + 10000;
@@ -9552,11 +10254,11 @@ window.__resetEmail = email;
                     // Refresh data to show new rate
                     await initApp();
                 } else {
-                    showToast(`❌ ${data.error || 'Purchase failed'}`, true);
+                    showToast(`❌ ${data.error || t('toastPurchaseFailed')}`, true);
                 }
             } catch (error) {
                 console.error('Purchase error:', error);
-                showToast('❌ Purchase failed. Please try again.', true);
+                showToast(`❌ ${t('toastPurchaseFailedRetry')}`, true);
             } finally {
                 isPurchasingSpeedBoost = false;
                 renderSpeedBoostButton();
@@ -9590,18 +10292,18 @@ window.__resetEmail = email;
             // Validate full name
             const fullNameRegex = /^[a-zA-Z\s]+$/;
             if (!fullNameRegex.test(fullName)) {
-                showToast('❌ Full Name: Only English letters allowed');
+                showToast(`❌ ${t('toastFullNameEnglishOnly')}`);
                 return;
             }
             if (fullName.length < 3) {
-                showToast('❌ Full Name must be at least 3 characters');
+                showToast(`❌ ${t('toastFullNameMin3')}`);
                 return;
             }
             
             // Validate email
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(newEmail)) {
-                showToast('❌ Invalid email');
+                showToast(`❌ ${t('toastInvalidEmail')}`);
                 return;
             }
             
@@ -9610,14 +10312,14 @@ window.__resetEmail = email;
                 const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
                 const match = birthDate.match(dateRegex);
                 if (!match) {
-                    showToast('❌ Format: DD/MM/YYYY');
+                    showToast(`❌ ${t('toastFormatDDMMYYYY')}`);
                     return;
                 }
                 const day = parseInt(match[1]);
                 const month = parseInt(match[2]);
                 const year = parseInt(match[3]);
                 if (year < 1923 || year > 2007 || month < 1 || month > 12 || day < 1 || day > 31) {
-                    showToast('❌ Invalid date');
+                    showToast(`❌ ${t('toastInvalidDate')}`);
                     return;
                 }
             }
@@ -9632,7 +10334,7 @@ window.__resetEmail = email;
                 
                 if (!profileRes.ok) {
                     const data = await profileRes.json();
-                    showToast(`❌ ${data.error || 'Failed'}`);
+                    showToast(`❌ ${data.error || t('toastFailed')}`);
                     return;
                 }
                 
@@ -9646,7 +10348,7 @@ window.__resetEmail = email;
                     
                     if (!emailRes.ok) {
                         const data = await emailRes.json();
-                        showToast(`❌ ${data.error || 'Email update failed'}`);
+                        showToast(`❌ ${data.error || t('toastEmailUpdateFailed')}`);
                         return;
                     }
                     currentUser.email = newEmail;
@@ -9656,7 +10358,7 @@ window.__resetEmail = email;
                 currentUser.birthDate = birthDate;
                 currentUser.country = country;
                 
-                showToast('✓ Profile updated');
+                showToast(`✓ ${t('toastProfileUpdated')}`);
                 document.getElementById('inputFullNamePage').disabled = true;
                 document.getElementById('inputEmailPage').disabled = true;
                 document.getElementById('inputBirthDatePage').disabled = true;
@@ -9667,7 +10369,7 @@ window.__resetEmail = email;
                 await initApp();
             } catch (error) {
                 console.error('Save profile error:', error);
-                showToast('❌ Failed to update');
+                showToast(`❌ ${t('toastFailedToUpdate')}`);
             }
         }
 
@@ -10106,7 +10808,7 @@ window.addEventListener('offline', checkConnection);
 async function __doConfirmReset(){
 
   if(!window.__resetEmail){
-    if (typeof showToast === 'function') showToast('❌ Reset email missing', true);
+    if (typeof showToast === 'function') showToast(`❌ ${t('toastResetEmailMissing')}`, true);
     else alert('Reset email missing');
     return;
   }
@@ -10117,7 +10819,7 @@ async function __doConfirmReset(){
 
   
   if(!code || !newPassword){
-    if (typeof showToast === 'function') showToast('❌ Fill all fields', true);
+    if (typeof showToast === 'function') showToast(`❌ ${t('toastFillAllFields')}`, true);
     else alert('Fill all fields');
     return;
   }
@@ -10133,20 +10835,20 @@ async function __doConfirmReset(){
     try { data = await res.json(); } catch(_) {}
 
     if(res.ok){
-      if (typeof showToast === 'function') showToast('✓ Password reset successful');
+      if (typeof showToast === 'function') showToast(`✓ ${t('toastPasswordResetSuccessful')}`);
       else alert('Password reset successful');
       const box = document.getElementById('resetWithCodeBox');
       if (box) box.style.display = 'none';
       const c = document.getElementById('resetCode'); if (c) c.value = '';
       const p = document.getElementById('resetNewPassword'); if (p) p.value = '';
     } else {
-      const msg = (data && data.error) ? data.error : 'Reset failed';
+      const msg = (data && data.error) ? data.error : t('toastResetFailed');
       if (typeof showToast === 'function') showToast('❌ ' + msg, true);
       else alert(msg);
     }
   } catch(e){
-    if (typeof showToast === 'function') showToast('❌ Reset failed', true);
-    else alert('Reset failed');
+    if (typeof showToast === 'function') showToast(`❌ ${t('toastResetFailed')}`, true);
+    else alert(t('toastResetFailed'));
   }
 }
 window.__doConfirmReset = __doConfirmReset;
@@ -10630,7 +11332,7 @@ try {
             
             // If no amount found, check backend first
             if (estimatedAmount === 0) {
-                showToast('No airdrops to claim', true);
+                showToast(t('toastNoAirdrops'), true);
                 isClaimingAirdrop = false;
                 return;
             }
@@ -10658,7 +11360,7 @@ try {
             render();
             
             // ⚡ STEP 5: Show success message immediately
-            showToast('✓ Claimed ' + estimatedAmount.toFixed(2) + ' ARCASTRA!');
+            showToast(`✓ ${t('toastClaimedAirdrop')} ` + estimatedAmount.toFixed(2) + ' ARCASTRA!');
             
             // ⚡ STEP 6: Backend call in background (async, non-blocking)
             (async () => {
@@ -10719,7 +11421,7 @@ try {
                             }
                         }
                         
-                        showToast('❌ Failed to claim airdrops. Please try again.', true);
+                        showToast(`❌ ${t('toastFailedClaimAirdrops')}`, true);
                     }
                     
                 } catch (error) {
@@ -10739,7 +11441,7 @@ try {
                         }
                     }
                     
-                    showToast('❌ Network error. Please try again.', true);
+                    showToast(`❌ ${t('toastNetworkError')}`, true);
                 } finally {
                     isClaimingAirdrop = false;
                 }
