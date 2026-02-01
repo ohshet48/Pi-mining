@@ -2312,7 +2312,11 @@ const translations = {
     updatesDaily: "Updates daily at 00:00 UTC",
     you: "You",
     days: "Days",
-    lvShort: "Lv"
+    lvShort: "Lv",
+    // Levels & Rewards Page
+    levelsRewards: "Levels & Rewards",
+    levelRewardsDesc: "Complete days to level up and earn rewards!",
+    rewardLabel: "Reward"
   },
   tr: {
     welcome: "Hoş Geldiniz",
@@ -2325,7 +2329,7 @@ const translations = {
     dailyBonus: "Günlük Bonus",
     yourReferralCode: "Referans Kodunuz",
     copy: "Kopyala",
-    miningInProgress: "Madencilik Devam Ediyor",
+    miningInProgress: "Ilerleme Devam Ediyor",
     target: "Hedef",
     earnedToday: "Bugün Kazanılan",
     settings: "Ayarlar",
@@ -2559,7 +2563,11 @@ const translations = {
     updatesDaily: "Günlük 00:00 UTC'de güncellenir",
     you: "Sen",
     days: "Gün",
-    lvShort: "Lv"
+    lvShort: "Sv",
+    // Levels & Rewards Page
+    levelsRewards: "Seviyeler ve Ödüller",
+    levelRewardsDesc: "Seviye atlamak ve ödüller kazanmak için günleri tamamlayın!",
+    rewardLabel: "Ödül"
   },
   vi: {
     welcome: "Chào mừng",
@@ -2797,7 +2805,11 @@ const translations = {
     updatesDaily: "Cập nhật hàng ngày lúc 00:00 UTC",
     you: "Bạn",
     days: "Ngày",
-    lvShort: "Cấp"
+    lvShort: "Cấp",
+    // Levels & Rewards Page
+    levelsRewards: "Cấp Độ & Phần Thưởng",
+    levelRewardsDesc: "Hoàn thành các ngày khai thác để lên cấp và nhận thưởng!",
+    rewardLabel: "Phần thưởng"
   },
   hi: {
     welcome: "स्वागत है",
@@ -3035,7 +3047,10 @@ const translations = {
     updatesDaily: "रोज़ाना 00:00 UTC पर अपडेट होता है",
     you: "आप",
     days: "दिन",
-    lvShort: "स्तर"
+    lvShort: "स्तर",
+    levelsRewards: "स्तर और पुरस्कार",
+    levelRewardsDesc: "लेवल अप करने और पुरस्कार प्राप्त करने के लिए माइनिंग दिन पूरे करें!",
+    rewardLabel: "पुरस्कार"
   },
   id: {
     welcome: "Selamat datang",
@@ -3271,7 +3286,10 @@ const translations = {
     updatesDaily: "Diperbarui setiap hari pada 00:00 UTC",
     you: "Anda",
     days: "Hari",
-    lvShort: "Lv"
+    lvShort: "Lv",
+    levelsRewards: "Level & Hadiah",
+    levelRewardsDesc: "Selesaikan hari menambang untuk naik level dan dapatkan hadiah!",
+    rewardLabel: "Hadiah"
   },
   pt: {
     welcome: "Bem-vindo",
@@ -3507,7 +3525,10 @@ const translations = {
     updatesDaily: "Atualiza diariamente às 00:00 UTC",
     you: "Você",
     days: "Dias",
-    lvShort: "Nv"
+    lvShort: "Nv",
+    levelsRewards: "Níveis e Recompensas",
+    levelRewardsDesc: "Complete dias de mineração para subir de nível e ganhar recompensas!",
+    rewardLabel: "Recompensa"
   },
   es: {
     welcome: "Bienvenido",
@@ -3743,7 +3764,10 @@ const translations = {
     updatesDaily: "Se actualiza diariamente a las 00:00 UTC",
     you: "Tú",
     days: "Días",
-    lvShort: "Nv"
+    lvShort: "Nv",
+    levelsRewards: "Niveles y Recompensas",
+    levelRewardsDesc: "¡Completa días de minería para subir de nivel y ganar recompensas!",
+    rewardLabel: "Recompensa"
   },
   ar: {
     welcome: "مرحباً",
@@ -3979,7 +4003,10 @@ const translations = {
     updatesDaily: "يتم التحديث يومياً في الساعة 00:00 UTC",
     you: "أنت",
     days: "أيام",
-    lvShort: "مستوى"
+    lvShort: "مستوى",
+    levelsRewards: "المستويات والمكافآت",
+    levelRewardsDesc: "أكمل أيام التعدين للارتقاء بالمستوى وكسب المكافآت!",
+    rewardLabel: "مكافأة"
   }
 };
 
@@ -6732,7 +6759,7 @@ window.__resetEmail = email;
                         <div class="stat-unit">ARCASTRA/hour</div>
                     </div>
 
-                    <div class="stat ${d.levelUpNotification ? 'reward-available' : ''}">
+                    <div class="stat ${d.levelUpNotification ? 'reward-available' : ''}" ${d.levelUpNotification ? '' : 'onclick="openPage(\'levels\')" style="cursor: pointer;"'}>
                         ${d.levelUpNotification ? `
                             <div style="display: flex; flex-direction: column; text-align: center; padding: 0 8px; min-height: 140px; justify-content: space-between;">
                                 <div style="margin-top: 12px;">
@@ -8383,6 +8410,15 @@ window.__resetEmail = email;
         }
         
         function openPage(page) {
+            // IMPORTANT: If opening referrals and history is empty, push mining page first
+            if (page === 'referrals' && window.history.length <= 1) {
+                try {
+                    history.pushState({ page: 'mining' }, '', '#mining');
+                } catch(e) {
+                    console.log('Could not push mining state');
+                }
+            }
+            
             // Push state FIRST for immediate back button response
             try {
                 history.pushState({ page: page }, '', '#' + page);
@@ -8671,6 +8707,10 @@ window.__resetEmail = email;
                     // Load content asynchronously
                     getReferralsPageContent().then(html => pageContent.innerHTML = html);
                     break;
+                case 'levels':
+                    pageTitle.textContent = t('levelsRewards');
+                    pageContent.innerHTML = getLevelsPageContent();
+                    break;
                 case 'menu2':
                     pageTitle.textContent = 'Menü 2';
                     pageContent.innerHTML = '<div class="card"><h2 style="color: white; text-align: center;">Menü 2 İçeriği</h2><p style="color: #c4b5fd; text-align: center; margin-top: 10px;">Bu sayfa için içerik yakında eklenecek.</p></div>';
@@ -8737,6 +8777,88 @@ window.__resetEmail = email;
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const year = date.getFullYear();
             return `${day}/${month}/${year}`;
+        }
+        
+        function getLevelsPageContent() {
+            const levelRewards = {
+                2: {coins: 20, rate: 0.05}, 3: {coins: 30, rate: 0.05}, 4: {coins: 50, rate: 0.05},
+                5: {coins: 75, rate: 0.05}, 6: {coins: 100, rate: 0.05}, 7: {coins: 150, rate: 0.05},
+                8: {coins: 200, rate: 0.05}, 9: {coins: 300, rate: 0.05}, 10: {coins: 500, rate: 0.05},
+                11: {coins: 750, rate: 0.05}, 12: {coins: 1100, rate: 0.05}, 13: {coins: 1500, rate: 0.05},
+                14: {coins: 2000, rate: 0.05}, 15: {coins: 2750, rate: 0.05}, 16: {coins: 3500, rate: 0.05},
+                17: {coins: 4500, rate: 0.05}, 18: {coins: 6000, rate: 0.05}, 19: {coins: 7500, rate: 0.05},
+                20: {coins: 10000, rate: 0.05}
+            };
+            
+            const currentLevel = currentUser?.level || 1;
+            
+            return `
+                <div style="padding: 20px 0;">
+                    <!-- Header -->
+                    <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.15)); border: 2px solid rgba(139, 92, 246, 0.3); border-radius: 16px; padding: 20px; margin-bottom: 24px; text-align: center;">
+                        <h3 style="color: #fff; font-size: 18px; font-weight: 800; margin-bottom: 8px;">${t('levelsRewards')}</h3>
+                        <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin: 0;">
+                            ${t('levelRewardsDesc')}
+                        </p>
+                    </div>
+                    
+                    <!-- Table Header -->
+                    <div style="display: flex; justify-content: space-between; padding: 16px 20px; background: rgba(0, 0, 0, 0.4); border: 2px solid rgba(0, 255, 255, 0.4); border-radius: 12px; margin-bottom: 12px;">
+                        <div style="color: #00ffff; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">LEVEL</div>
+                        <div style="color: #00ffff; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">${t('rewardLabel').toUpperCase()}</div>
+                    </div>
+                    
+                    <!-- Levels List -->
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        ${Object.keys(levelRewards).map(level => {
+                            const reward = levelRewards[level];
+                            const isCompleted = currentLevel >= parseInt(level);
+                            const isCurrent = currentLevel === parseInt(level);
+                            
+                            return `
+                                <div style="
+                                    display: flex; 
+                                    justify-content: space-between; 
+                                    align-items: center;
+                                    padding: 16px 20px;
+                                    background: ${isCompleted ? 'rgba(16, 185, 129, 0.1)' : 'rgba(0, 0, 0, 0.3)'}; 
+                                    border: 2px solid ${isCurrent ? 'rgba(251, 191, 36, 0.6)' : isCompleted ? 'rgba(16, 185, 129, 0.4)' : 'rgba(0, 255, 255, 0.3)'}; 
+                                    border-radius: 12px;
+                                    position: relative;
+                                ">
+                                    ${isCurrent ? '<div style="position: absolute; top: -10px; right: 10px; background: linear-gradient(135deg, #fbbf24, #f59e0b); padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800; color: #000; box-shadow: 0 2px 8px rgba(251, 191, 36, 0.4);">CURRENT</div>' : ''}
+                                    
+                                    <!-- Left: Level -->
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <div style="
+                                            background: ${isCompleted ? 'linear-gradient(135deg, #10b981, #059669)' : 'rgba(0, 255, 255, 0.2)'}; 
+                                            border: 2px solid ${isCompleted ? '#10b981' : 'rgba(0, 255, 255, 0.4)'}; 
+                                            border-radius: 8px; 
+                                            width: 45px; 
+                                            height: 45px; 
+                                            display: flex; 
+                                            align-items: center; 
+                                            justify-content: center;
+                                            font-size: 18px;
+                                            font-weight: 900;
+                                            color: #fff;
+                                        ">
+                                            ${level}
+                                        </div>
+                                        <div style="color: #fff; font-size: 16px; font-weight: 700;">Level ${level}</div>
+                                    </div>
+                                    
+                                    <!-- Right: Rewards -->
+                                    <div style="text-align: right;">
+                                        <div style="color: #fbbf24; font-size: 14px; font-weight: 700; margin-bottom: 2px;">+${reward.coins} ARCASTRA</div>
+                                        <div style="color: #00ffff; font-size: 14px; font-weight: 700;">+${reward.rate.toFixed(2)} ${t('rate').toUpperCase()}</div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
         }
         
         function getSettingsPageContent() {
